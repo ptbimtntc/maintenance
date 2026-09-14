@@ -13,6 +13,17 @@
         </div>
 
         <div>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Skills &amp; Competency</h2>
+            <p class="mt-1 text-sm text-gray-500">Live counts from the Skills &amp; Competency Management module.</p>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <x-dashboard-stat label="Total Skills Tracked" :value="$skillSummary['total_skills']" />
+                <x-dashboard-stat label="Average Competency Score" :value="$skillSummary['average_competency_score'] ?? 'No assessments yet'" />
+                <x-dashboard-stat label="Employees with Competency Gaps" :value="$skillSummary['employees_with_gaps']" />
+            </div>
+        </div>
+
+        <div>
             <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Organization Overview</h2>
             <p class="mt-1 text-sm text-gray-500">Live counts from the Organization &amp; Master Data module.</p>
 

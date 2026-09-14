@@ -45,6 +45,13 @@ $parentField = $config['parent']['field'] ?? null;
                                 <input type="checkbox" name="{{ $field }}" value="1" @checked($old($field, false)) class="rounded border-gray-300" />
                                 <span class="text-sm text-gray-700">{{ $meta['label'] }}</span>
                             </label>
+                        @elseif ($meta['type'] === 'select')
+                            <x-input-label for="{{ $field }}" :value="$meta['label']" />
+                            <select id="{{ $field }}" name="{{ $field }}" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                                @foreach ($meta['options'] as $value => $label)
+                                    <option value="{{ $value }}" @selected($old($field) == $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         @else
                             <x-input-label for="{{ $field }}" :value="$meta['label']" />
                             <x-text-input id="{{ $field }}" type="{{ $meta['type'] === 'number' ? 'number' : ($meta['type'] === 'time' ? 'time' : 'text') }}" name="{{ $field }}" class="mt-1 block w-full" value="{{ $old($field) }}" />

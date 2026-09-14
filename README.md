@@ -4,22 +4,26 @@ An internal web application for the Maintenance Department of **PT Bekaert Indon
 
 > This project is under active development. It is not officially connected to, or endorsed by, any PT Bekaert Indonesia production system. The logo placeholder in the sidebar and login page is a stand-in for the official company logo, which can be added later.
 
-## Current status: Phase 2 — Organization & Employee Management
+## Current status: Phase 3 — Job Descriptions & Skills/Competency Management
 
-Phases 1 and 2 have been built so far. See [Roadmap](#roadmap) for what's next.
+Phases 1, 2 and 3 have been built so far. See [Roadmap](#roadmap) for what's next.
 
 Implemented:
 - Laravel 13 application running on **MySQL** (not SQLite/demo storage).
 - Authentication (Laravel Breeze, Blade + Tailwind stack).
 - Role-based access control with 5 roles (`spatie/laravel-permission`): Administrator, Maintenance Manager, Maintenance Supervisor, Maintenance Staff, People Development.
 - Responsive admin layout: fixed sidebar on desktop, off-canvas sidebar on mobile, top bar with user menu.
-- Dashboard with **real, database-driven** employee and organization counts. Metrics for modules not yet built (skills, training, certificates) are shown as an explicit "not yet available" state rather than fake numbers.
-- **Employee Database**: full CRUD, search/filter/pagination, a tabbed employee profile page (Overview and Notes are real; other tabs are honest "not yet implemented" placeholders), and role-scoped visibility enforced in the backend (`EmployeePolicy`) — Administrators/Managers/HR see everyone, Supervisors see only their own team, Staff see only themselves.
-- **Organization & Master Data CRUD**: create/edit/deactivate/delete UI for departments, divisions, maintenance areas, maintenance teams, positions, employment types, employment statuses, shifts, and locations — restricted to the `master-data.manage` permission (Administrator by default).
-- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts so role-scoping has real data to show.
-- Automated tests (48 passing) covering authentication guards, role/permission checks, employee visibility scoping, and master data CRUD/validation.
+- Dashboard with **real, database-driven** employee, organization, and skills/competency counts. Metrics for modules not yet built (training, certificates) are shown as an explicit "not yet available" state rather than fake numbers.
+- **Employee Database**: full CRUD, search/filter/pagination, a tabbed employee profile page, and role-scoped visibility enforced in the backend (`EmployeePolicy`) — Administrators/Managers/HR see everyone, Supervisors see only their own team, Staff see only themselves.
+- **Organization & Master Data CRUD**: create/edit/deactivate/delete UI for departments, divisions, maintenance areas, maintenance teams, positions, employment types, employment statuses, shifts, locations, skill categories, competency levels, and the skill catalog — restricted to the `master-data.manage` permission (Administrator by default).
+- **Job Descriptions**: full CRUD with a simple version/approval workflow (draft → pending review → active → archived), version history per position, and an explicit "New Revision" action instead of silently overwriting history. Shown on the employee profile's Job Description tab.
+- **Skills & Competency Management**: a configurable competency level scale (not hard-coded), a skill catalog, and **Position Skill Requirements** (which skills + level each position needs).
+- **Employee Skill Assessments**: an append-only assessment log (history is never lost) with a "current level" derived as the most recent assessment per skill. Missing assessments are shown explicitly as "not assessed", never silently treated as meeting a requirement.
+- **Skill Matrix**: an employee × skill matrix comparing current vs. required competency, with gap calculated as `required − current`, filterable by area/team/position/skill category, and an overall per-employee status (Meets / Development Required / Assessment Incomplete / No Requirements Defined).
+- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts and sample assessments so role-scoping and the skill matrix have real data to show.
+- Automated tests (65 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix gap calculation, and the job description version/approval workflow.
 
-Not implemented yet: Job Descriptions, Skills & Competency Management, Skill Matrix, Competency Gap Analysis, Training Management, Certificates, Development Plans, Reports. These are planned for later phases (see below) and their UI/data will be built incrementally.
+Not implemented yet: Competency Gap Analysis (dedicated reporting view), Training Management, Certificates, Development Plans, Reports. These are planned for later phases (see below) and their UI/data will be built incrementally.
 
 ## Technology stack
 
@@ -174,8 +178,8 @@ Not yet applicable — no file uploads (e.g. certificates, job description attac
 ## Roadmap
 
 - ~~**Phase 2** — Organization master data CRUD UI, Employee database, employee profile pages.~~ Done.
-- **Phase 3** — Job Descriptions, Skills & Competency levels, position skill requirements, Skill Matrix.
-- **Phase 4** — Competency Gap Analysis.
+- ~~**Phase 3** — Job Descriptions, Skills & Competency levels, position skill requirements, Skill Matrix.~~ Done.
+- **Phase 4** — Competency Gap Analysis (dedicated reporting/drill-down view; the underlying gap calculation already exists in the Skill Matrix).
 - **Phase 5** — Training programs, schedules, records, Development Plans.
 - **Phase 6** — Certificate management with secure file storage and expiry tracking.
 - **Phase 7** — Reports, audit logging, security review, UI polish.

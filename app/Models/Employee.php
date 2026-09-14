@@ -115,6 +115,27 @@ class Employee extends Model
         return $query->whereHas('employmentStatus', fn (Builder $q) => $q->where('counts_as_active', true));
     }
 
+    public function skillAssessments(): HasMany
+    {
+        return $this->hasMany(EmployeeSkillAssessment::class);
+    }
+
+    /**
+     * The most recent assessment per skill, keyed by skill_id. Missing
+     * assessments are simply absent from the collection - never treated as
+     * an implicit competency level.
+     */
+    public function currentSkillAssessments(): \Illuminate\Support\Collection
+    {
+        return $this->skillAssessments()
+            ->with(['skill', 'competencyLevel'])
+            ->orderByDesc('assessment_date')
+            ->orderByDesc('id')
+            ->get()
+            ->unique('skill_id')
+            ->keyBy('skill_id');
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (blank($term)) {

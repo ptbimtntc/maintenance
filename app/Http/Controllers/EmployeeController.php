@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
+use App\Models\CompetencyLevel;
 use App\Models\Department;
 use App\Models\Division;
 use App\Models\Employee;
@@ -15,6 +16,7 @@ use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
+use App\Models\Skill;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -87,9 +89,16 @@ class EmployeeController extends Controller
         $employee->load([
             'department', 'division', 'maintenanceArea', 'maintenanceTeam', 'position',
             'employmentType', 'employmentStatus', 'location', 'shift', 'supervisor', 'manager',
+            'position.skillRequirements.skill', 'position.skillRequirements.requiredCompetencyLevel',
+            'skillAssessments' => fn ($q) => $q->with(['skill', 'competencyLevel', 'assessedBy'])->orderByDesc('assessment_date')->orderByDesc('id'),
         ]);
 
-        return view('employees.show', ['employee' => $employee]);
+        return view('employees.show', [
+            'employee' => $employee,
+            'currentSkillLevels' => $employee->skillAssessments->unique('skill_id')->keyBy('skill_id'),
+            'skills' => Skill::where('is_active', true)->orderBy('name')->get(),
+            'competencyLevels' => CompetencyLevel::where('is_active', true)->orderBy('level_number')->get(),
+        ]);
     }
 
     public function edit(Employee $employee): View

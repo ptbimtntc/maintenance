@@ -158,12 +158,19 @@ class MasterDataController extends Controller
         }
 
         foreach ($config['extra_fields'] ?? [] as $field => $meta) {
-            $rules[$field] = match ($meta['type']) {
-                'number' => ['nullable', 'integer'],
+            $fieldRules = match ($meta['type']) {
+                'number' => [($meta['required'] ?? false) ? 'required' : 'nullable', 'integer'],
                 'boolean' => ['sometimes', 'boolean'],
                 'time' => ['nullable', 'date_format:H:i'],
-                default => ['nullable', 'string', 'max:255'],
+                'select' => [($meta['required'] ?? false) ? 'required' : 'nullable', Rule::in(array_keys($meta['options'] ?? []))],
+                default => [($meta['required'] ?? false) ? 'required' : 'nullable', 'string', 'max:255'],
             };
+
+            if ($meta['unique'] ?? false) {
+                $fieldRules[] = Rule::unique($config['model']::make()->getTable(), $field)->ignore($ignoreId);
+            }
+
+            $rules[$field] = $fieldRules;
         }
 
         return $rules;

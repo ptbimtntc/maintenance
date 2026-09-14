@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             MasterDataSeeder::class,
             DemoUsersSeeder::class,
             EmployeeSeeder::class,
+            SkillsAndCompetencySeeder::class,
+            JobDescriptionSeeder::class,
         ]);
     }
 }
