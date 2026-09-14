@@ -210,7 +210,107 @@
             @endif
         </div>
 
-        @foreach (['training' => 'Training Management', 'certificates' => 'Certificate Management', 'development' => 'Employee Development Plans'] as $key => $moduleName)
+        @php
+        $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' => 'bg-amber-100 text-amber-800', 'failed' => 'bg-red-100 text-red-800'];
+        $planStatusStyles = ['not_started' => 'bg-gray-100 text-gray-600', 'in_progress' => 'bg-blue-100 text-blue-800', 'completed' => 'bg-green-100 text-green-800', 'on_hold' => 'bg-amber-100 text-amber-800'];
+        @endphp
+
+        <div x-show="tab === 'training'">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <p class="text-sm text-gray-500">Total training hours recorded: {{ $employee->trainingRecords->sum('duration_hours') ?: 0 }}</p>
+                    @can(\App\Enums\PermissionName::ManageTrainingRecords->value)
+                        <a href="{{ route('employees.training-records.create', $employee) }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Add Training Record</a>
+                    @endcan
+                </div>
+
+                <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Program</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Date</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Hours</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Completion</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Certificate</th>
+                                <th class="px-4 py-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($employee->trainingRecords as $record)
+                                <tr>
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $record->trainingProgram?->title ?? 'Ad-hoc training' }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $record->training_date->format('d M Y') }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $record->duration_hours ?? '—' }}</td>
+                                    <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $record->certificate_issued ? ($record->certificate_reference ?? 'Yes') : '—' }}</td>
+                                    <td class="px-4 py-3 text-right">
+                                        @can(\App\Enums\PermissionName::ManageTrainingRecords->value)
+                                            <form method="POST" action="{{ route('employees.training-records.destroy', [$employee, $record]) }}" onsubmit="return confirm('Remove this training record?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                            </form>
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">No training records yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="tab === 'development'">
+            <div class="space-y-4">
+                @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
+                    <div class="flex justify-end">
+                        <a href="{{ route('employees.development-plans.create', $employee) }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Add Development Plan</a>
+                    </div>
+                @endcan
+
+                @forelse ($employee->developmentPlans as $plan)
+                    <div class="rounded-lg border border-gray-200 bg-white p-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <p class="font-medium text-gray-900">{{ $plan->development_objective }}</p>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    {{ \App\Models\EmployeeDevelopmentPlan::ACTIONS[$plan->development_action] }}
+                                    @if ($plan->relatedSkill) &middot; {{ $plan->relatedSkill->name }} @endif
+                                    @if ($plan->mentor) &middot; Mentor: {{ $plan->mentor->full_name }} @endif
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $planStatusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span>
+                                @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
+                                    <a href="{{ route('employees.development-plans.edit', [$employee, $plan]) }}" class="text-sm text-slate-600 hover:underline">Edit</a>
+                                @endcan
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="h-2 w-full rounded-full bg-gray-100">
+                                <div class="h-2 rounded-full bg-slate-900" style="width: {{ $plan->progress_percentage }}%"></div>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500">{{ $plan->progress_percentage }}% complete &middot; Priority: {{ ucfirst($plan->priority) }} @if ($plan->target_completion_date) &middot; Target: {{ $plan->target_completion_date->format('d M Y') }} @endif</p>
+                        </div>
+                        @if ($plan->manager_remarks)
+                            <p class="mt-2 text-sm text-gray-600"><span class="font-medium">Manager:</span> {{ $plan->manager_remarks }}</p>
+                        @endif
+                        @if ($plan->employee_remarks)
+                            <p class="mt-1 text-sm text-gray-600"><span class="font-medium">Employee:</span> {{ $plan->employee_remarks }}</p>
+                        @endif
+                    </div>
+                @empty
+                    <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-500">
+                        No development plans recorded for this employee yet.
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        @foreach (['certificates' => 'Certificate Management'] as $key => $moduleName)
             <div x-show="tab === '{{ $key }}'">
                 <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
                     <p class="text-sm font-medium text-gray-500">{{ $moduleName }} module not yet implemented</p>

@@ -91,6 +91,8 @@ class EmployeeController extends Controller
             'employmentType', 'employmentStatus', 'location', 'shift', 'supervisor', 'manager',
             'position.skillRequirements.skill', 'position.skillRequirements.requiredCompetencyLevel',
             'skillAssessments' => fn ($q) => $q->with(['skill', 'competencyLevel', 'assessedBy'])->orderByDesc('assessment_date')->orderByDesc('id'),
+            'trainingRecords' => fn ($q) => $q->with('trainingProgram')->orderByDesc('training_date'),
+            'developmentPlans' => fn ($q) => $q->with(['relatedSkill', 'currentCompetencyLevel', 'targetCompetencyLevel', 'mentor'])->orderByDesc('created_at'),
         ]);
 
         return view('employees.show', [

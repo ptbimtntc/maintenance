@@ -120,6 +120,21 @@ class Employee extends Model
         return $this->hasMany(EmployeeSkillAssessment::class);
     }
 
+    public function trainingRecords(): HasMany
+    {
+        return $this->hasMany(TrainingRecord::class);
+    }
+
+    public function trainingParticipations(): HasMany
+    {
+        return $this->hasMany(TrainingParticipant::class);
+    }
+
+    public function developmentPlans(): HasMany
+    {
+        return $this->hasMany(EmployeeDevelopmentPlan::class);
+    }
+
     /**
      * The most recent assessment per skill, keyed by skill_id. Missing
      * assessments are simply absent from the collection - never treated as

@@ -24,6 +24,17 @@
         </div>
 
         <div>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Training &amp; Development</h2>
+            <p class="mt-1 text-sm text-gray-500">Live counts from the Training Management module.</p>
+
+            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <x-dashboard-stat label="Active Training Programs" :value="$trainingSummary['programs']" />
+                <x-dashboard-stat label="Upcoming Training Sessions" :value="$trainingSummary['upcoming_sessions']" />
+                <x-dashboard-stat label="Completed Training Sessions" :value="$trainingSummary['completed_sessions']" />
+            </div>
+        </div>
+
+        <div>
             <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Organization Overview</h2>
             <p class="mt-1 text-sm text-gray-500">Live counts from the Organization &amp; Master Data module.</p>
 

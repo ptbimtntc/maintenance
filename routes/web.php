@@ -4,12 +4,16 @@ use App\Enums\PermissionName;
 use App\Http\Controllers\CompetencyGapAnalysisController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\EmployeeDevelopmentPlanController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
 use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SkillMatrixController;
+use App\Http\Controllers\TrainingProgramController;
+use App\Http\Controllers\TrainingRecordController;
+use App\Http\Controllers\TrainingSessionController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,6 +28,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('employees', EmployeeController::class);
     Route::post('/employees/{employee}/skill-assessments', [EmployeeSkillAssessmentController::class, 'store'])->name('employees.skill-assessments.store');
     Route::delete('/employees/{employee}/skill-assessments/{assessment}', [EmployeeSkillAssessmentController::class, 'destroy'])->name('employees.skill-assessments.destroy');
+
+    Route::post('/employees/{employee}/training-records', [TrainingRecordController::class, 'store'])->name('employees.training-records.store');
+    Route::get('/employees/{employee}/training-records/create', [TrainingRecordController::class, 'create'])->name('employees.training-records.create');
+    Route::delete('/employees/{employee}/training-records/{record}', [TrainingRecordController::class, 'destroy'])->name('employees.training-records.destroy');
+
+    Route::get('/employees/{employee}/development-plans/create', [EmployeeDevelopmentPlanController::class, 'create'])->name('employees.development-plans.create');
+    Route::post('/employees/{employee}/development-plans', [EmployeeDevelopmentPlanController::class, 'store'])->name('employees.development-plans.store');
+    Route::get('/employees/{employee}/development-plans/{plan}/edit', [EmployeeDevelopmentPlanController::class, 'edit'])->name('employees.development-plans.edit');
+    Route::put('/employees/{employee}/development-plans/{plan}', [EmployeeDevelopmentPlanController::class, 'update'])->name('employees.development-plans.update');
+    Route::delete('/employees/{employee}/development-plans/{plan}', [EmployeeDevelopmentPlanController::class, 'destroy'])->name('employees.development-plans.destroy');
 });
 
 Route::pattern('type', implode('|', array_keys(config('master_data'))));
@@ -77,6 +91,33 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewJobDescription
         Route::post('/{jobDescription}/approve', [JobDescriptionController::class, 'approve'])->name('approve');
         Route::post('/{jobDescription}/archive', [JobDescriptionController::class, 'archive'])->name('archive');
     });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->value])
+    ->prefix('training')
+    ->name('training.')
+    ->group(function () {
+        Route::get('/calendar', [TrainingSessionController::class, 'calendar'])->name('calendar');
+        Route::get('/records', [TrainingRecordController::class, 'index'])->name('records.index');
+
+        Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program']);
+        Route::delete('/programs/{program}', [TrainingProgramController::class, 'destroy'])->name('programs.destroy');
+
+        Route::get('/programs/{program}/sessions/create', [TrainingSessionController::class, 'create'])->name('programs.sessions.create');
+        Route::post('/programs/{program}/sessions', [TrainingSessionController::class, 'store'])->name('programs.sessions.store');
+
+        Route::get('/sessions/{trainingSession}', [TrainingSessionController::class, 'show'])->name('sessions.show');
+        Route::get('/sessions/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->name('sessions.edit');
+        Route::put('/sessions/{trainingSession}', [TrainingSessionController::class, 'update'])->name('sessions.update');
+        Route::delete('/sessions/{trainingSession}', [TrainingSessionController::class, 'destroy'])->name('sessions.destroy');
+
+        Route::post('/sessions/{trainingSession}/participants', [TrainingSessionController::class, 'addParticipant'])->name('sessions.participants.store');
+        Route::put('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'updateParticipant'])->name('sessions.participants.update');
+        Route::delete('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'removeParticipant'])->name('sessions.participants.destroy');
+    });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
+    ->get('/development-plans', [EmployeeDevelopmentPlanController::class, 'index'])
+    ->name('development-plans.index');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

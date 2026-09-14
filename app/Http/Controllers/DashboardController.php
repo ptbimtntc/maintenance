@@ -9,6 +9,8 @@ use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Skill;
+use App\Models\TrainingProgram;
+use App\Models\TrainingSession;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -41,16 +43,22 @@ class DashboardController extends Controller
             'employees_with_gaps' => $this->countEmployeesWithCompetencyGaps(),
         ];
 
+        $trainingSummary = [
+            'programs' => TrainingProgram::where('status', 'active')->count(),
+            'upcoming_sessions' => TrainingSession::whereIn('status', ['scheduled', 'ongoing'])->where('start_date', '>=', now())->count(),
+            'completed_sessions' => TrainingSession::where('status', 'completed')->count(),
+        ];
+
         $pendingModules = [
-            'Training Programs',
-            'Upcoming Training Sessions',
             'Certificates Expiring Soon',
+            'Expired Certificates',
         ];
 
         return view('dashboard', [
             'orgSummary' => $orgSummary,
             'employeeSummary' => $employeeSummary,
             'skillSummary' => $skillSummary,
+            'trainingSummary' => $trainingSummary,
             'pendingModules' => $pendingModules,
         ]);
     }

@@ -12,6 +12,9 @@ use App\Models\Position;
 use App\Models\Shift;
 use App\Models\Skill;
 use App\Models\SkillCategory;
+use App\Models\TrainingCategory;
+use App\Models\TrainingProvider;
+use App\Models\TrainingType;
 
 /**
  * Configuration-driven registry of the simple "lookup" tables managed under
@@ -153,5 +156,26 @@ return [
             ],
             'measurement_method' => ['type' => 'text', 'label' => 'Measurement Method'],
         ],
+    ],
+
+    'training-categories' => [
+        'model' => TrainingCategory::class,
+        'label' => 'Training Categories',
+        'singular' => 'Training Category',
+        'name_field' => 'name',
+    ],
+
+    'training-types' => [
+        'model' => TrainingType::class,
+        'label' => 'Training Types',
+        'singular' => 'Training Type',
+        'name_field' => 'name',
+    ],
+
+    'training-providers' => [
+        'model' => TrainingProvider::class,
+        'label' => 'Training Providers',
+        'singular' => 'Training Provider',
+        'name_field' => 'name',
     ],
 ];

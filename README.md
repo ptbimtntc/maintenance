@@ -4,9 +4,9 @@ An internal web application for the Maintenance Department of **PT Bekaert Indon
 
 > This project is under active development. It is not officially connected to, or endorsed by, any PT Bekaert Indonesia production system. The logo placeholder in the sidebar and login page is a stand-in for the official company logo, which can be added later.
 
-## Current status: Phase 4 — Competency Gap Analysis
+## Current status: Phase 5 — Training Management & Development Plans
 
-Phases 1 through 4 have been built so far. See [Roadmap](#roadmap) for what's next.
+Phases 1 through 5 have been built so far. See [Roadmap](#roadmap) for what's next.
 
 Implemented:
 - Laravel 13 application running on **MySQL** (not SQLite/demo storage).
@@ -21,10 +21,13 @@ Implemented:
 - **Employee Skill Assessments**: an append-only assessment log (history is never lost) with a "current level" derived as the most recent assessment per skill. Missing assessments are shown explicitly as "not assessed", never silently treated as meeting a requirement.
 - **Skill Matrix**: an employee × skill matrix comparing current vs. required competency, with gap calculated as `required − current`, filterable by area/team/position/skill category, and an overall per-employee status (Meets / Development Required / Assessment Incomplete / No Requirements Defined).
 - **Competency Gap Analysis**: department-wide rollup of the same gap calculation — skills with the largest gaps, positions and maintenance areas needing the most development, a drill-down list of employees with gaps, and system-generated training suggestions clearly labeled as suggestions, not approved decisions. The gap logic lives in one place (`Employee::skillGapRows()`) and is reused by the employee profile, Skill Matrix, Dashboard, and this module, so "what counts as a gap" can never drift between screens.
-- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts and sample assessments so role-scoping, the skill matrix, and gap analysis have real data to show.
-- Automated tests (70 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, and the job description version/approval workflow.
+- **Training Management**: training programs (with related skills, category/type/provider, cost/duration), scheduled sessions with a calendar/list view, and participant assignment with per-participant attendance tracking. Session dates are validated (end can't be before start), and sessions respect a configurable maximum participant count.
+- **Training Records**: a per-employee training history (program, date, hours, attendance/completion status, assessment score/result, before/after competency level, certificate reference), a global searchable index, and a running total of training hours shown on the employee profile.
+- **Employee Development Plans**: objective, related skill/competency gap, current vs. target competency, a development action (formal training, OJT, coaching, mentoring, job rotation, self-learning, practical assessment, cross-training, certification), optional mentor and recommended training program, priority/status/progress tracking, and manager/employee remarks — visible on the employee profile and a global index.
+- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts, sample assessments, and a training/development-plan story that ties back to a real seeded competency gap so the modules show a consistent, believable narrative rather than disconnected sample rows.
+- Automated tests (85 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, and development plan authorization.
 
-Not implemented yet: Training Management, Certificates, Development Plans, Reports. These are planned for later phases (see below) and their UI/data will be built incrementally.
+Not implemented yet: Certificates, Reports. These are planned for later phases (see below) and their UI/data will be built incrementally.
 
 ## Technology stack
 
@@ -181,6 +184,6 @@ Not yet applicable — no file uploads (e.g. certificates, job description attac
 - ~~**Phase 2** — Organization master data CRUD UI, Employee database, employee profile pages.~~ Done.
 - ~~**Phase 3** — Job Descriptions, Skills & Competency levels, position skill requirements, Skill Matrix.~~ Done.
 - ~~**Phase 4** — Competency Gap Analysis.~~ Done.
-- **Phase 5** — Training programs, schedules, records, Development Plans.
+- ~~**Phase 5** — Training programs, schedules, records, Development Plans.~~ Done.
 - **Phase 6** — Certificate management with secure file storage and expiry tracking.
 - **Phase 7** — Reports, audit logging, security review, UI polish.
