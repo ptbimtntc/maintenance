@@ -32,5 +32,12 @@
                 <p class="mt-1 text-sm text-gray-500">Compare current vs. required competency across employees.</p>
             </a>
         @endcan
+
+        @can(\App\Enums\PermissionName::ViewCompetencyGap->value)
+            <a href="{{ route('competency-gap-analysis.index') }}" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-slate-400 hover:shadow-sm">
+                <p class="font-medium text-gray-900">Competency Gap Analysis</p>
+                <p class="mt-1 text-sm text-gray-500">Department-wide gap findings and training suggestions.</p>
+            </a>
+        @endcan
     </div>
 </x-app-layout>

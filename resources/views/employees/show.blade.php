@@ -156,7 +156,7 @@
         </div>
 
         <div x-show="tab === 'skill-matrix'">
-            @php $requirements = $employee->position?->skillRequirements ?? collect(); @endphp
+            @php $gapRows = $employee->skillGapRows(); @endphp
             <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
@@ -168,25 +168,13 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse ($requirements as $requirement)
-                            @php
-                                $current = $currentSkillLevels->get($requirement->skill_id)?->competencyLevel;
-                                $gap = $current ? $requirement->requiredCompetencyLevel->level_number - $current->level_number : null;
-                            @endphp
+                        @forelse ($gapRows as $row)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-gray-900">{{ $requirement->skill->name }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $current ? $current->level_number.' — '.$current->name : '—' }}</td>
-                                <td class="px-4 py-3 text-gray-700">{{ $requirement->requiredCompetencyLevel->level_number }} — {{ $requirement->requiredCompetencyLevel->name }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-900">{{ $row['skill']->name }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $row['current'] ? $row['current']->level_number.' — '.$row['current']->name : '—' }}</td>
+                                <td class="px-4 py-3 text-gray-700">{{ $row['required']->level_number }} — {{ $row['required']->name }}</td>
                                 <td class="px-4 py-3">
-                                    @if (is_null($current))
-                                        <span class="inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800">Not Assessed</span>
-                                    @elseif ($gap > 0)
-                                        <span class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">Development Required</span>
-                                    @elseif ($gap === 0)
-                                        <span class="inline-flex rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">Meets Requirement</span>
-                                    @else
-                                        <span class="inline-flex rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">Exceeds Requirement</span>
-                                    @endif
+                                    <x-gap-status-badge :status="$row['status']" />
                                 </td>
                             </tr>
                         @empty

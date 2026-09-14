@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Http\Controllers\CompetencyGapAnalysisController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
@@ -56,6 +57,10 @@ Route::middleware(['auth', 'verified'])->prefix('skills')->name('skills.')->grou
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSkillMatrix->value])
     ->get('/skill-matrix', [SkillMatrixController::class, 'index'])
     ->name('skill-matrix.index');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCompetencyGap->value])
+    ->get('/competency-gap-analysis', [CompetencyGapAnalysisController::class, 'index'])
+    ->name('competency-gap-analysis.index');
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewJobDescriptions->value])
     ->prefix('job-descriptions')

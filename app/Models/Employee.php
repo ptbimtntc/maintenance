@@ -136,6 +136,47 @@ class Employee extends Model
             ->keyBy('skill_id');
     }
 
+    /**
+     * One row per skill required by this employee's position, comparing
+     * their current assessed level against what's required. This is the
+     * single source of truth for gap status - reused by the employee
+     * profile, the Skill Matrix, the Dashboard, and Competency Gap
+     * Analysis, so the definition of "gap" never drifts between them.
+     *
+     * Status is one of: 'meets', 'exceeds', 'gap', 'incomplete'.
+     */
+    public function skillGapRows(): \Illuminate\Support\Collection
+    {
+        // Uses the relation as already loaded when eager-loaded by the
+        // caller (important when computing this across many employees at
+        // once, e.g. Competency Gap Analysis) - falls back to a lazy query
+        // for single-employee use such as the employee profile page.
+        $requirements = $this->position?->skillRequirements ?? collect();
+
+        $currentLevels = $this->currentSkillAssessments();
+
+        return $requirements->map(function (PositionSkillRequirement $requirement) use ($currentLevels) {
+            $current = $currentLevels->get($requirement->skill_id)?->competencyLevel;
+            $required = $requirement->requiredCompetencyLevel;
+            $gap = $current ? $required->level_number - $current->level_number : null;
+
+            $status = match (true) {
+                is_null($current) => 'incomplete',
+                $gap > 0 => 'gap',
+                $gap === 0 => 'meets',
+                default => 'exceeds',
+            };
+
+            return [
+                'skill' => $requirement->skill,
+                'current' => $current,
+                'required' => $required,
+                'gap' => $gap,
+                'status' => $status,
+            ];
+        });
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (blank($term)) {

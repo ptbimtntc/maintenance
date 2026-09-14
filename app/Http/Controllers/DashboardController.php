@@ -77,35 +77,22 @@ class DashboardController extends Controller
     }
 
     /**
-     * Number of employees whose position has at least one required skill
-     * where their current assessed level is below the required level.
-     * Employees with no requirements defined, or fully unassessed, are not
-     * counted as "gapped" - they are simply not yet measurable.
+     * Number of employees with at least one required skill below the
+     * required level, using the same Employee::skillGapRows() definition of
+     * a gap as the Skill Matrix and Competency Gap Analysis. Employees with
+     * no requirements defined, or fully unassessed, are not counted as
+     * "gapped" - they are simply not yet measurable.
      */
     private function countEmployeesWithCompetencyGaps(): int
     {
         $employees = Employee::with([
+            'position.skillRequirements.skill',
             'position.skillRequirements.requiredCompetencyLevel',
             'skillAssessments.competencyLevel',
         ])->get();
 
-        return $employees->filter(function (Employee $employee) {
-            $requirements = $employee->position?->skillRequirements ?? collect();
-
-            if ($requirements->isEmpty()) {
-                return false;
-            }
-
-            $currentLevels = $employee->skillAssessments
-                ->sortByDesc('assessment_date')
-                ->unique('skill_id')
-                ->keyBy('skill_id');
-
-            return $requirements->contains(function ($requirement) use ($currentLevels) {
-                $current = $currentLevels->get($requirement->skill_id);
-
-                return $current && $current->competencyLevel->level_number < $requirement->requiredCompetencyLevel->level_number;
-            });
-        })->count();
+        return $employees->filter(
+            fn (Employee $employee) => $employee->skillGapRows()->contains(fn ($row) => $row['status'] === 'gap')
+        )->count();
     }
 }
