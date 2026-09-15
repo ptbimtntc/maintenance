@@ -6,14 +6,14 @@ Ringkasan kondisi proyek untuk melanjutkan pekerjaan setelah context auto-compac
 
 Aplikasi web **Maintenance People Development System** untuk Departemen Maintenance PT Bekaert Indonesia (brief lengkap ada di prompt sistem awal percakapan ini). Dibangun dengan **Laravel 13, PHP 8.4, MySQL 8.0, Blade + Tailwind + Alpine.js**, di dalam GitHub Codespace di `/workspaces/maintenance`.
 
-Brief asli membagi pekerjaan jadi **7 fase**. Semua 7 fase **sudah selesai dan di-commit**. Sesi ini sedang mengerjakan **item tambahan dari Roadmap** di README (di luar 7 fase asli, atas permintaan user).
+Brief asli membagi pekerjaan jadi **7 fase**. Semua 7 fase **sudah selesai dan di-commit**. Setelah itu user minta lanjutkan **4 item Roadmap** di README (di luar 7 fase asli) — **KEEMPATNYA SEKARANG SUDAH SELESAI SECARA FUNGSIONAL**: Settings page, Notifikasi in-app, Export .xlsx (3 item ini sudah di-commit), dan Kalender visual/grid (sudah selesai + teruji, belum di-commit). README juga sudah diupdate (4 item dipindah dari "Roadmap" ke "Implemented", Known Limitations direvisi, jumlah test diupdate ke 119) — update README ini juga belum di-commit.
 
 ## Status Git
 
 - Branch `main`, belum pernah di-push ke remote.
-- 7 commit, satu per fase (Phase 1 s/d Phase 7), pesan commit detail per fase.
-- **Ada perubahan besar yang BELUM di-commit** dari pekerjaan Roadmap sesi ini (lihat bagian "Belum selesai" di bawah) — cek `git status` dan `git diff` dulu sebelum lanjut.
-- Jangan pernah pakai `git checkout .` / `git reset --hard` tanpa cek dulu — banyak file baru yang belum di-add.
+- 7 commit fase (Phase 1 s/d Phase 7) + 1 commit gabungan "Add Settings page, in-app notifications, and Excel export (Roadmap items 1-3)".
+- **Kalender visual (item 4) sudah selesai tapi BELUM di-commit** di titik penulisan ini — cek `git status` dulu. Juga update README (pemindahan Roadmap → Implemented) belum di-commit.
+- Jangan pernah pakai `git checkout .` / `git reset --hard` tanpa cek dulu.
 
 ## Cara menjalankan environment (WAJIB tiap restart Codespace)
 
@@ -123,8 +123,13 @@ Yang sudah diselesaikan setelah interupsi terakhir:
 
 Item 3 (Notifikasi) sekarang berstatus **selesai penuh**, tinggal menunggu commit bersama item Roadmap lain.
 
-### 4. Kalender visual (month/week grid) — ❌ BELUM DIMULAI
-Rencana: tambah view grid bulanan di halaman Training Calendar (`training.calendar`), sebagai alternatif tampilan list yang sudah ada (bukan ganti, tambah toggle `?view=grid`). Murni Blade + Tailwind (tanpa library JS eksternal, sesuai prinsip "minimal dependency" yang sudah ditulis di README bagian Known Limitations — **kalau jadi pakai library JS kalender, update juga bagian Known Limitations di README supaya tidak kontradiksi**). `TrainingSessionController::calendar()` perlu terima parameter `?month=YYYY-MM` untuk navigasi bulan.
+### 4. Kalender visual (month/week grid) — ✅ SELESAI, sudah teruji, BELUM DI-COMMIT
+File yang diubah:
+- `app/Http/Controllers/TrainingSessionController.php` — `calendar()` sekarang cabang ke `list` (default, perilaku lama tidak berubah) atau `calendarGrid()` (baru) berdasar `?view=grid`. `calendarGrid()` terima `?month=YYYY-MM` (default bulan berjalan), bangun array minggu (Senin—Minggu, termasuk hari dari bulan sebelum/sesudah untuk mengisi grid), tiap hari berisi daftar sesi yang overlap hari itu (`$day->between($session->start_date, $session->end_date)`).
+- `resources/views/training/sessions/calendar.blade.php` — toggle tombol "List"/"Grid" di kanan atas, grid view baru: navigasi Prev/Next bulan, header hari (Mon-Sun), tiap sel tanggal menampilkan sesi yang jatuh di hari itu (link ke `training.sessions.show`, warna sesuai status memakai style yang sama dengan list view), tanggal hari ini di-bold, hari di luar bulan berjalan diberi warna abu-abu. View list lama tidak diubah sama sekali (dibungkus `@else`/`@endif`), jadi regresi kecil kemungkinannya.
+- Murni Blade + Tailwind, **tidak ada library JS kalender baru** — sesuai prinsip minimal-dependency, dan Known Limitations di README sudah diupdate untuk mencerminkan ini (bukan dihapus, tapi direvisi jadi soal keterbatasan grid ini, bukan soal "tidak ada grid sama sekali").
+- Test baru: 3 test ditambahkan ke `tests/Feature/TrainingSessionTest.php` (default view = list, sesi muncul di tanggal yang benar pada grid, sesi dari bulan lain tidak ikut muncul). **Total test suite sekarang 119, SEMUA LULUS.**
+- Verifikasi browser dengan Playwright + MySQL asli: toggle List↔Grid berfungsi, navigasi Prev/Next bulan menampilkan sesi yang benar di bulan yang benar (termasuk sesi yang melintasi 2 hari, muncul di kedua tanggal), tanggal hari ini ter-bold. Tidak ada console error.
 
 ## File-file kunci untuk orientasi cepat
 
@@ -132,11 +137,12 @@ Rencana: tambah view grid bulanan di halaman Training Calendar (`training.calend
 - `config/master_data.php` — daftar semua master data generic.
 - `app/Enums/PermissionName.php`, `app/Enums/RoleName.php` — semua nama role/permission.
 - `database/seeders/DatabaseSeeder.php` — urutan seeder (penting kalau nambah seeder baru, taruh sesuai dependency).
-- `README.md` — dokumentasi lengkap, ada bagian Roadmap dan Known Limitations yang jadi acuan sesi ini.
+- `README.md` — dokumentasi lengkap, **sudah diupdate**: 4 item Roadmap dipindah ke "Implemented", Known Limitations direvisi, jumlah test jadi 119, bagian Roadmap sekarang bilang semua sudah selesai.
 - `bin/start.sh` — script convenience start MySQL + server.
 
-## Setelah semua item Roadmap ini selesai
+## Status akhir: SEMUA 4 ITEM ROADMAP SUDAH SELESAI
 
-- Update README: pindahkan 4 item ini dari "Roadmap" ke bagian "Implemented", update jumlah test yang lulus, mungkin update/hapus sebagian "Known Limitations" kalau sudah tidak berlaku (misal setelah xlsx export dibuat, baris "CSV, not Excel" di Known Limitations perlu diubah).
-- Commit per item (ikuti pola commit message detail seperti 7 commit fase sebelumnya) ATAU satu commit gabungan kalau user maunya begitu — **tanya dulu ke user preferensinya** kalau belum jelas.
-- Jangan push ke remote kecuali diminta eksplisit.
+- Item 1 (Settings), 2 (Export .xlsx), 3 (Notifikasi) — **sudah di-commit** (satu commit gabungan: "Add Settings page, in-app notifications, and Excel export (Roadmap items 1-3)").
+- Item 4 (Kalender visual) — selesai + teruji, **belum di-commit**. Yang harus dilakukan berikutnya: commit perubahan kalender (`app/Http/Controllers/TrainingSessionController.php`, `resources/views/training/sessions/calendar.blade.php`, `tests/Feature/TrainingSessionTest.php`) plus update README (`README.md`) — bisa satu commit gabungan seperti pola sebelumnya, atau tanya user dulu kalau mau dipisah.
+- Jangan push ke remote kecuali diminta eksplisit oleh user.
+- Setelah commit ini, tidak ada lagi item Roadmap tersisa — proyek dalam kondisi feature-complete sesuai 7 fase asli + 4 follow-on.

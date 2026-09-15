@@ -6,17 +6,66 @@ $sessionStatusStyles = ['scheduled' => 'bg-blue-100 text-blue-800', 'ongoing' =>
     <x-slot name="header">Training Calendar</x-slot>
 
     <div class="space-y-6">
-        <form method="GET" class="flex gap-3 rounded-lg border border-gray-200 bg-white p-4">
-            <select name="status" class="rounded-md border-gray-300 text-sm">
-                <option value="">All Statuses</option>
-                @foreach ($statuses as $status)
-                    <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
-                @endforeach
-            </select>
-            <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
-            <a href="{{ route('training.calendar') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
-        </form>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <form method="GET" class="flex flex-wrap gap-3 rounded-lg border border-gray-200 bg-white p-4">
+                <input type="hidden" name="view" value="{{ $view }}">
+                @if ($view === 'grid')
+                    <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
+                @endif
+                <select name="status" class="rounded-md border-gray-300 text-sm">
+                    <option value="">All Statuses</option>
+                    @foreach ($statuses as $status)
+                        <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
+                <a href="{{ route('training.calendar', ['view' => $view]) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
+            </form>
 
+            <div class="flex overflow-hidden rounded-md border border-gray-300">
+                <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'list'])) }}"
+                   class="px-4 py-2 text-sm font-medium {{ $view === 'list' ? 'bg-slate-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">List</a>
+                <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid'])) }}"
+                   class="px-4 py-2 text-sm font-medium {{ $view === 'grid' ? 'bg-slate-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50' }}">Grid</a>
+            </div>
+        </div>
+
+        @if ($view === 'grid')
+            <div class="rounded-lg border border-gray-200 bg-white p-4">
+                <div class="mb-4 flex items-center justify-between">
+                    <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid', 'month' => $month->copy()->subMonth()->format('Y-m')])) }}"
+                       class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">&larr; Prev</a>
+                    <h2 class="text-lg font-semibold text-gray-900">{{ $month->format('F Y') }}</h2>
+                    <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid', 'month' => $month->copy()->addMonth()->format('Y-m')])) }}"
+                       class="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">Next &rarr;</a>
+                </div>
+
+                <div class="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-gray-200 bg-gray-200 text-xs">
+                    @foreach (['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as $label)
+                        <div class="bg-gray-50 px-2 py-1.5 text-center font-medium uppercase tracking-wide text-gray-500">{{ $label }}</div>
+                    @endforeach
+
+                    @foreach ($weeks as $week)
+                        @foreach ($week as $day)
+                            <div class="min-h-[6rem] bg-white p-1.5 align-top {{ $day['inMonth'] ? '' : 'bg-gray-50 text-gray-400' }}">
+                                <div class="text-right text-xs {{ $day['date']->isToday() ? 'font-bold text-slate-900' : 'text-gray-500' }}">
+                                    {{ $day['date']->day }}
+                                </div>
+                                <div class="mt-1 space-y-1">
+                                    @foreach ($day['sessions'] as $session)
+                                        <a href="{{ route('training.sessions.show', $session) }}"
+                                           class="block truncate rounded px-1.5 py-0.5 {{ $sessionStatusStyles[$session->status] }}"
+                                           title="{{ $session->trainingProgram->title }}">
+                                            {{ $session->trainingProgram->title }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endforeach
+                    @endforeach
+                </div>
+            </div>
+        @else
         @forelse ($sessionsByMonth as $month => $sessions)
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $month }}</h2>
@@ -50,5 +99,6 @@ $sessionStatusStyles = ['scheduled' => 'bg-blue-100 text-blue-800', 'ongoing' =>
                 No training sessions scheduled yet.
             </div>
         @endforelse
+        @endif
     </div>
 </x-app-layout>

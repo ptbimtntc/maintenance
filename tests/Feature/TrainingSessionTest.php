@@ -87,4 +87,56 @@ class TrainingSessionTest extends TestCase
 
         $response->assertSessionHasErrors('employee_id');
     }
+
+    public function test_calendar_defaults_to_list_view(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($staff)->get(route('training.calendar'));
+
+        $response->assertOk();
+        $response->assertViewHas('view', 'list');
+    }
+
+    public function test_calendar_grid_view_shows_sessions_on_the_correct_day(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        $program = TrainingProgram::factory()->create(['title' => 'Mechanical Fundamentals']);
+        $session = TrainingSession::factory()->create([
+            'training_program_id' => $program->id,
+            'start_date' => '2026-09-15',
+            'end_date' => '2026-09-15',
+        ]);
+
+        $response = $this->actingAs($staff)->get(route('training.calendar', ['view' => 'grid', 'month' => '2026-09']));
+
+        $response->assertOk();
+        $response->assertViewHas('view', 'grid');
+        $response->assertSee('Mechanical Fundamentals');
+
+        $weeks = $response->viewData('weeks');
+        $matchingDay = collect($weeks)->flatten(1)->firstWhere(fn ($day) => $day['date']->format('Y-m-d') === '2026-09-15');
+
+        $this->assertNotNull($matchingDay);
+        $this->assertTrue($matchingDay['sessions']->contains('id', $session->id));
+    }
+
+    public function test_calendar_grid_view_does_not_show_sessions_from_other_months(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        TrainingSession::factory()->create([
+            'start_date' => '2026-01-10',
+            'end_date' => '2026-01-10',
+        ]);
+
+        $response = $this->actingAs($staff)->get(route('training.calendar', ['view' => 'grid', 'month' => '2026-09']));
+
+        $weeks = $response->viewData('weeks');
+        $allSessions = collect($weeks)->flatten(1)->flatMap(fn ($day) => $day['sessions']);
+
+        $this->assertCount(0, $allSessions);
+    }
 }

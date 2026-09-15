@@ -9,6 +9,7 @@ use App\Models\Location;
 use App\Models\TrainingParticipant;
 use App\Models\TrainingProgram;
 use App\Models\TrainingSession;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -17,11 +18,19 @@ use Illuminate\View\View;
 class TrainingSessionController extends Controller
 {
     /**
-     * Simple list/calendar view: upcoming and past sessions grouped by
-     * month, across all programs. Filterable by status.
+     * Two views of the same data: a list grouped by month (the original,
+     * good for scanning many sessions at once) and a month grid (better for
+     * seeing at a glance which days/weeks are busy). Switched with ?view=,
+     * grid navigates months with ?month=YYYY-MM.
      */
     public function calendar(Request $request): View
     {
+        $view = $request->string('view')->toString() === 'grid' ? 'grid' : 'list';
+
+        if ($view === 'grid') {
+            return $this->calendarGrid($request);
+        }
+
         $sessions = TrainingSession::query()
             ->with(['trainingProgram', 'location'])
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
@@ -30,7 +39,47 @@ class TrainingSessionController extends Controller
             ->groupBy(fn (TrainingSession $session) => $session->start_date->format('F Y'));
 
         return view('training.sessions.calendar', [
+            'view' => 'list',
             'sessionsByMonth' => $sessions,
+            'statuses' => TrainingSession::STATUSES,
+            'filters' => $request->only(['status']),
+        ]);
+    }
+
+    private function calendarGrid(Request $request): View
+    {
+        $month = Carbon::parse($request->string('month')->toString() ?: now()->format('Y-m-01'))->startOfMonth();
+
+        $sessions = TrainingSession::query()
+            ->with(['trainingProgram', 'location'])
+            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
+            ->where('start_date', '<=', $month->copy()->endOfMonth())
+            ->where('end_date', '>=', $month->copy()->startOfMonth())
+            ->orderBy('start_date')
+            ->get();
+
+        $gridStart = $month->copy()->startOfWeek(Carbon::MONDAY);
+        $gridEnd = $month->copy()->endOfMonth()->endOfWeek(Carbon::MONDAY);
+
+        $weeks = [];
+        $day = $gridStart->copy();
+        while ($day->lte($gridEnd)) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $week[] = [
+                    'date' => $day->copy(),
+                    'inMonth' => $day->month === $month->month,
+                    'sessions' => $sessions->filter(fn (TrainingSession $s) => $day->between($s->start_date, $s->end_date))->values(),
+                ];
+                $day->addDay();
+            }
+            $weeks[] = $week;
+        }
+
+        return view('training.sessions.calendar', [
+            'view' => 'grid',
+            'month' => $month,
+            'weeks' => $weeks,
             'statuses' => TrainingSession::STATUSES,
             'filters' => $request->only(['status']),
         ]);

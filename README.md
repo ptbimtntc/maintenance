@@ -4,9 +4,9 @@ An internal web application for the Maintenance Department of **PT Bekaert Indon
 
 > This project is under active development. It is not officially connected to, or endorsed by, any PT Bekaert Indonesia production system. The logo placeholder in the sidebar and login page is a stand-in for the official company logo, which can be added later.
 
-## Current status: Phase 7 — Reports, Audit Logging & Security Review (feature-complete)
+## Current status: feature-complete, including all Roadmap follow-ons
 
-All 7 phases from the project brief have been built. See [Known limitations](#known-limitations) for what's intentionally out of scope, and [Roadmap](#roadmap) for genuine follow-on ideas beyond the original brief.
+All 7 phases from the project brief have been built, plus the Settings, notifications, `.xlsx` export, and visual calendar follow-ons identified afterwards. See [Known limitations](#known-limitations) for what's intentionally out of scope.
 
 Implemented:
 - Laravel 13 application running on **MySQL** (not SQLite/demo storage).
@@ -25,10 +25,14 @@ Implemented:
 - **Training Records**: a per-employee training history (program, date, hours, attendance/completion status, assessment score/result, before/after competency level, certificate reference), a global searchable index, and a running total of training hours shown on the employee profile.
 - **Employee Development Plans**: objective, related skill/competency gap, current vs. target competency, a development action (formal training, OJT, coaching, mentoring, job rotation, self-learning, practical assessment, cross-training, certification), optional mentor and recommended training program, priority/status/progress tracking, and manager/employee remarks — visible on the employee profile and a global index.
 - **Certificate Management**: certificates with type, number, issuing organization, issue/expiry dates, and secure file upload (PDF/JPG/PNG, 5MB max) stored on a **private disk** — never a public URL. Status (Valid / Expiring Soon / Expired / No Expiry / Pending Verification) is derived from the expiry date on every read rather than stored, so it can never go stale, and a certificate is never assumed valid just because a file was attached. Downloads are streamed through an authorized controller action that re-checks the same employee-visibility rules as the profile page.
-- **Reports**: a Reports hub linking every report from the brief. Reports that are just a filtered view of a module already built (Skill Matrix, Certificates, Training Records, Training Calendar, ...) link to that module directly with CSV export added, so the report can never drift out of sync with the underlying module. Three reports with no existing equivalent were built new: Training Hours (by employee and by department), Employee Development Summary, and Competency Assessment History (the full cross-employee assessment log). CSV export is available on Employees, Certificates, Training Records, and Assessment History.
+- **Reports**: a Reports hub linking every report from the brief. Reports that are just a filtered view of a module already built (Skill Matrix, Certificates, Training Records, Training Calendar, ...) link to that module directly with CSV export added, so the report can never drift out of sync with the underlying module. Three reports with no existing equivalent were built new: Training Hours (by employee and by department), Employee Development Summary, and Competency Assessment History (the full cross-employee assessment log). CSV and XLSX export are both available on Employees, Certificates, Training Records, Training Hours, and Assessment History.
 - **Audit Logging**: an append-only audit trail (`AuditLog` model, `Auditable` trait) recording who created, changed, or deleted a record and which fields changed, applied to the security-sensitive models called out in the brief — employees, certificates, skill assessments, job descriptions (approvals are just status updates, so they're covered automatically), training records, and development plans. Viewable at Administration → Audit Log, restricted to Administrators.
+- **Settings**: an Administrator-only page for application-wide configuration — currently the certificate "expiring soon" window and the training session reminder lead time (`app/Models/Setting.php`, a simple cached key-value store), replacing what used to be a fixed constant.
+- **In-app notifications**: a daily scheduled command (`app:send-expiration-notifications`) notifies certificate managers and the employee themselves when a certificate enters its expiring-soon window, and reminds training participants ahead of an upcoming session — each notification sent exactly once. The top bar shows a live unread-count badge and a dropdown to read or mark-all-as-read, with each notification linking straight to the relevant employee tab or session.
+- **Excel (.xlsx) export**: alongside the existing CSV export, Employees, Certificates, Training Records, Training Hours, and Assessment History can all be exported as genuine `.xlsx` files (`phpoffice/phpspreadsheet`).
+- **Visual training calendar**: the Training Calendar page now offers a month-grid view (with month navigation) as an alternative to the original list view, toggled with `?view=grid`.
 - Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts, sample assessments, and a training/development-plan/certificate story that ties back to a real seeded competency gap so the modules show a consistent, believable narrative rather than disconnected sample rows.
-- Automated tests (104 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, development plan authorization, certificate upload/download/status computation, audit log entries, and report calculations/CSV export.
+- Automated tests (119 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, development plan authorization, certificate upload/download/status computation, audit log entries, report calculations/CSV/XLSX export, application settings, notification delivery, and the calendar grid view.
 
 ## Technology stack
 
@@ -191,16 +195,11 @@ These points reflect a manual review pass done for Phase 7, not a formal penetra
 
 Scope decisions made deliberately, so a future maintainer doesn't mistake them for oversights:
 
-- **Settings page** — the sidebar has a placeholder for application-wide settings (e.g. the "expiring soon" window, currently a fixed 60 days via `Certificate::EXPIRING_SOON_DAYS`). The brief mentions a generic `settings` table but never specifies concrete fields, so building a settings UI would have meant inventing requirements rather than implementing them. Left as "Soon" rather than guessed at.
-- **CSV, not Excel** — exports are CSV (opens fine in Excel) rather than genuine `.xlsx`. No spreadsheet library was added to keep dependencies minimal; this is easy to upgrade later (e.g. `maatwebsite/excel`) if a real `.xlsx` is required.
-- **No drag-and-drop training calendar** — the Training Calendar is a real, filterable list grouped by month rather than a JS calendar widget. It shows the same data a calendar UI would, without adding a frontend calendar library.
+- **Notifications are in-app only, not email** — `CertificateExpiringSoon` and `UpcomingTrainingSession` use Laravel's `database` notification channel only. Adding a `mail` channel later is a small change (implement `toMail()` on each notification class) since the data and scheduling are already in place.
+- **No drag-and-drop training calendar** — the Training Calendar's grid view is a real month grid built with Blade/Tailwind (no JS calendar library), showing sessions on the days they occur with month navigation. It doesn't support dragging sessions between days; editing a session still goes through its own edit form.
+- **`ext-gd` not actually installed** — this Codespace's PHP was compiled from source without the `gd` extension. `composer.json` declares `platform.ext-gd` so Composer will still install `phpoffice/phpspreadsheet` (which only *requires* `ext-gd` for chart/image features this project doesn't use), but a fresh environment should install the real extension if that ever changes. `ext-zip`, which `phpspreadsheet` genuinely needs at runtime, *is* installed.
 - **Formal penetration testing not performed** — see the caveat at the end of [Security notes](#security-notes).
 
 ## Roadmap
 
-All 7 phases from the original brief are complete. Genuine follow-on ideas, beyond what the brief asked for:
-
-- A real Settings page once concrete configuration needs are identified.
-- `.xlsx` export via a spreadsheet library, if CSV proves insufficient for end users.
-- Notifications (in-app or email) for expiring certificates and upcoming training sessions.
-- A visual training calendar (month/week grid) if the list view proves insufficient in practice.
+All 7 phases from the original brief, plus every follow-on item identified afterwards (Settings, notifications, `.xlsx` export, visual calendar), are complete. No further items are currently planned; new ideas should be added here as they come up.
