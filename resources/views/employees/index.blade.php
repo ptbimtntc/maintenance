@@ -16,27 +16,27 @@
         </div>
 
         <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">
-            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search name, number, email..."
+            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK or name..."
                    class="col-span-1 rounded-md border-gray-300 text-sm sm:col-span-2 lg:col-span-2" />
 
-            <select name="department_id" class="rounded-md border-gray-300 text-sm">
-                <option value="">All Departments</option>
-                @foreach ($departments as $department)
-                    <option value="{{ $department->id }}" @selected(($filters['department_id'] ?? null) == $department->id)>{{ $department->name }}</option>
+            <select name="business_unit_id" class="rounded-md border-gray-300 text-sm">
+                <option value="">All Business Units</option>
+                @foreach ($businessUnits as $businessUnit)
+                    <option value="{{ $businessUnit->id }}" @selected(($filters['business_unit_id'] ?? null) == $businessUnit->id)>{{ $businessUnit->name }}</option>
                 @endforeach
             </select>
 
-            <select name="maintenance_area_id" class="rounded-md border-gray-300 text-sm">
-                <option value="">All Areas</option>
-                @foreach ($maintenanceAreas as $area)
-                    <option value="{{ $area->id }}" @selected(($filters['maintenance_area_id'] ?? null) == $area->id)>{{ $area->name }}</option>
+            <select name="employment_type_id" class="rounded-md border-gray-300 text-sm">
+                <option value="">All Employment Types</option>
+                @foreach ($employmentTypes as $type)
+                    <option value="{{ $type->id }}" @selected(($filters['employment_type_id'] ?? null) == $type->id)>{{ $type->name }}</option>
                 @endforeach
             </select>
 
-            <select name="maintenance_team_id" class="rounded-md border-gray-300 text-sm">
-                <option value="">All Teams</option>
-                @foreach ($maintenanceTeams as $team)
-                    <option value="{{ $team->id }}" @selected(($filters['maintenance_team_id'] ?? null) == $team->id)>{{ $team->name }}</option>
+            <select name="employment_source_id" class="rounded-md border-gray-300 text-sm">
+                <option value="">All Employment Sources</option>
+                @foreach ($employmentSources as $source)
+                    <option value="{{ $source->id }}" @selected(($filters['employment_source_id'] ?? null) == $source->id)>{{ $source->name }}</option>
                 @endforeach
             </select>
 
@@ -44,6 +44,20 @@
                 <option value="">All Statuses</option>
                 @foreach ($employmentStatuses as $status)
                     <option value="{{ $status->id }}" @selected(($filters['employment_status_id'] ?? null) == $status->id)>{{ $status->name }}</option>
+                @endforeach
+            </select>
+
+            <select name="supervisor_id" class="rounded-md border-gray-300 text-sm">
+                <option value="">All Supervisors</option>
+                @foreach ($supervisors as $supervisor)
+                    <option value="{{ $supervisor->id }}" @selected(($filters['supervisor_id'] ?? null) == $supervisor->id)>{{ $supervisor->full_name }} ({{ $supervisor->employee_number }})</option>
+                @endforeach
+            </select>
+
+            <select name="shift_id" class="rounded-md border-gray-300 text-sm">
+                <option value="">All Shifts</option>
+                @foreach ($shifts as $shift)
+                    <option value="{{ $shift->id }}" @selected(($filters['shift_id'] ?? null) == $shift->id)>{{ $shift->name }}</option>
                 @endforeach
             </select>
 

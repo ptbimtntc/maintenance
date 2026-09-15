@@ -14,7 +14,6 @@ use App\Models\Employee;
 use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
-use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
@@ -36,17 +35,19 @@ class EmployeeController extends Controller
         $user = $request->user();
 
         $query = Employee::query()->with([
-            'department', 'maintenanceArea', 'maintenanceTeam', 'position', 'employmentStatus',
+            'department', 'businessUnit', 'maintenanceArea', 'maintenanceTeam', 'position',
+            'employmentType', 'employmentSource', 'employmentStatus', 'shift', 'supervisor',
         ]);
 
         $query->visibleTo($user);
 
         $query->search($request->string('search')->toString())
-            ->when($request->filled('department_id'), fn ($q) => $q->where('department_id', $request->integer('department_id')))
-            ->when($request->filled('maintenance_area_id'), fn ($q) => $q->where('maintenance_area_id', $request->integer('maintenance_area_id')))
-            ->when($request->filled('maintenance_team_id'), fn ($q) => $q->where('maintenance_team_id', $request->integer('maintenance_team_id')))
-            ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
-            ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')));
+            ->when($request->filled('business_unit_id'), fn ($q) => $q->where('business_unit_id', $request->integer('business_unit_id')))
+            ->when($request->filled('employment_type_id'), fn ($q) => $q->where('employment_type_id', $request->integer('employment_type_id')))
+            ->when($request->filled('employment_source_id'), fn ($q) => $q->where('employment_source_id', $request->integer('employment_source_id')))
+            ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')))
+            ->when($request->filled('supervisor_id'), fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')))
+            ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')));
 
         if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
             $header = ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'];
@@ -71,13 +72,14 @@ class EmployeeController extends Controller
 
         return view('employees.index', [
             'employees' => $employees,
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceAreas' => MaintenanceArea::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
-            'positions' => Position::where('is_active', true)->orderBy('title')->get(),
+            'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
+            'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
+            'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
+            'supervisors' => Employee::query()->visibleTo($user)->whereHas('directReports')->orderBy('full_name')->get(['id', 'full_name', 'employee_number']),
+            'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
             'filters' => $request->only([
-                'search', 'department_id', 'maintenance_area_id', 'maintenance_team_id', 'position_id', 'employment_status_id',
+                'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'employment_status_id', 'supervisor_id', 'shift_id',
             ]),
         ]);
     }

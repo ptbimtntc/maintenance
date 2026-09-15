@@ -269,8 +269,7 @@ class Employee extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('full_name', 'like', "%{$term}%")
-                ->orWhere('employee_number', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%");
+                ->orWhere('employee_number', 'like', "%{$term}%");
         });
     }
 }

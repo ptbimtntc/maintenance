@@ -253,4 +253,61 @@ class EmployeeManagementTest extends TestCase
         $response->assertRedirect(route('employees.index'));
         $this->assertSoftDeleted($employee);
     }
+
+    public function test_index_can_be_filtered_by_business_unit_employment_type_source_status_supervisor_and_shift(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $businessUnit = \App\Models\BusinessUnit::factory()->create();
+        $employmentType = \App\Models\EmploymentType::factory()->create();
+        $employmentSource = \App\Models\EmploymentSource::factory()->create();
+        $employmentStatus = \App\Models\EmploymentStatus::factory()->create();
+        $shift = \App\Models\Shift::factory()->create();
+        $supervisor = Employee::factory()->create();
+
+        $matching = Employee::factory()->create([
+            'business_unit_id' => $businessUnit->id,
+            'employment_type_id' => $employmentType->id,
+            'employment_source_id' => $employmentSource->id,
+            'employment_status_id' => $employmentStatus->id,
+            'shift_id' => $shift->id,
+            'supervisor_id' => $supervisor->id,
+        ]);
+        Employee::factory()->create();
+
+        foreach ([
+            'business_unit_id' => $businessUnit->id,
+            'employment_type_id' => $employmentType->id,
+            'employment_source_id' => $employmentSource->id,
+            'employment_status_id' => $employmentStatus->id,
+            'shift_id' => $shift->id,
+            'supervisor_id' => $supervisor->id,
+        ] as $field => $value) {
+            $response = $this->actingAs($admin)->get(route('employees.index', [$field => $value]));
+
+            $response->assertOk();
+            $response->assertViewHas('employees', fn ($employees) => $employees->total() === 1
+                && $employees->first()->id === $matching->id);
+        }
+    }
+
+    public function test_search_matches_employee_number_and_name_but_not_email(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $byNumber = Employee::factory()->create(['employee_number' => 'EMP-55555', 'full_name' => 'Zzz Unrelated']);
+        $byName = Employee::factory()->create(['employee_number' => 'EMP-11111', 'full_name' => 'Findable Person']);
+        Employee::factory()->create(['employee_number' => 'EMP-22222', 'full_name' => 'Zzz Other', 'email' => 'findable@example.com']);
+
+        $byNumberResponse = $this->actingAs($admin)->get(route('employees.index', ['search' => 'EMP-55555']));
+        $byNumberResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 1 && $employees->first()->id === $byNumber->id);
+
+        $byNameResponse = $this->actingAs($admin)->get(route('employees.index', ['search' => 'Findable']));
+        $byNameResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 1 && $employees->first()->id === $byName->id);
+
+        $byEmailResponse = $this->actingAs($admin)->get(route('employees.index', ['search' => 'findable@example.com']));
+        $byEmailResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 0);
+    }
 }
