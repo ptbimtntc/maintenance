@@ -2,7 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\BusinessUnit;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
 use App\Models\Location;
@@ -10,6 +12,7 @@ use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
+use App\Models\SkillPosition;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -29,6 +32,9 @@ class EmployeeSeeder extends Seeder
         $activeStatus = EmploymentStatus::where('code', 'ACTIVE')->first();
         $locations = Location::all();
         $shifts = Shift::all();
+        $businessUnits = BusinessUnit::all();
+        $skillPositions = SkillPosition::all();
+        $employmentSources = EmploymentSource::all();
 
         if ($areas->isEmpty() || $positions->isEmpty()) {
             return;
@@ -39,12 +45,15 @@ class EmployeeSeeder extends Seeder
         $managerPosition = $positions->firstWhere('code', 'POS-MGR') ?? $positions->first();
         $workshopTeam = $teams->firstWhere('code', 'TEAM-MECH') ?? $teams->first();
         $workshopArea = $areas->firstWhere('code', 'AREA-WKS') ?? $areas->first();
+        $tireCordUnit = $businessUnits->firstWhere('code', 'BU-TC') ?? $businessUnits->first();
+        $bekaertSource = $employmentSources->firstWhere('code', 'SRC-BEK') ?? $employmentSources->first();
+        $mechanicalSkillPosition = $skillPositions->firstWhere('code', 'SKP-MECH') ?? $skillPositions->first();
 
         // Link demo login accounts to real employee records.
         $demoLinks = [
-            'manager@mpd.test' => ['position' => $managerPosition, 'team' => $workshopTeam, 'area' => $workshopArea],
-            'supervisor@mpd.test' => ['position' => $supervisorPosition, 'team' => $workshopTeam, 'area' => $workshopArea],
-            'staff@mpd.test' => ['position' => $technicianPosition, 'team' => $workshopTeam, 'area' => $workshopArea],
+            'manager@mpd.test' => ['position' => $managerPosition, 'team' => $workshopTeam, 'area' => $workshopArea, 'workforce_category' => 'WCM'],
+            'supervisor@mpd.test' => ['position' => $supervisorPosition, 'team' => $workshopTeam, 'area' => $workshopArea, 'workforce_category' => 'WCM'],
+            'staff@mpd.test' => ['position' => $technicianPosition, 'team' => $workshopTeam, 'area' => $workshopArea, 'workforce_category' => 'BC'],
         ];
 
         $demoEmployees = [];
@@ -65,7 +74,11 @@ class EmployeeSeeder extends Seeder
                     'maintenance_area_id' => $link['area']?->id,
                     'maintenance_team_id' => $link['team']?->id,
                     'position_id' => $link['position']?->id,
+                    'skill_position_id' => $mechanicalSkillPosition?->id,
+                    'business_unit_id' => $tireCordUnit?->id,
                     'employment_type_id' => $employmentTypes->first()?->id,
+                    'employment_source_id' => $bekaertSource?->id,
+                    'workforce_category' => $link['workforce_category'],
                     'employment_status_id' => $activeStatus?->id,
                     'location_id' => $locations->first()?->id,
                     'shift_id' => $shifts->first()?->id,
@@ -94,7 +107,11 @@ class EmployeeSeeder extends Seeder
                 'maintenance_area_id' => $areas->random()->id,
                 'maintenance_team_id' => $teams->random()->id,
                 'position_id' => $positions->random()->id,
+                'skill_position_id' => $skillPositions->isNotEmpty() ? $skillPositions->random()->id : null,
+                'business_unit_id' => $businessUnits->isNotEmpty() ? $businessUnits->random()->id : null,
                 'employment_type_id' => $employmentTypes->random()->id,
+                'employment_source_id' => $employmentSources->isNotEmpty() ? $employmentSources->random()->id : null,
+                'workforce_category' => fake()->randomElement(array_keys(Employee::WORKFORCE_CATEGORIES)),
                 'employment_status_id' => EmploymentStatus::inRandomOrder()->first()?->id,
                 'location_id' => $locations->random()->id,
                 'shift_id' => $shifts->random()->id,

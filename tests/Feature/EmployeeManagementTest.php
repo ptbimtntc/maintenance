@@ -181,6 +181,67 @@ class EmployeeManagementTest extends TestCase
         $this->assertDatabaseHas('employees', ['employee_number' => 'EMP-99999']);
     }
 
+    public function test_administrator_can_create_an_employee_with_the_new_classification_fields(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $businessUnit = \App\Models\BusinessUnit::factory()->create();
+        $skillPosition = \App\Models\SkillPosition::factory()->create();
+        $employmentSource = \App\Models\EmploymentSource::factory()->create();
+
+        $response = $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_number' => 'EMP-88888',
+            'full_name' => 'Classified Employee',
+            'business_unit_id' => $businessUnit->id,
+            'skill_position_id' => $skillPosition->id,
+            'employment_source_id' => $employmentSource->id,
+            'workforce_category' => 'BC',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('employees', [
+            'employee_number' => 'EMP-88888',
+            'business_unit_id' => $businessUnit->id,
+            'skill_position_id' => $skillPosition->id,
+            'employment_source_id' => $employmentSource->id,
+            'workforce_category' => 'BC',
+        ]);
+    }
+
+    public function test_creating_an_employee_rejects_an_invalid_workforce_category(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_number' => 'EMP-77777',
+            'full_name' => 'Bad Category Employee',
+            'workforce_category' => 'NOT-A-REAL-CATEGORY',
+        ]);
+
+        $response->assertSessionHasErrors('workforce_category');
+        $this->assertDatabaseMissing('employees', ['employee_number' => 'EMP-77777']);
+    }
+
+    public function test_administrator_can_upload_a_photo_when_creating_an_employee(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_number' => 'EMP-66666',
+            'full_name' => 'Photo Employee',
+            'photo' => \Illuminate\Http\UploadedFile::fake()->create('photo.jpg', 10, 'image/jpeg'),
+        ]);
+
+        $response->assertRedirect();
+        $employee = Employee::where('employee_number', 'EMP-66666')->firstOrFail();
+        $this->assertNotNull($employee->photo_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($employee->photo_path);
+    }
+
     public function test_administrator_can_delete_an_employee(): void
     {
         $admin = User::factory()->create();

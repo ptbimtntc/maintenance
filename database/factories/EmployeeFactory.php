@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\BusinessUnit;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
 use App\Models\Location;
@@ -10,6 +12,7 @@ use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
+use App\Models\SkillPosition;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
@@ -31,7 +34,11 @@ class EmployeeFactory extends Factory
             'maintenance_area_id' => MaintenanceArea::factory(),
             'maintenance_team_id' => MaintenanceTeam::factory(),
             'position_id' => Position::factory(),
+            'skill_position_id' => SkillPosition::factory(),
+            'business_unit_id' => BusinessUnit::factory(),
             'employment_type_id' => EmploymentType::factory(),
+            'employment_source_id' => EmploymentSource::factory(),
+            'workforce_category' => fake()->randomElement(array_keys(Employee::WORKFORCE_CATEGORIES)),
             'employment_status_id' => EmploymentStatus::factory(),
             'location_id' => Location::factory(),
             'shift_id' => Shift::factory(),

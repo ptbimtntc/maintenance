@@ -16,5 +16,8 @@ until sudo mysqladmin ping --silent 2>/dev/null; do
     sleep 1
 done
 
+echo "==> Ensuring public storage symlink exists (for employee photos)..."
+[ -L public/storage ] || php artisan storage:link
+
 echo "==> Starting Laravel dev server on 0.0.0.0:8000..."
 php artisan serve --host=0.0.0.0 --port=8000

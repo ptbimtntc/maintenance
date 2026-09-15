@@ -17,9 +17,12 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
-        <x-input-label for="preferred_name" value="Preferred Name" />
-        <x-text-input id="preferred_name" name="preferred_name" class="mt-1 block w-full" value="{{ $old('preferred_name') }}" />
-        <x-input-error :messages="$errors->get('preferred_name')" class="mt-1" />
+        <x-input-label for="photo" value="Photo (optional)" />
+        @if ($employee?->photo_path)
+            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}" alt="Current photo" class="mt-1 mb-2 h-16 w-16 rounded-full object-cover">
+        @endif
+        <input id="photo" type="file" name="photo" accept="image/*" class="mt-1 block w-full text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800" />
+        <x-input-error :messages="$errors->get('photo')" class="mt-1" />
     </div>
 
     <div>
@@ -68,25 +71,14 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
-        <x-input-label for="division_id" value="Division" />
-        <select id="division_id" name="division_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+        <x-input-label for="business_unit_id" value="Business Unit" />
+        <select id="business_unit_id" name="business_unit_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
             <option value="">—</option>
-            @foreach ($divisions as $division)
-                <option value="{{ $division->id }}" @selected($old('division_id') == $division->id)>{{ $division->name }}</option>
+            @foreach ($businessUnits as $businessUnit)
+                <option value="{{ $businessUnit->id }}" @selected($old('business_unit_id') == $businessUnit->id)>{{ $businessUnit->name }}</option>
             @endforeach
         </select>
-        <x-input-error :messages="$errors->get('division_id')" class="mt-1" />
-    </div>
-
-    <div>
-        <x-input-label for="maintenance_area_id" value="Maintenance Area" />
-        <select id="maintenance_area_id" name="maintenance_area_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
-            <option value="">—</option>
-            @foreach ($maintenanceAreas as $area)
-                <option value="{{ $area->id }}" @selected($old('maintenance_area_id') == $area->id)>{{ $area->name }}</option>
-            @endforeach
-        </select>
-        <x-input-error :messages="$errors->get('maintenance_area_id')" class="mt-1" />
+        <x-input-error :messages="$errors->get('business_unit_id')" class="mt-1" />
     </div>
 
     <div>
@@ -112,6 +104,17 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
+        <x-input-label for="skill_position_id" value="Skill Position" />
+        <select id="skill_position_id" name="skill_position_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+            <option value="">—</option>
+            @foreach ($skillPositions as $skillPosition)
+                <option value="{{ $skillPosition->id }}" @selected($old('skill_position_id') == $skillPosition->id)>{{ $skillPosition->name }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('skill_position_id')" class="mt-1" />
+    </div>
+
+    <div>
         <x-input-label for="employment_type_id" value="Employment Type" />
         <select id="employment_type_id" name="employment_type_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
             <option value="">—</option>
@@ -123,6 +126,28 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
+        <x-input-label for="employment_source_id" value="Employment Source" />
+        <select id="employment_source_id" name="employment_source_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+            <option value="">—</option>
+            @foreach ($employmentSources as $employmentSource)
+                <option value="{{ $employmentSource->id }}" @selected($old('employment_source_id') == $employmentSource->id)>{{ $employmentSource->name }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('employment_source_id')" class="mt-1" />
+    </div>
+
+    <div>
+        <x-input-label for="workforce_category" value="Management" />
+        <select id="workforce_category" name="workforce_category" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+            <option value="">—</option>
+            @foreach ($workforceCategories as $value => $label)
+                <option value="{{ $value }}" @selected($old('workforce_category') === $value)>{{ $label }}</option>
+            @endforeach
+        </select>
+        <x-input-error :messages="$errors->get('workforce_category')" class="mt-1" />
+    </div>
+
+    <div>
         <x-input-label for="employment_status_id" value="Employment Status" />
         <select id="employment_status_id" name="employment_status_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
             <option value="">—</option>
@@ -131,17 +156,6 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
             @endforeach
         </select>
         <x-input-error :messages="$errors->get('employment_status_id')" class="mt-1" />
-    </div>
-
-    <div>
-        <x-input-label for="location_id" value="Work Location" />
-        <select id="location_id" name="location_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
-            <option value="">—</option>
-            @foreach ($locations as $location)
-                <option value="{{ $location->id }}" @selected($old('location_id') == $location->id)>{{ $location->name }}</option>
-            @endforeach
-        </select>
-        <x-input-error :messages="$errors->get('location_id')" class="mt-1" />
     </div>
 
     <div>
@@ -163,36 +177,14 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
                 <option value="{{ $person->id }}" @selected($old('supervisor_id') == $person->id)>{{ $person->full_name }} ({{ $person->employee_number }})</option>
             @endforeach
         </select>
+        <p class="mt-1 text-xs text-gray-500">The employee's manager is inferred automatically from this supervisor's own chain - there's no separate manager field to fill in.</p>
         <x-input-error :messages="$errors->get('supervisor_id')" class="mt-1" />
-    </div>
-
-    <div>
-        <x-input-label for="manager_id" value="Manager" />
-        <select id="manager_id" name="manager_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
-            <option value="">—</option>
-            @foreach ($possibleSupervisors as $person)
-                <option value="{{ $person->id }}" @selected($old('manager_id') == $person->id)>{{ $person->full_name }} ({{ $person->employee_number }})</option>
-            @endforeach
-        </select>
-        <x-input-error :messages="$errors->get('manager_id')" class="mt-1" />
-    </div>
-
-    <div>
-        <x-input-label for="education" value="Education" />
-        <x-text-input id="education" name="education" class="mt-1 block w-full" value="{{ $old('education') }}" />
-        <x-input-error :messages="$errors->get('education')" class="mt-1" />
     </div>
 
     <div>
         <x-input-label for="technical_background" value="Technical Background" />
         <x-text-input id="technical_background" name="technical_background" class="mt-1 block w-full" value="{{ $old('technical_background') }}" />
         <x-input-error :messages="$errors->get('technical_background')" class="mt-1" />
-    </div>
-
-    <div>
-        <x-input-label for="years_of_experience" value="Years of Experience" />
-        <x-text-input id="years_of_experience" type="number" min="0" max="60" name="years_of_experience" class="mt-1 block w-full" value="{{ $old('years_of_experience') }}" />
-        <x-input-error :messages="$errors->get('years_of_experience')" class="mt-1" />
     </div>
 </div>
 

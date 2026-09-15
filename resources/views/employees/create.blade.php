@@ -2,7 +2,7 @@
     <x-slot name="header">Add Employee</x-slot>
 
     <div class="max-w-4xl rounded-lg border border-gray-200 bg-white p-6">
-        <form method="POST" action="{{ route('employees.store') }}">
+        <form method="POST" action="{{ route('employees.store') }}" enctype="multipart/form-data">
             @csrf
 
             @include('employees._form')

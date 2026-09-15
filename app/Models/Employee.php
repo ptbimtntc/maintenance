@@ -14,8 +14,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'employee_number', 'full_name', 'preferred_name', 'photo_path', 'gender', 'date_of_birth',
-    'email', 'phone', 'department_id', 'division_id', 'maintenance_area_id', 'maintenance_team_id',
-    'position_id', 'employment_type_id', 'employment_status_id', 'location_id', 'shift_id',
+    'email', 'phone', 'department_id', 'business_unit_id', 'division_id', 'maintenance_area_id', 'maintenance_team_id',
+    'position_id', 'skill_position_id', 'employment_type_id', 'employment_source_id', 'workforce_category',
+    'employment_status_id', 'location_id', 'shift_id',
     'supervisor_id', 'manager_id', 'date_joined', 'education', 'technical_background',
     'years_of_experience', 'notes', 'user_id', 'created_by', 'updated_by',
 ])]
@@ -23,6 +24,15 @@ class Employee extends Model
 {
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
     use HasFactory, SoftDeletes, Auditable;
+
+    /**
+     * Workforce classification: BC (Blue Collar - operator/technician level)
+     * vs WCM (White Collar Management - staff and above).
+     */
+    public const WORKFORCE_CATEGORIES = [
+        'BC' => 'Blue Collar (BC)',
+        'WCM' => 'White Collar Management (WCM)',
+    ];
 
     protected function casts(): array
     {
@@ -42,6 +52,11 @@ class Employee extends Model
         return $this->belongsTo(Division::class);
     }
 
+    public function businessUnit(): BelongsTo
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
+
     public function maintenanceArea(): BelongsTo
     {
         return $this->belongsTo(MaintenanceArea::class);
@@ -57,9 +72,19 @@ class Employee extends Model
         return $this->belongsTo(Position::class);
     }
 
+    public function skillPosition(): BelongsTo
+    {
+        return $this->belongsTo(SkillPosition::class);
+    }
+
     public function employmentType(): BelongsTo
     {
         return $this->belongsTo(EmploymentType::class);
+    }
+
+    public function employmentSource(): BelongsTo
+    {
+        return $this->belongsTo(EmploymentSource::class);
     }
 
     public function employmentStatus(): BelongsTo

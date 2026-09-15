@@ -2,8 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\BusinessUnit;
 use App\Models\Department;
 use App\Models\Division;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
 use App\Models\Location;
@@ -11,6 +13,7 @@ use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
+use App\Models\SkillPosition;
 use Illuminate\Database\Seeder;
 
 class MasterDataSeeder extends Seeder
@@ -146,6 +149,38 @@ class MasterDataSeeder extends Seeder
 
         foreach ($locations as $location) {
             Location::firstOrCreate(['code' => $location['code']], ['name' => $location['name']]);
+        }
+
+        $businessUnits = [
+            ['code' => 'BU-TC', 'name' => 'Tire Cord'],
+            ['code' => 'BU-HP', 'name' => 'Half Product'],
+            ['code' => 'BU-DX', 'name' => 'Dramix'],
+        ];
+
+        foreach ($businessUnits as $unit) {
+            BusinessUnit::firstOrCreate(['code' => $unit['code']], ['name' => $unit['name']]);
+        }
+
+        $skillPositions = [
+            ['code' => 'SKP-MECH', 'name' => 'Mechanical'],
+            ['code' => 'SKP-ELEC', 'name' => 'Electrical'],
+            ['code' => 'SKP-INST', 'name' => 'Instrument'],
+        ];
+
+        foreach ($skillPositions as $skillPosition) {
+            SkillPosition::firstOrCreate(['code' => $skillPosition['code']], ['name' => $skillPosition['name']]);
+        }
+
+        $employmentSources = [
+            ['code' => 'SRC-BEK', 'name' => 'Bekaert'],
+            ['code' => 'SRC-BRX', 'name' => 'Brexa'],
+            ['code' => 'SRC-GOK', 'name' => 'Gokko'],
+            ['code' => 'SRC-MHK', 'name' => 'Mahkota'],
+            ['code' => 'SRC-TSS', 'name' => 'TSS'],
+        ];
+
+        foreach ($employmentSources as $source) {
+            EmploymentSource::firstOrCreate(['code' => $source['code']], ['name' => $source['name']]);
         }
     }
 }

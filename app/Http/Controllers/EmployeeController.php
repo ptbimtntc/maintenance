@@ -7,20 +7,22 @@ use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
+use App\Models\BusinessUnit;
 use App\Models\CompetencyLevel;
 use App\Models\Department;
-use App\Models\Division;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
-use App\Models\Location;
 use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
 use App\Models\Skill;
+use App\Models\SkillPosition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class EmployeeController extends Controller
@@ -90,10 +92,12 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
         $employee = Employee::create([
-            ...$request->validated(),
+            ...$request->safe()->except('photo'),
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ]);
+
+        $this->storeUploadedPhoto($request, $employee);
 
         return redirect()->route('employees.show', $employee)->with('status', 'Employee created.');
     }
@@ -103,8 +107,8 @@ class EmployeeController extends Controller
         $this->authorize('view', $employee);
 
         $employee->load([
-            'department', 'division', 'maintenanceArea', 'maintenanceTeam', 'position',
-            'employmentType', 'employmentStatus', 'location', 'shift', 'supervisor', 'manager',
+            'department', 'businessUnit', 'maintenanceTeam', 'position', 'skillPosition',
+            'employmentType', 'employmentSource', 'employmentStatus', 'shift', 'supervisor',
             'position.skillRequirements.skill', 'position.skillRequirements.requiredCompetencyLevel',
             'skillAssessments' => fn ($q) => $q->with(['skill', 'competencyLevel', 'assessedBy'])->orderByDesc('assessment_date')->orderByDesc('id'),
             'trainingRecords' => fn ($q) => $q->with('trainingProgram')->orderByDesc('training_date'),
@@ -133,11 +137,33 @@ class EmployeeController extends Controller
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
     {
         $employee->update([
-            ...$request->validated(),
+            ...$request->safe()->except('photo'),
             'updated_by' => $request->user()->id,
         ]);
 
+        $this->storeUploadedPhoto($request, $employee);
+
         return redirect()->route('employees.show', $employee)->with('status', 'Employee updated.');
+    }
+
+    /**
+     * Employee photos are a lower-sensitivity, display-oriented asset
+     * (unlike certificates), so they're stored on the public disk and
+     * served by direct URL rather than an authorized streaming route.
+     */
+    private function storeUploadedPhoto(Request $request, Employee $employee): void
+    {
+        if (! $request->hasFile('photo')) {
+            return;
+        }
+
+        if ($employee->photo_path) {
+            Storage::disk('public')->delete($employee->photo_path);
+        }
+
+        $path = $request->file('photo')->store('employee-photos', 'public');
+
+        $employee->update(['photo_path' => $path]);
     }
 
     public function destroy(Employee $employee): RedirectResponse
@@ -156,13 +182,14 @@ class EmployeeController extends Controller
     {
         return [
             'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'divisions' => Division::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceAreas' => MaintenanceArea::where('is_active', true)->orderBy('name')->get(),
+            'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
             'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
             'positions' => Position::where('is_active', true)->orderBy('title')->get(),
+            'skillPositions' => SkillPosition::where('is_active', true)->orderBy('name')->get(),
             'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
+            'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
+            'workforceCategories' => Employee::WORKFORCE_CATEGORIES,
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
-            'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
             'possibleSupervisors' => Employee::query()
                 ->when($employee, fn ($q) => $q->where('id', '!=', $employee->id))
