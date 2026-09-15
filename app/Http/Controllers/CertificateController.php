@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Concerns\ExportsCsv;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreCertificateRequest;
@@ -19,7 +18,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CertificateController extends Controller
 {
-    use ExportsCsv, ExportsSpreadsheet;
+    use ExportsSpreadsheet;
 
     private const DISK = 'local';
 
@@ -46,7 +45,7 @@ class CertificateController extends Controller
             default => null,
         };
 
-        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+        if ($request->string('export') == 'xlsx') {
             $statusLabels = Certificate::statusLabels();
 
             $header = ['Employee', 'Certificate', 'Type', 'Number', 'Issuing Organization', 'Issue Date', 'Expiry Date', 'Status'];
@@ -61,11 +60,7 @@ class CertificateController extends Controller
                 $statusLabels[$c->status()],
             ]);
 
-            $basename = 'certificates-'.now()->format('Y-m-d');
-
-            return $request->string('export') == 'xlsx'
-                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
-                : $this->streamCsv("{$basename}.csv", $header, $rows);
+            return $this->streamXlsx('certificates-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
         }
 
         $certificates = $query->orderByDesc('created_at')->paginate(20)->withQueryString();

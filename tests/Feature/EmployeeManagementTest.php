@@ -385,4 +385,131 @@ class EmployeeManagementTest extends TestCase
         $this->assertSoftDeleted($directReport);
         $this->assertDatabaseHas('employees', ['id' => $outsideScope->id, 'deleted_at' => null]);
     }
+
+    /**
+     * Builds a real .xlsx file (not a fake/dummy one) since the import
+     * endpoint actually parses it with PhpSpreadsheet - wraps it as an
+     * UploadedFile the same way a browser upload would arrive.
+     */
+    private function makeImportFile(array $header, array $rows): \Illuminate\Http\UploadedFile
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->fromArray($header, null, 'A1');
+        $rowNumber = 2;
+        foreach ($rows as $row) {
+            $sheet->fromArray($row, null, 'A'.$rowNumber);
+            $rowNumber++;
+        }
+
+        $path = tempnam(sys_get_temp_dir(), 'import-test-').'.xlsx';
+        (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save($path);
+
+        return new \Illuminate\Http\UploadedFile($path, 'import.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', null, true);
+    }
+
+    public function test_an_administrator_can_bulk_update_employees_via_xlsx_import(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $businessUnit = \App\Models\BusinessUnit::factory()->create(['name' => 'Tire Cord']);
+        $employee = Employee::factory()->create(['employee_number' => 'EMP-30001', 'workforce_category' => null]);
+
+        $file = $this->makeImportFile(
+            [
+                'Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
+                'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management',
+                'Employment Status', 'Shift', 'Supervisor (Employee Number)',
+            ],
+            [
+                ['EMP-30001', '', 'Tire Cord', '', '', '', '', '', '', 'BC', '', '', ''],
+            ]
+        );
+
+        $response = $this->actingAs($admin)->post(route('employees.import'), ['file' => $file]);
+
+        $response->assertRedirect(route('employees.index'));
+        $employee->refresh();
+        $this->assertSame($businessUnit->id, $employee->business_unit_id);
+        $this->assertSame('BC', $employee->workforce_category);
+    }
+
+    public function test_import_reports_an_unmatched_lookup_value_without_crashing(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $employee = Employee::factory()->create(['employee_number' => 'EMP-30002']);
+        $originalBusinessUnitId = $employee->business_unit_id;
+
+        $file = $this->makeImportFile(
+            ['Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team', 'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management', 'Employment Status', 'Shift', 'Supervisor (Employee Number)'],
+            [['EMP-30002', '', 'Nonexistent Unit', '', '', '', '', '', '', '', '', '', '']]
+        );
+
+        $response = $this->actingAs($admin)->post(route('employees.import'), ['file' => $file]);
+
+        $response->assertRedirect(route('employees.index'));
+        $response->assertSessionHas('import_errors');
+        $this->assertSame($originalBusinessUnitId, $employee->fresh()->business_unit_id);
+    }
+
+    public function test_import_skips_a_row_for_an_employee_number_that_does_not_exist(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $file = $this->makeImportFile(
+            ['Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team', 'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management', 'Employment Status', 'Shift', 'Supervisor (Employee Number)'],
+            [['EMP-NOPE', '', '', '', '', '', '', '', '', '', '', '', '']]
+        );
+
+        $response = $this->actingAs($admin)->post(route('employees.import'), ['file' => $file]);
+
+        $response->assertRedirect(route('employees.index'));
+        $response->assertSessionHas('import_errors');
+    }
+
+    public function test_import_is_forbidden_for_a_user_without_manage_employees(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        Employee::factory()->create(['employee_number' => 'EMP-30003']);
+
+        $file = $this->makeImportFile(
+            ['Employee Number'],
+            [['EMP-30003']]
+        );
+
+        $response = $this->actingAs($staff)->post(route('employees.import'), ['file' => $file]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_import_only_updates_employees_visible_to_the_importer(): void
+    {
+        $managerUser = User::factory()->create();
+        $managerUser->assignRole(RoleName::MaintenanceManager->value);
+        $managerEmployee = Employee::factory()->create(['user_id' => $managerUser->id]);
+        $directReport = Employee::factory()->create(['supervisor_id' => $managerEmployee->id, 'employee_number' => 'EMP-30004']);
+        $outsideScope = Employee::factory()->create(['employee_number' => 'EMP-30005']);
+        $outsideScopeOriginalBusinessUnitId = $outsideScope->business_unit_id;
+
+        $businessUnit = \App\Models\BusinessUnit::factory()->create(['name' => 'Dramix']);
+
+        $file = $this->makeImportFile(
+            ['Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team', 'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management', 'Employment Status', 'Shift', 'Supervisor (Employee Number)'],
+            [
+                ['EMP-30004', '', 'Dramix', '', '', '', '', '', '', '', '', '', ''],
+                ['EMP-30005', '', 'Dramix', '', '', '', '', '', '', '', '', '', ''],
+            ]
+        );
+
+        $response = $this->actingAs($managerUser)->post(route('employees.import'), ['file' => $file]);
+
+        $response->assertRedirect(route('employees.index'));
+        $this->assertSame($businessUnit->id, $directReport->fresh()->business_unit_id);
+        $this->assertSame($outsideScopeOriginalBusinessUnitId, $outsideScope->fresh()->business_unit_id);
+    }
 }

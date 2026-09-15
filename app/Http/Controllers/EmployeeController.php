@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Concerns\ExportsCsv;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
@@ -23,10 +22,22 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 
 class EmployeeController extends Controller
 {
-    use ExportsCsv, ExportsSpreadsheet;
+    use ExportsSpreadsheet;
+
+    /**
+     * Column headers shared by export and import, in this exact order, so
+     * a file downloaded via "Export XLSX" can be edited and re-uploaded via
+     * "Import XLSX" to bulk-update the same employees without reshaping it.
+     */
+    private const IMPORT_COLUMNS = [
+        'Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
+        'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management',
+        'Employment Status', 'Shift', 'Supervisor (Employee Number)',
+    ];
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -59,23 +70,24 @@ class EmployeeController extends Controller
             ->when($request->filled('supervisor_id'), fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')))
             ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')));
 
-        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
-            $header = ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'];
+        if ($request->string('export') == 'xlsx') {
             $rows = $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
                 $e->employee_number,
                 $e->full_name,
-                $e->position?->title,
+                $e->businessUnit?->name,
                 $e->department?->name,
-                $e->maintenanceArea?->name,
                 $e->maintenanceTeam?->name,
+                $e->position?->title,
+                $e->skillPosition?->name,
+                $e->employmentType?->name,
+                $e->employmentSource?->name,
+                $e->workforce_category,
                 $e->employmentStatus?->name,
+                $e->shift?->name,
+                $e->supervisor?->employee_number,
             ]);
 
-            $basename = 'employees-'.now()->format('Y-m-d');
-
-            return $request->string('export') == 'xlsx'
-                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
-                : $this->streamCsv("{$basename}.csv", $header, $rows);
+            return $this->streamXlsx('employees-'.now()->format('Y-m-d').'.xlsx', self::IMPORT_COLUMNS, $rows);
         }
 
         $employees = $query->orderBy('full_name')->paginate(15)->withQueryString();
@@ -218,6 +230,136 @@ class EmployeeController extends Controller
         $message = $deleted > 0 ? "{$deleted} employee(s) removed." : 'No employees were removed.';
 
         return redirect()->route('employees.index')->with('status', $message);
+    }
+
+    /**
+     * Bulk-updates employees from an uploaded .xlsx file shaped like the
+     * "Export XLSX" output (see IMPORT_COLUMNS) - matched by Employee
+     * Number, which is required and never changed by the import itself.
+     * Every other column is optional per row: blank cells leave that field
+     * untouched, and a lookup value that doesn't match an existing record
+     * (Business Unit, Position, ...) is skipped with a reported error
+     * rather than silently creating new master data or guessing.
+     *
+     * Deliberately update-only: a row whose Employee Number doesn't match
+     * an existing, visible employee is reported as an error, never used to
+     * create a new one - that stays a deliberate action via "Add Employee".
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $this->authorize('create', Employee::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx'],
+        ]);
+
+        $rows = (new XlsxReader)->load($request->file('file')->getRealPath())
+            ->getActiveSheet()
+            ->toArray(null, true, true, false);
+
+        $header = array_map(fn ($cell) => trim((string) $cell), array_shift($rows) ?? []);
+
+        $lookups = [
+            'Business Unit' => [BusinessUnit::class, 'name', 'business_unit_id'],
+            'Department' => [Department::class, 'name', 'department_id'],
+            'Maintenance Team' => [MaintenanceTeam::class, 'name', 'maintenance_team_id'],
+            'Position' => [Position::class, 'title', 'position_id'],
+            'Skill Position' => [SkillPosition::class, 'name', 'skill_position_id'],
+            'Employment Type' => [EmploymentType::class, 'name', 'employment_type_id'],
+            'Employment Source' => [EmploymentSource::class, 'name', 'employment_source_id'],
+            'Employment Status' => [EmploymentStatus::class, 'name', 'employment_status_id'],
+            'Shift' => [Shift::class, 'name', 'shift_id'],
+        ];
+
+        $updated = 0;
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $rowNumber = $index + 2; // account for the header row
+            $data = array_combine($header, array_pad($row, count($header), null));
+
+            $employeeNumber = trim((string) ($data['Employee Number'] ?? ''));
+
+            if ($employeeNumber === '') {
+                continue;
+            }
+
+            $employee = Employee::query()->visibleTo($request->user())->where('employee_number', $employeeNumber)->first();
+
+            if (! $employee || ! $request->user()->can('update', $employee)) {
+                $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
+
+                continue;
+            }
+
+            $changes = [];
+
+            if (! empty($data['Full Name'])) {
+                $changes['full_name'] = trim((string) $data['Full Name']);
+            }
+
+            foreach ($lookups as $column => [$modelClass, $nameField, $foreignKey]) {
+                $value = trim((string) ($data[$column] ?? ''));
+
+                if ($value === '') {
+                    continue;
+                }
+
+                $match = $modelClass::where($nameField, $value)->first();
+
+                if (! $match) {
+                    $errors[] = "Row {$rowNumber}: {$column} \"{$value}\" not found - left unchanged.";
+
+                    continue;
+                }
+
+                $changes[$foreignKey] = $match->id;
+            }
+
+            $managementValue = strtoupper(trim((string) ($data['Management'] ?? '')));
+
+            if ($managementValue !== '') {
+                $code = match (true) {
+                    $managementValue === 'BC' || str_starts_with($managementValue, 'BLUE') => 'BC',
+                    $managementValue === 'WCM' || str_starts_with($managementValue, 'WHITE') => 'WCM',
+                    default => null,
+                };
+
+                if ($code) {
+                    $changes['workforce_category'] = $code;
+                } else {
+                    $errors[] = "Row {$rowNumber}: Management value \"{$data['Management']}\" not recognized (expected BC or WCM) - left unchanged.";
+                }
+            }
+
+            $supervisorNumber = trim((string) ($data['Supervisor (Employee Number)'] ?? ''));
+
+            if ($supervisorNumber !== '') {
+                $supervisor = Employee::where('employee_number', $supervisorNumber)->first();
+
+                if ($supervisor && $supervisor->id !== $employee->id) {
+                    $changes['supervisor_id'] = $supervisor->id;
+                } else {
+                    $errors[] = "Row {$rowNumber}: supervisor \"{$supervisorNumber}\" not found - left unchanged.";
+                }
+            }
+
+            if ($changes !== []) {
+                $employee->update([...$changes, 'updated_by' => $request->user()->id]);
+                $updated++;
+            }
+        }
+
+        $redirect = redirect()->route('employees.index')
+            ->with('status', "{$updated} employee(s) updated from import.");
+
+        if ($errors !== []) {
+            $shown = array_slice($errors, 0, 8);
+            $suffix = count($errors) > 8 ? ' …and '.(count($errors) - 8).' more.' : '';
+            $redirect->with('import_errors', count($errors).' issue(s) found: '.implode(' | ', $shown).$suffix);
+        }
+
+        return $redirect;
     }
 
     /**

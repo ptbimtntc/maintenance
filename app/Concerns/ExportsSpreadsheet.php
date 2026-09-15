@@ -8,7 +8,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Small shared helper so every report/list that offers an Excel export does
- * it the same way, mirroring ExportsCsv's (filename, header, rows) shape.
+ * it the same way: (filename, header, rows) in, a streamed .xlsx download
+ * out. .xlsx is the only export format the app offers.
  */
 trait ExportsSpreadsheet
 {

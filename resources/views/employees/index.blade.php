@@ -9,11 +9,26 @@
             </div>
 
             @can('create', \App\Models\Employee::class)
-                <a href="{{ route('employees.create') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
-                    Add Employee
-                </a>
+                <div class="flex items-center gap-2">
+                    <form method="POST" action="{{ route('employees.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                        @csrf
+                        <label class="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            Import XLSX
+                            <input type="file" name="file" accept=".xlsx" class="hidden" onchange="this.form.requestSubmit()">
+                        </label>
+                    </form>
+                    <a href="{{ route('employees.create') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                        Add Employee
+                    </a>
+                </div>
             @endcan
         </div>
+
+        @if (session('import_errors'))
+            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                {{ session('import_errors') }}
+            </div>
+        @endif
 
         <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">
             <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK or name..."
@@ -64,7 +79,6 @@
             <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-6">
                 <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
                 <a href="{{ route('employees.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
-                <a href="{{ route('employees.index', array_merge(request()->query(), ['export' => 'csv'])) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export CSV</a>
                 <a href="{{ route('employees.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export XLSX</a>
             </div>
         </form>

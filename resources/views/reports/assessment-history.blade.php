@@ -8,7 +8,6 @@
             <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="block w-full rounded-md border-gray-300 text-sm" />
             <button type="submit" class="shrink-0 rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
             <a href="{{ route('reports.assessment-history') }}" class="shrink-0 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
-            <a href="{{ route('reports.assessment-history', array_merge(request()->query(), ['export' => 'csv'])) }}" class="shrink-0 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export CSV</a>
             <a href="{{ route('reports.assessment-history', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="shrink-0 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export XLSX</a>
         </form>
 
