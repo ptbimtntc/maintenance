@@ -1,6 +1,7 @@
 @php
 $dashboardActive = request()->routeIs('dashboard');
 $employeesActive = request()->routeIs('employees.*');
+$organizationChartActive = request()->routeIs('organization-chart.*');
 $organizationActive = request()->routeIs('organization.*');
 $skillsActive = request()->routeIs('skills.*');
 $skillMatrixActive = request()->routeIs('skill-matrix.*');
@@ -40,6 +41,15 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
                 @else
                     <x-nav-item disabled icon="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z">
                         Employees
+                    </x-nav-item>
+                @endcan
+                @can('viewAny', \App\Models\Employee::class)
+                    <x-nav-item :href="route('organization-chart.index')" :active="$organizationChartActive" icon="M12 3.75a1.5 1.5 0 013 0v2.25h1.5A2.25 2.25 0 0118.75 8.25v.567c.98.196 1.75.984 1.75 1.933v0M4.5 8.25A2.25 2.25 0 016.75 6h1.5V3.75a1.5 1.5 0 013 0M4.5 8.25v9A2.25 2.25 0 006.75 19.5H9m-4.5-11.25h15M9 19.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3M9 19.5h6">
+                        Organization Chart
+                    </x-nav-item>
+                @else
+                    <x-nav-item disabled icon="M12 3.75a1.5 1.5 0 013 0v2.25h1.5A2.25 2.25 0 0118.75 8.25v.567c.98.196 1.75.984 1.75 1.933v0M4.5 8.25A2.25 2.25 0 016.75 6h1.5V3.75a1.5 1.5 0 013 0M4.5 8.25v9A2.25 2.25 0 006.75 19.5H9m-4.5-11.25h15M9 19.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3M9 19.5h6">
+                        Organization Chart
                     </x-nav-item>
                 @endcan
                 @can(\App\Enums\PermissionName::ManageMasterData->value)

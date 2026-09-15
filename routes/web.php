@@ -13,6 +13,7 @@ use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
@@ -33,6 +34,10 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+Route::middleware(['auth', 'verified'])
+    ->get('/organization-chart', [OrganizationChartController::class, 'index'])
+    ->name('organization-chart.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('employees', EmployeeController::class)
