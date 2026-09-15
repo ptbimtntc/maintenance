@@ -10,9 +10,11 @@ use App\Http\Controllers\EmployeeDevelopmentPlanController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
 use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SkillMatrixController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\TrainingRecordController;
@@ -137,6 +139,12 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value
     ->get('/audit-logs', [AuditLogController::class, 'index'])
     ->name('audit-logs.index');
 
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageSettings->value])
+    ->group(function () {
+        Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    });
+
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewReports->value])
     ->prefix('reports')
     ->name('reports.')
@@ -146,6 +154,11 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewReports->value
         Route::get('/development-summary', [ReportController::class, 'developmentSummary'])->name('development-summary');
         Route::get('/assessment-history', [ReportController::class, 'assessmentHistory'])->name('assessment-history');
     });
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

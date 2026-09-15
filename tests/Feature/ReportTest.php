@@ -66,6 +66,19 @@ class ReportTest extends TestCase
         $response->assertHeader('content-type', 'text/csv; charset=UTF-8');
     }
 
+    public function test_training_hours_report_can_be_exported_as_xlsx(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        $employee = Employee::factory()->create();
+        TrainingRecord::factory()->create(['employee_id' => $employee->id, 'duration_hours' => 5]);
+
+        $response = $this->actingAs($manager)->get(route('reports.training-hours', ['export' => 'xlsx']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
     public function test_development_summary_counts_plans_by_status(): void
     {
         $manager = User::factory()->create();

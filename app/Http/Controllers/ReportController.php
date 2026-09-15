@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsCsv;
+use App\Concerns\ExportsSpreadsheet;
 use App\Models\Employee;
 use App\Models\EmployeeDevelopmentPlan;
 use App\Models\EmployeeSkillAssessment;
@@ -12,7 +13,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    use ExportsCsv;
+    use ExportsCsv, ExportsSpreadsheet;
 
     /**
      * A landing page linking every report from the project brief. Reports
@@ -40,17 +41,20 @@ class ReportController extends Controller
             ->sortByDesc('training_records_sum_duration_hours')
             ->values();
 
-        if ($request->string('export') == 'csv') {
-            return $this->streamCsv(
-                'training-hours-by-employee-'.now()->format('Y-m-d').'.csv',
-                ['Employee', 'Employee Number', 'Total Hours', 'Completed Trainings'],
-                $rows->map(fn (Employee $e) => [
-                    $e->full_name,
-                    $e->employee_number,
-                    $e->training_records_sum_duration_hours,
-                    $e->completed_trainings_count,
-                ])
-            );
+        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+            $header = ['Employee', 'Employee Number', 'Total Hours', 'Completed Trainings'];
+            $exportRows = $rows->map(fn (Employee $e) => [
+                $e->full_name,
+                $e->employee_number,
+                $e->training_records_sum_duration_hours,
+                $e->completed_trainings_count,
+            ]);
+
+            $basename = 'training-hours-by-employee-'.now()->format('Y-m-d');
+
+            return $request->string('export') == 'xlsx'
+                ? $this->streamXlsx("{$basename}.xlsx", $header, $exportRows)
+                : $this->streamCsv("{$basename}.csv", $header, $exportRows);
         }
 
         $byDepartment = Employee::query()
@@ -100,19 +104,22 @@ class ReportController extends Controller
                 fn ($eq) => $eq->search($request->string('employee_search')->toString())
             ));
 
-        if ($request->string('export') == 'csv') {
-            return $this->streamCsv(
-                'competency-assessment-history-'.now()->format('Y-m-d').'.csv',
-                ['Employee', 'Skill', 'Level', 'Assessment Date', 'Assessed By', 'Method'],
-                $query->orderByDesc('assessment_date')->get()->map(fn (EmployeeSkillAssessment $a) => [
-                    $a->employee->full_name,
-                    $a->skill->name,
-                    $a->competencyLevel->level_number.' - '.$a->competencyLevel->name,
-                    $a->assessment_date->format('Y-m-d'),
-                    $a->assessedBy?->name,
-                    $a->assessment_method,
-                ])
-            );
+        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+            $header = ['Employee', 'Skill', 'Level', 'Assessment Date', 'Assessed By', 'Method'];
+            $rows = $query->orderByDesc('assessment_date')->get()->map(fn (EmployeeSkillAssessment $a) => [
+                $a->employee->full_name,
+                $a->skill->name,
+                $a->competencyLevel->level_number.' - '.$a->competencyLevel->name,
+                $a->assessment_date->format('Y-m-d'),
+                $a->assessedBy?->name,
+                $a->assessment_method,
+            ]);
+
+            $basename = 'competency-assessment-history-'.now()->format('Y-m-d');
+
+            return $request->string('export') == 'xlsx'
+                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
+                : $this->streamCsv("{$basename}.csv", $header, $rows);
         }
 
         $assessments = $query->orderByDesc('assessment_date')->paginate(30)->withQueryString();

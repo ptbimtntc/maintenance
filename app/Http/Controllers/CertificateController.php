@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsCsv;
+use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreCertificateRequest;
 use App\Models\Certificate;
@@ -18,7 +19,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CertificateController extends Controller
 {
-    use ExportsCsv;
+    use ExportsCsv, ExportsSpreadsheet;
 
     private const DISK = 'local';
 
@@ -33,7 +34,7 @@ class CertificateController extends Controller
             ->when($request->filled('certificate_type_id'), fn ($q) => $q->where('certificate_type_id', $request->integer('certificate_type_id')));
 
         $today = now()->startOfDay();
-        $soonCutoff = $today->copy()->addDays(Certificate::EXPIRING_SOON_DAYS);
+        $soonCutoff = $today->copy()->addDays(Certificate::expiringSoonDays());
 
         match ($request->string('status')->toString()) {
             'pending_verification' => $query->where('verification_status', 'pending_verification'),
@@ -44,23 +45,26 @@ class CertificateController extends Controller
             default => null,
         };
 
-        if ($request->string('export') == 'csv') {
+        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
             $statusLabels = Certificate::statusLabels();
 
-            return $this->streamCsv(
-                'certificates-'.now()->format('Y-m-d').'.csv',
-                ['Employee', 'Certificate', 'Type', 'Number', 'Issuing Organization', 'Issue Date', 'Expiry Date', 'Status'],
-                $query->orderByDesc('created_at')->get()->map(fn (Certificate $c) => [
-                    $c->employee->full_name,
-                    $c->name,
-                    $c->certificateType?->name,
-                    $c->certificate_number,
-                    $c->issuing_organization,
-                    $c->issue_date?->format('Y-m-d'),
-                    $c->expiry_date?->format('Y-m-d'),
-                    $statusLabels[$c->status()],
-                ])
-            );
+            $header = ['Employee', 'Certificate', 'Type', 'Number', 'Issuing Organization', 'Issue Date', 'Expiry Date', 'Status'];
+            $rows = $query->orderByDesc('created_at')->get()->map(fn (Certificate $c) => [
+                $c->employee->full_name,
+                $c->name,
+                $c->certificateType?->name,
+                $c->certificate_number,
+                $c->issuing_organization,
+                $c->issue_date?->format('Y-m-d'),
+                $c->expiry_date?->format('Y-m-d'),
+                $statusLabels[$c->status()],
+            ]);
+
+            $basename = 'certificates-'.now()->format('Y-m-d');
+
+            return $request->string('export') == 'xlsx'
+                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
+                : $this->streamCsv("{$basename}.csv", $header, $rows);
         }
 
         $certificates = $query->orderByDesc('created_at')->paginate(20)->withQueryString();

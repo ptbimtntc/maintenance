@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsCsv;
+use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
@@ -24,7 +25,7 @@ use Illuminate\View\View;
 
 class EmployeeController extends Controller
 {
-    use ExportsCsv;
+    use ExportsCsv, ExportsSpreadsheet;
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -52,20 +53,23 @@ class EmployeeController extends Controller
             ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
             ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')));
 
-        if ($request->string('export') == 'csv') {
-            return $this->streamCsv(
-                'employees-'.now()->format('Y-m-d').'.csv',
-                ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'],
-                $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
-                    $e->employee_number,
-                    $e->full_name,
-                    $e->position?->title,
-                    $e->department?->name,
-                    $e->maintenanceArea?->name,
-                    $e->maintenanceTeam?->name,
-                    $e->employmentStatus?->name,
-                ])
-            );
+        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+            $header = ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'];
+            $rows = $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
+                $e->employee_number,
+                $e->full_name,
+                $e->position?->title,
+                $e->department?->name,
+                $e->maintenanceArea?->name,
+                $e->maintenanceTeam?->name,
+                $e->employmentStatus?->name,
+            ]);
+
+            $basename = 'employees-'.now()->format('Y-m-d');
+
+            return $request->string('export') == 'xlsx'
+                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
+                : $this->streamCsv("{$basename}.csv", $header, $rows);
         }
 
         $employees = $query->orderBy('full_name')->paginate(15)->withQueryString();

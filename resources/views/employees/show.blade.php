@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">Employee Profile</x-slot>
 
-    <div x-data="{ tab: '{{ session('activeTab', 'overview') }}' }" class="space-y-6">
+    <div x-data="{ tab: '{{ request('tab', session('activeTab', 'overview')) }}' }" class="space-y-6">
         @if (session('status'))
             <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
         @endif

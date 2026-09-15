@@ -12,12 +12,55 @@
         </h1>
 
         <div class="flex items-center gap-4">
-            <button type="button" class="relative text-gray-400 hover:text-gray-600" title="Notifications (no unread items)">
-                <span class="sr-only">Notifications</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                </svg>
-            </button>
+            @php
+                $unreadNotifications = Auth::user()->unreadNotifications()->latest()->take(10)->get();
+                $unreadCount = Auth::user()->unreadNotifications()->count();
+            @endphp
+
+            <x-dropdown align="right" width="80">
+                <x-slot name="trigger">
+                    <button type="button" class="relative text-gray-400 hover:text-gray-600" title="{{ $unreadCount > 0 ? $unreadCount.' unread notification(s)' : 'Notifications (no unread items)' }}">
+                        <span class="sr-only">Notifications</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        @if ($unreadCount > 0)
+                            <span class="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+                                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                            </span>
+                        @endif
+                    </button>
+                </x-slot>
+
+                <x-slot name="content">
+                    <div class="flex items-center justify-between border-b border-gray-100 px-4 py-2">
+                        <span class="text-sm font-semibold text-gray-700">Notifications</span>
+                        @if ($unreadCount > 0)
+                            <form method="POST" action="{{ route('notifications.read-all') }}">
+                                @csrf
+                                <button type="submit" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">
+                                    Mark all as read
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+
+                    <div class="max-h-96 overflow-y-auto">
+                        @forelse ($unreadNotifications as $notification)
+                            <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
+                                @csrf
+                                <button type="submit" class="block w-full px-4 py-3 text-left text-sm hover:bg-gray-100">
+                                    <span class="block font-medium text-gray-800">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                                    <span class="mt-0.5 block text-xs text-gray-500">{{ $notification->data['message'] ?? '' }}</span>
+                                    <span class="mt-1 block text-xs text-gray-400">{{ $notification->created_at->diffForHumans() }}</span>
+                                </button>
+                            </form>
+                        @empty
+                            <p class="px-4 py-6 text-center text-sm text-gray-500">No unread notifications.</p>
+                        @endforelse
+                    </div>
+                </x-slot>
+            </x-dropdown>
 
             <x-dropdown align="right" width="48">
                 <x-slot name="trigger">

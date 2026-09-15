@@ -8,6 +8,7 @@
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">By Employee</h2>
                 <a href="{{ route('reports.training-hours', ['export' => 'csv']) }}" class="text-sm text-slate-600 hover:underline">Export CSV</a>
+                <a href="{{ route('reports.training-hours', ['export' => 'xlsx']) }}" class="ml-3 text-sm text-slate-600 hover:underline">Export XLSX</a>
             </div>
             <div class="mt-3 overflow-x-auto rounded-lg border border-gray-200 bg-white">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">

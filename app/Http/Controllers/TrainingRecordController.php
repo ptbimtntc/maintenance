@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsCsv;
+use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreTrainingRecordRequest;
 use App\Models\CompetencyLevel;
@@ -17,7 +18,7 @@ use Illuminate\View\View;
 
 class TrainingRecordController extends Controller
 {
-    use ExportsCsv;
+    use ExportsCsv, ExportsSpreadsheet;
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -29,20 +30,23 @@ class TrainingRecordController extends Controller
             ))
             ->when($request->filled('completion_status'), fn ($q) => $q->where('completion_status', $request->string('completion_status')));
 
-        if ($request->string('export') == 'csv') {
-            return $this->streamCsv(
-                'training-records-'.now()->format('Y-m-d').'.csv',
-                ['Employee', 'Program', 'Date', 'Hours', 'Attendance', 'Completion', 'Score'],
-                $query->orderByDesc('training_date')->get()->map(fn (TrainingRecord $r) => [
-                    $r->employee->full_name,
-                    $r->trainingProgram?->title ?? 'Ad-hoc',
-                    $r->training_date->format('Y-m-d'),
-                    $r->duration_hours,
-                    $r->attendance_status,
-                    $r->completion_status,
-                    $r->assessment_score,
-                ])
-            );
+        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+            $header = ['Employee', 'Program', 'Date', 'Hours', 'Attendance', 'Completion', 'Score'];
+            $rows = $query->orderByDesc('training_date')->get()->map(fn (TrainingRecord $r) => [
+                $r->employee->full_name,
+                $r->trainingProgram?->title ?? 'Ad-hoc',
+                $r->training_date->format('Y-m-d'),
+                $r->duration_hours,
+                $r->attendance_status,
+                $r->completion_status,
+                $r->assessment_score,
+            ]);
+
+            $basename = 'training-records-'.now()->format('Y-m-d');
+
+            return $request->string('export') == 'xlsx'
+                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
+                : $this->streamCsv("{$basename}.csv", $header, $rows);
         }
 
         $records = $query->orderByDesc('training_date')->paginate(20)->withQueryString();

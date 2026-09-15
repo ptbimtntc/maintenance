@@ -25,9 +25,14 @@ class Certificate extends Model
 
     /**
      * How many days before expiry a certificate is flagged "expiring soon".
-     * Kept as one constant rather than scattered magic numbers.
+     * Configurable via Administration -> Settings rather than a fixed
+     * number, since different certificate types may warrant different
+     * lead times in practice.
      */
-    public const EXPIRING_SOON_DAYS = 60;
+    public static function expiringSoonDays(): int
+    {
+        return Setting::getInt('certificate_expiring_soon_days', 60);
+    }
 
     protected function casts(): array
     {
@@ -93,7 +98,7 @@ class Certificate extends Model
             return 'expired';
         }
 
-        if ($today->diffInDays($expiry) <= self::EXPIRING_SOON_DAYS) {
+        if ($today->diffInDays($expiry) <= self::expiringSoonDays()) {
             return 'expiring_soon';
         }
 

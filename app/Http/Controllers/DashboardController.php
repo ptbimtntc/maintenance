@@ -85,7 +85,7 @@ class DashboardController extends Controller
     private function certificateSummary(): array
     {
         $today = now()->startOfDay();
-        $soonCutoff = $today->copy()->addDays(Certificate::EXPIRING_SOON_DAYS);
+        $soonCutoff = $today->copy()->addDays(Certificate::expiringSoonDays());
 
         return [
             'expiring_soon' => Certificate::where('verification_status', 'verified')
