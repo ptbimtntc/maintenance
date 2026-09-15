@@ -14,7 +14,9 @@ Implemented:
 - Role-based access control with 5 roles (`spatie/laravel-permission`): Administrator, Maintenance Manager, Maintenance Supervisor, Maintenance Staff, People Development.
 - Responsive admin layout: fixed sidebar on desktop, off-canvas sidebar on mobile, top bar with user menu.
 - Dashboard with **real, database-driven** counts across every module (employees, organization, skills/competency, training, certificates) — no fabricated placeholder numbers anywhere.
-- **Employee Database**: full CRUD, search/filter/pagination, a tabbed employee profile page, and role-scoped visibility enforced in the backend (`EmployeePolicy`) — Administrators/Managers/HR see everyone, Supervisors see only their own team, Staff see only themselves.
+- **Employee Database**: full CRUD, search/filter/pagination, a tabbed employee profile page, and hierarchy-scoped visibility enforced in the backend (`Employee::scopeVisibleTo()`) — Administrators/People Development see everyone, a supervisor sees themselves plus their direct reports only (one level, not the whole chain beneath them — someone with no direct reports simply sees only themselves), and Staff see only themselves. The same scope is reused everywhere an employee list appears — Skill Matrix, Competency Gap Analysis, Training Records, Certificates, and Development Plans — so visibility can never drift between modules.
+- **User Management & per-menu edit permissions** (Administrator-only, under People & Organization → User Management): create new login accounts (name/email/initial password/role), change a user's role, see their linked position for context, and grant or revoke edit rights per menu independently of role. Every menu defaults to read-only except Job Descriptions (editable by everyone by default, since staff should always be able to work on their own job description); an administrator can widen or narrow this per user at any time from one screen. Enforced centrally — a `Gate::after` hook in `AppServiceProvider` retrofits every existing `Manage*` permission check with the per-user override, and a `menu.edit` route middleware covers the rest — so a grant or revocation takes effect everywhere immediately, not just on one screen.
+- **Guest (read-only) access**: a "View as Guest" button on the login page logs the visitor into a single shared, read-only account with organization-wide view access and zero edit rights anywhere, hard-enforced regardless of any menu override that might exist on that account.
 - **Organization & Master Data CRUD**: create/edit/deactivate/delete UI for departments, divisions, maintenance areas, maintenance teams, positions, employment types, employment statuses, shifts, locations, skill categories, competency levels, and the skill catalog — restricted to the `master-data.manage` permission (Administrator by default).
 - **Job Descriptions**: full CRUD with a simple version/approval workflow (draft → pending review → active → archived), version history per position, and an explicit "New Revision" action instead of silently overwriting history. Shown on the employee profile's Job Description tab.
 - **Skills & Competency Management**: a configurable competency level scale (not hard-coded), a skill catalog, and **Position Skill Requirements** (which skills + level each position needs).
@@ -32,7 +34,7 @@ Implemented:
 - **Excel (.xlsx) export**: alongside the existing CSV export, Employees, Certificates, Training Records, Training Hours, and Assessment History can all be exported as genuine `.xlsx` files (`phpoffice/phpspreadsheet`).
 - **Visual training calendar**: the Training Calendar page now offers a month-grid view (with month navigation) as an alternative to the original list view, toggled with `?view=grid`.
 - Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts, sample assessments, and a training/development-plan/certificate story that ties back to a real seeded competency gap so the modules show a consistent, believable narrative rather than disconnected sample rows.
-- Automated tests (119 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, development plan authorization, certificate upload/download/status computation, audit log entries, report calculations/CSV/XLSX export, application settings, notification delivery, and the calendar grid view.
+- Automated tests (152 passing) covering authentication guards, role/permission checks, employee visibility scoping (across every module that scopes by it), master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, development plan authorization, certificate upload/download/status computation, audit log entries, report calculations/CSV/XLSX export, application settings, notification delivery, the calendar grid view, per-user menu edit permissions, User Management, and Guest access.
 
 ## Technology stack
 
@@ -155,15 +157,17 @@ Tests run against an in-memory SQLite database (configured in `phpunit.xml`) so 
 | Maintenance Staff | staff@mpd.test |
 | People Development | hr@mpd.test |
 
+There is also a `guest@mpd.test` account (random, never-surfaced password) backing the "View as Guest" button on the login page — not meant to be logged into directly by email/password.
+
 ## Roles
 
-- **Administrator** — full access, manages users, master data, and all modules.
-- **Maintenance Manager** — manages/approves employee development, skills, training, and views reports for the department.
-- **Maintenance Supervisor** — views their team, records skill assessments, recommends training.
-- **Maintenance Staff** — views only their own profile, skills, training, and certificates.
-- **People Development / HR** — coordinates training programs, certificates, and development reporting.
+- **Administrator** — full access, manages users (User Management), master data, and all modules; always able to edit every menu regardless of any per-user override.
+- **Maintenance Manager** and **Maintenance Supervisor** — both are line-management roles scoped by hierarchy: sees themselves plus their direct reports only (one level, not the whole chain beneath them). Manager additionally manages/approves employee development, skills, and training; Supervisor records skill assessments and recommends training.
+- **Maintenance Staff** — sees only their own profile, skills, training, and certificates (or their own reports too, if ever promoted into a supervisory position with reports linked to them).
+- **People Development / HR** — coordinates training programs, certificates, and development reporting (sees all employees, an intentional exception to hierarchy scoping since HR legitimately needs org-wide visibility).
+- **Guest** — read-only, organization-wide view access via the login page's "View as Guest" button; cannot edit anything anywhere, cannot be granted edit rights by any menu override, and cannot reach Settings, User Management, or Audit Log.
 
-Role and permission names are centralised in `app/Enums/RoleName.php` and `app/Enums/PermissionName.php` rather than hard-coded throughout the app.
+Role and permission names are centralised in `app/Enums/RoleName.php` and `app/Enums/PermissionName.php` rather than hard-coded throughout the app. On top of these roles, an Administrator can grant or revoke **per-user, per-menu edit rights** from User Management (`app/Models/UserMenuPermission.php`) — see the Implemented list above.
 
 ## File storage
 

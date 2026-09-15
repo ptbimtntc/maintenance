@@ -18,6 +18,7 @@ class EmployeeDevelopmentPlanController extends Controller
     public function index(Request $request): View
     {
         $plans = EmployeeDevelopmentPlan::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with('employee')
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
             ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->string('priority')))
@@ -35,6 +36,7 @@ class EmployeeDevelopmentPlanController extends Controller
 
     public function create(Employee $employee): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageDevelopmentPlans->value);
 
         return view('development-plans.form', [
@@ -46,6 +48,8 @@ class EmployeeDevelopmentPlanController extends Controller
 
     public function store(StoreDevelopmentPlanRequest $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
+
         $employee->developmentPlans()->create([
             ...$request->validated(),
             'created_by' => $request->user()->id,
@@ -58,6 +62,7 @@ class EmployeeDevelopmentPlanController extends Controller
 
     public function edit(Employee $employee, EmployeeDevelopmentPlan $plan): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageDevelopmentPlans->value);
         abort_unless($plan->employee_id === $employee->id, 404);
 
@@ -70,6 +75,7 @@ class EmployeeDevelopmentPlanController extends Controller
 
     public function update(StoreDevelopmentPlanRequest $request, Employee $employee, EmployeeDevelopmentPlan $plan): RedirectResponse
     {
+        $this->authorize('view', $employee);
         abort_unless($plan->employee_id === $employee->id, 404);
 
         $plan->update($request->validated());
@@ -81,6 +87,7 @@ class EmployeeDevelopmentPlanController extends Controller
 
     public function destroy(Employee $employee, EmployeeDevelopmentPlan $plan): RedirectResponse
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageDevelopmentPlans->value);
         abort_unless($plan->employee_id === $employee->id, 404);
 

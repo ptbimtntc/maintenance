@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\Auditable;
+use App\Enums\PermissionName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -196,6 +197,43 @@ class Employee extends Model
                 'status' => $status,
             ];
         });
+    }
+
+    /**
+     * The single source of truth for "which employees can this user see",
+     * reused by the Employee list/profile, Skill Matrix, Competency Gap
+     * Analysis, Training Records, Certificates, and Development Plans, so
+     * visibility can never drift between modules.
+     *
+     * - ViewAllEmployees: no restriction (Administrator, People Development,
+     *   and the Guest read-only account).
+     * - ViewSubordinateEmployees: the viewer's own record plus their direct
+     *   reports only (one level - not the whole reporting chain beneath
+     *   them). A viewer with no direct reports simply sees only themselves.
+     * - ViewOwnEmployee: only the viewer's own record.
+     * - None of the above: sees nothing (viewAny() on the policy already
+     *   blocks reaching these screens in that case).
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
+            return $query;
+        }
+
+        $viewerEmployeeId = $user->employee?->id;
+
+        if ($user->hasPermissionTo(PermissionName::ViewSubordinateEmployees->value)) {
+            return $query->where(function (Builder $q) use ($viewerEmployeeId) {
+                $q->where('id', $viewerEmployeeId ?? 0)
+                    ->orWhere('supervisor_id', $viewerEmployeeId ?? 0);
+            });
+        }
+
+        if ($user->hasPermissionTo(PermissionName::ViewOwnEmployee->value)) {
+            return $query->where('id', $viewerEmployeeId ?? 0);
+        }
+
+        return $query->whereRaw('1 = 0');
     }
 
     public function scopeSearch(Builder $query, ?string $term): Builder

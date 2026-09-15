@@ -25,6 +25,7 @@ class SkillMatrixController extends Controller
     public function index(Request $request): View
     {
         $employees = Employee::query()
+            ->visibleTo($request->user())
             ->with(['position.skillRequirements.requiredCompetencyLevel', 'maintenanceArea', 'maintenanceTeam'])
             ->when($request->filled('maintenance_area_id'), fn ($q) => $q->where('maintenance_area_id', $request->integer('maintenance_area_id')))
             ->when($request->filled('maintenance_team_id'), fn ($q) => $q->where('maintenance_team_id', $request->integer('maintenance_team_id')))

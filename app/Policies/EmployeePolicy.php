@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\MenuKey;
 use App\Enums\PermissionName;
 use App\Models\Employee;
 use App\Models\User;
@@ -17,44 +18,36 @@ class EmployeePolicy
     {
         return $user->hasAnyPermission([
             PermissionName::ViewAllEmployees->value,
-            PermissionName::ViewTeamEmployees->value,
+            PermissionName::ViewSubordinateEmployees->value,
             PermissionName::ViewOwnEmployee->value,
         ]);
     }
 
+    /**
+     * Delegates to the same Employee::scopeVisibleTo() used for list
+     * screens, so a single-record check (e.g. certificate download, the
+     * profile page) can never disagree with what shows up in a list.
+     */
     public function view(User $user, Employee $employee): bool
     {
-        if ($user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
-            return true;
-        }
-
-        if ($user->hasPermissionTo(PermissionName::ViewTeamEmployees->value)) {
-            $viewerTeamId = $user->employee?->maintenance_team_id;
-
-            if ($viewerTeamId !== null && $viewerTeamId === $employee->maintenance_team_id) {
-                return true;
-            }
-        }
-
-        if ($user->hasPermissionTo(PermissionName::ViewOwnEmployee->value)) {
-            return $employee->user_id === $user->id;
-        }
-
-        return false;
+        return Employee::query()->visibleTo($user)->whereKey($employee->id)->exists();
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo(PermissionName::ManageEmployees->value);
+        return $user->hasPermissionTo(PermissionName::ManageEmployees->value)
+            && $user->canEditMenu(MenuKey::Employees);
     }
 
     public function update(User $user, Employee $employee): bool
     {
-        return $user->hasPermissionTo(PermissionName::ManageEmployees->value);
+        return $user->hasPermissionTo(PermissionName::ManageEmployees->value)
+            && $user->canEditMenu(MenuKey::Employees)
+            && $this->view($user, $employee);
     }
 
     public function delete(User $user, Employee $employee): bool
     {
-        return $user->hasPermissionTo(PermissionName::ManageEmployees->value);
+        return $this->update($user, $employee);
     }
 }

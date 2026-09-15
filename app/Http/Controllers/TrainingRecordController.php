@@ -23,6 +23,7 @@ class TrainingRecordController extends Controller
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $query = TrainingRecord::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'trainingProgram', 'trainingType'])
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
@@ -60,6 +61,7 @@ class TrainingRecordController extends Controller
 
     public function create(Employee $employee): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageTrainingRecords->value);
 
         return view('training.records.form', [
@@ -70,6 +72,8 @@ class TrainingRecordController extends Controller
 
     public function store(StoreTrainingRecordRequest $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
+
         $employee->trainingRecords()->create([
             ...$request->safe()->all(),
             'certificate_issued' => $request->boolean('certificate_issued'),
@@ -84,6 +88,7 @@ class TrainingRecordController extends Controller
 
     public function destroy(Employee $employee, TrainingRecord $record): RedirectResponse
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageTrainingRecords->value);
         abort_unless($record->employee_id === $employee->id, 404);
 

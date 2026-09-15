@@ -47,6 +47,8 @@ class EmployeeSeeder extends Seeder
             'staff@mpd.test' => ['position' => $technicianPosition, 'team' => $workshopTeam, 'area' => $workshopArea],
         ];
 
+        $demoEmployees = [];
+
         foreach ($demoLinks as $email => $link) {
             $user = User::where('email', $email)->first();
 
@@ -54,7 +56,7 @@ class EmployeeSeeder extends Seeder
                 continue;
             }
 
-            Employee::firstOrCreate(
+            $demoEmployees[$email] = Employee::firstOrCreate(
                 ['user_id' => $user->id],
                 [
                     'employee_number' => 'EMP-'.str_pad((string) $user->id, 5, '0', STR_PAD_LEFT),
@@ -72,10 +74,21 @@ class EmployeeSeeder extends Seeder
             );
         }
 
+        // Wire up the reporting hierarchy for the demo accounts, so
+        // "supervisor sees self + direct reports" has something real to
+        // show: Manager <- Supervisor <- Staff.
+        if (isset($demoEmployees['supervisor@mpd.test'], $demoEmployees['manager@mpd.test'])) {
+            $demoEmployees['supervisor@mpd.test']->update(['supervisor_id' => $demoEmployees['manager@mpd.test']->id]);
+        }
+        if (isset($demoEmployees['staff@mpd.test'], $demoEmployees['supervisor@mpd.test'])) {
+            $demoEmployees['staff@mpd.test']->update(['supervisor_id' => $demoEmployees['supervisor@mpd.test']->id]);
+        }
+
         // A handful of additional fictional employees spread across the
         // seeded areas/teams/positions so lists, filters and the dashboard
-        // have realistic-looking data to show.
-        Employee::factory()
+        // have realistic-looking data to show. A few report to the demo
+        // supervisor, so that account has more than one direct report.
+        $additional = Employee::factory()
             ->count(15)
             ->state(fn () => [
                 'maintenance_area_id' => $areas->random()->id,
@@ -87,5 +100,11 @@ class EmployeeSeeder extends Seeder
                 'shift_id' => $shifts->random()->id,
             ])
             ->create();
+
+        if (isset($demoEmployees['supervisor@mpd.test'])) {
+            $additional->take(2)->each(
+                fn (Employee $employee) => $employee->update(['supervisor_id' => $demoEmployees['supervisor@mpd.test']->id])
+            );
+        }
     }
 }

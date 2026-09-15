@@ -16,7 +16,7 @@ enum PermissionName: string
 
     // Employees
     case ViewAllEmployees = 'employees.view-all';
-    case ViewTeamEmployees = 'employees.view-team';
+    case ViewSubordinateEmployees = 'employees.view-subordinates';
     case ViewOwnEmployee = 'employees.view-own';
     case ManageEmployees = 'employees.manage';
 

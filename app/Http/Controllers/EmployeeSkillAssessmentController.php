@@ -12,6 +12,7 @@ class EmployeeSkillAssessmentController extends Controller
 {
     public function store(Request $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
         abort_unless($request->user()->hasPermissionTo(PermissionName::AssessCompetencies->value), 403);
 
         $data = $request->validate([
@@ -34,6 +35,7 @@ class EmployeeSkillAssessmentController extends Controller
 
     public function destroy(Request $request, Employee $employee, EmployeeSkillAssessment $assessment): RedirectResponse
     {
+        $this->authorize('view', $employee);
         abort_unless($request->user()->hasPermissionTo(PermissionName::AssessCompetencies->value), 403);
         abort_unless($assessment->employee_id === $employee->id, 404);
 

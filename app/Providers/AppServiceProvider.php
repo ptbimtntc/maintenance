@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Enums\MenuKey;
+use App\Models\User;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -38,5 +41,35 @@ class AppServiceProvider extends ServiceProvider
                 return url()->to(request()->getPathInfo());
             });
         }
+
+        // Retrofits every existing role-permission check for a "Manage*"
+        // permission (route `can:` middleware, $this->authorize(...), and
+        // Blade @can(...)) with the per-user menu-edit override, in one
+        // place, rather than editing each of those call sites individually.
+        // Only affects abilities mapped in MenuKey::forManagePermission() -
+        // every other ability (including model policies like
+        // EmployeePolicy::view/update) passes through untouched (null).
+        //
+        // - A role-based grant (Manager has ManageEmployees, say) can be
+        //   narrowed to a denial if the admin has switched that user's menu
+        //   override off.
+        // - A role-based denial can be turned into a grant only for a menu
+        //   that defaults to editable (currently just Job Descriptions),
+        //   so staff without ManageJobDescriptions can still edit their own
+        //   job description unless an admin explicitly revokes it. This
+        //   never escalates any other menu, since their defaults are false.
+        Gate::after(function (User $user, string $ability, ?bool $result) {
+            $menu = MenuKey::forManagePermission($ability);
+
+            if (! $menu) {
+                return null;
+            }
+
+            if ($result) {
+                return $user->canEditMenu($menu);
+            }
+
+            return $user->canEditMenu($menu) ? true : null;
+        });
     }
 }

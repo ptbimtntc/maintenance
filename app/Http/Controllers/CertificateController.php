@@ -26,6 +26,7 @@ class CertificateController extends Controller
     public function index(Request $request): View|StreamedResponse
     {
         $query = Certificate::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'certificateType'])
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
@@ -79,6 +80,7 @@ class CertificateController extends Controller
 
     public function create(Employee $employee): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
 
         return view('certificates.form', [
@@ -90,6 +92,8 @@ class CertificateController extends Controller
 
     public function store(StoreCertificateRequest $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
+
         $data = $request->safe()->except('file');
 
         $certificate = $employee->certificates()->create([
@@ -107,6 +111,7 @@ class CertificateController extends Controller
 
     public function edit(Employee $employee, Certificate $certificate): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
         abort_unless($certificate->employee_id === $employee->id, 404);
 
@@ -119,6 +124,7 @@ class CertificateController extends Controller
 
     public function update(StoreCertificateRequest $request, Employee $employee, Certificate $certificate): RedirectResponse
     {
+        $this->authorize('view', $employee);
         abort_unless($certificate->employee_id === $employee->id, 404);
 
         $certificate->update([
@@ -135,6 +141,7 @@ class CertificateController extends Controller
 
     public function destroy(Employee $employee, Certificate $certificate): RedirectResponse
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
         abort_unless($certificate->employee_id === $employee->id, 404);
 

@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\Employee;
-use App\Models\MaintenanceTeam;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,6 +49,46 @@ class EmployeeManagementTest extends TestCase
         $response->assertViewHas('employees', fn ($employees) => $employees->total() === 3);
     }
 
+    public function test_people_development_sees_all_employees(): void
+    {
+        // People Development (HR) is an intentional exception to hierarchy
+        // scoping - it's a cross-organization role, not a line-management
+        // one, so it keeps ViewAllEmployees like Administrator.
+        $hr = User::factory()->create();
+        $hr->assignRole(RoleName::PeopleDevelopment->value);
+
+        Employee::factory()->count(3)->create();
+
+        $response = $this->actingAs($hr)->get(route('employees.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('employees', fn ($employees) => $employees->total() === 3);
+    }
+
+    public function test_manager_sees_only_themselves_and_their_direct_reports(): void
+    {
+        // Maintenance Manager is scoped by hierarchy like Supervisor - it's
+        // a line-management role, not a cross-organization one like People
+        // Development.
+        $managerUser = User::factory()->create();
+        $managerUser->assignRole(RoleName::MaintenanceManager->value);
+        $managerEmployee = Employee::factory()->create(['user_id' => $managerUser->id]);
+
+        $directReport = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
+        Employee::factory()->create();
+
+        $response = $this->actingAs($managerUser)->get(route('employees.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('employees', function ($employees) use ($managerEmployee, $directReport) {
+            $ids = $employees->pluck('id')->all();
+
+            return $employees->total() === 2
+                && in_array($managerEmployee->id, $ids)
+                && in_array($directReport->id, $ids);
+        });
+    }
+
     public function test_maintenance_staff_can_only_see_their_own_employee_record(): void
     {
         $staffUser = User::factory()->create();
@@ -78,22 +117,44 @@ class EmployeeManagementTest extends TestCase
         $response->assertForbidden();
     }
 
-    public function test_supervisor_only_sees_employees_on_their_own_team(): void
+    public function test_supervisor_sees_only_themselves_and_their_direct_reports(): void
     {
         $supervisorUser = User::factory()->create();
         $supervisorUser->assignRole(RoleName::MaintenanceSupervisor->value);
+        $supervisorEmployee = Employee::factory()->create(['user_id' => $supervisorUser->id]);
 
-        $teamA = MaintenanceTeam::factory()->create();
-        $teamB = MaintenanceTeam::factory()->create();
-
-        Employee::factory()->create(['user_id' => $supervisorUser->id, 'maintenance_team_id' => $teamA->id]);
-        Employee::factory()->create(['maintenance_team_id' => $teamA->id]);
-        Employee::factory()->create(['maintenance_team_id' => $teamB->id]);
+        $directReport = Employee::factory()->create(['supervisor_id' => $supervisorEmployee->id]);
+        // A report-of-a-report: not visible, since visibility is one level
+        // deep only (direct reports), not the whole chain beneath them.
+        Employee::factory()->create(['supervisor_id' => $directReport->id]);
+        // Someone else's employee entirely: never visible.
+        Employee::factory()->create();
 
         $response = $this->actingAs($supervisorUser)->get(route('employees.index'));
 
         $response->assertOk();
-        $response->assertViewHas('employees', fn ($employees) => $employees->total() === 2);
+        $response->assertViewHas('employees', function ($employees) use ($supervisorEmployee, $directReport) {
+            $ids = $employees->pluck('id')->all();
+
+            return $employees->total() === 2
+                && in_array($supervisorEmployee->id, $ids)
+                && in_array($directReport->id, $ids);
+        });
+    }
+
+    public function test_supervisor_with_no_direct_reports_sees_only_themselves(): void
+    {
+        $supervisorUser = User::factory()->create();
+        $supervisorUser->assignRole(RoleName::MaintenanceSupervisor->value);
+        $supervisorEmployee = Employee::factory()->create(['user_id' => $supervisorUser->id]);
+
+        Employee::factory()->count(2)->create();
+
+        $response = $this->actingAs($supervisorUser)->get(route('employees.index'));
+
+        $response->assertOk();
+        $response->assertViewHas('employees', fn ($employees) => $employees->total() === 1
+            && $employees->first()->id === $supervisorEmployee->id);
     }
 
     public function test_maintenance_staff_cannot_create_employees(): void

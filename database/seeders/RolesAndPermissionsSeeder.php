@@ -24,7 +24,7 @@ class RolesAndPermissionsSeeder extends Seeder
             RoleName::Administrator->value => PermissionName::all(),
 
             RoleName::MaintenanceManager->value => [
-                PermissionName::ViewAllEmployees,
+                PermissionName::ViewSubordinateEmployees,
                 PermissionName::ManageEmployees,
                 PermissionName::ViewJobDescriptions,
                 PermissionName::ManageJobDescriptions,
@@ -42,7 +42,7 @@ class RolesAndPermissionsSeeder extends Seeder
             ],
 
             RoleName::MaintenanceSupervisor->value => [
-                PermissionName::ViewTeamEmployees,
+                PermissionName::ViewSubordinateEmployees,
                 PermissionName::ViewJobDescriptions,
                 PermissionName::AssessCompetencies,
                 PermissionName::ViewSkillMatrix,
@@ -73,6 +73,23 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ManageCertificates,
                 PermissionName::ViewDevelopmentPlans,
                 PermissionName::ManageDevelopmentPlans,
+                PermissionName::ViewReports,
+            ],
+
+            // Read-only, org-wide access for the "View as Guest" button on
+            // the login page. Deliberately excludes ManageUsers/
+            // ManageSettings/ManageMasterData and every Manage* permission,
+            // so a guest can never edit anything no matter what a future
+            // per-user menu override might say (User::canEditMenu() also
+            // hard-blocks this role as a second layer of defense).
+            RoleName::Guest->value => [
+                PermissionName::ViewAllEmployees,
+                PermissionName::ViewJobDescriptions,
+                PermissionName::ViewSkillMatrix,
+                PermissionName::ViewCompetencyGap,
+                PermissionName::ViewTraining,
+                PermissionName::ViewCertificates,
+                PermissionName::ViewDevelopmentPlans,
                 PermissionName::ViewReports,
             ],
         ];

@@ -22,12 +22,13 @@ class EmployeeSkillAssessmentTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
-    public function test_supervisor_can_record_a_skill_assessment_for_their_team(): void
+    public function test_supervisor_can_record_a_skill_assessment_for_a_direct_report(): void
     {
         $supervisor = User::factory()->create();
         $supervisor->assignRole(RoleName::MaintenanceSupervisor->value);
+        $supervisorEmployee = Employee::factory()->create(['user_id' => $supervisor->id]);
 
-        $employee = Employee::factory()->create();
+        $employee = Employee::factory()->create(['supervisor_id' => $supervisorEmployee->id]);
         $skill = Skill::factory()->create();
         $level = CompetencyLevel::factory()->create();
 
@@ -67,8 +68,9 @@ class EmployeeSkillAssessmentTest extends TestCase
     {
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
+        $managerEmployee = Employee::factory()->create(['user_id' => $manager->id]);
 
-        $employee = Employee::factory()->create();
+        $employee = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
         $skill = Skill::factory()->create();
         $oldLevel = CompetencyLevel::factory()->create(['level_number' => 1]);
         $newLevel = CompetencyLevel::factory()->create(['level_number' => 3]);

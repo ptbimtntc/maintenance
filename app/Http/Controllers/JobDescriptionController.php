@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MenuKey;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreJobDescriptionRequest;
 use App\Models\JobDescription;
@@ -12,6 +13,23 @@ use Illuminate\View\View;
 
 class JobDescriptionController extends Controller
 {
+    /**
+     * Job Descriptions is the one menu that defaults to editable for
+     * everyone (MenuKey::JobDescriptions->editableByDefault()), on top of
+     * the pre-existing ManageJobDescriptions role permission (which
+     * Administrator/Manager hold outright). Either grant is sufficient,
+     * so an administrator can still revoke edit rights for a specific user
+     * via the menu permission override without touching roles.
+     */
+    private function authorizeJobDescriptionEdit(Request $request): void
+    {
+        abort_unless(
+            $request->user()->hasPermissionTo(PermissionName::ManageJobDescriptions->value)
+                || $request->user()->canEditMenu(MenuKey::JobDescriptions),
+            403
+        );
+    }
+
     public function index(Request $request): View
     {
         $jobDescriptions = JobDescription::query()
@@ -31,9 +49,9 @@ class JobDescriptionController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $this->authorize(PermissionName::ManageJobDescriptions->value);
+        $this->authorizeJobDescriptionEdit($request);
 
         return view('job-descriptions.form', [
             'jobDescription' => null,
@@ -69,9 +87,9 @@ class JobDescriptionController extends Controller
         ]);
     }
 
-    public function edit(JobDescription $jobDescription): View
+    public function edit(Request $request, JobDescription $jobDescription): View
     {
-        $this->authorize(PermissionName::ManageJobDescriptions->value);
+        $this->authorizeJobDescriptionEdit($request);
         abort_if($jobDescription->status === 'archived', 403, 'Archived job descriptions cannot be edited. Create a new revision instead.');
 
         return view('job-descriptions.form', [
@@ -82,6 +100,7 @@ class JobDescriptionController extends Controller
 
     public function update(StoreJobDescriptionRequest $request, JobDescription $jobDescription): RedirectResponse
     {
+        $this->authorizeJobDescriptionEdit($request);
         abort_if($jobDescription->status === 'archived', 403);
 
         $jobDescription->update([
@@ -94,7 +113,7 @@ class JobDescriptionController extends Controller
 
     public function newRevision(Request $request, JobDescription $jobDescription): RedirectResponse
     {
-        $this->authorize(PermissionName::ManageJobDescriptions->value);
+        $this->authorizeJobDescriptionEdit($request);
 
         $nextVersion = 1 + (int) JobDescription::where('position_id', $jobDescription->position_id)->max('version');
 
@@ -120,7 +139,7 @@ class JobDescriptionController extends Controller
 
     public function submitForReview(Request $request, JobDescription $jobDescription): RedirectResponse
     {
-        $this->authorize(PermissionName::ManageJobDescriptions->value);
+        $this->authorizeJobDescriptionEdit($request);
         abort_unless($jobDescription->status === 'draft', 422, 'Only drafts can be submitted for review.');
 
         $jobDescription->update(['status' => 'pending_review', 'updated_by' => $request->user()->id]);
@@ -149,7 +168,7 @@ class JobDescriptionController extends Controller
 
     public function archive(Request $request, JobDescription $jobDescription): RedirectResponse
     {
-        $this->authorize(PermissionName::ManageJobDescriptions->value);
+        $this->authorizeJobDescriptionEdit($request);
 
         $jobDescription->update(['status' => 'archived', 'updated_by' => $request->user()->id]);
 

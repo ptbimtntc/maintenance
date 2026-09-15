@@ -46,6 +46,7 @@ class CompetencyGapAnalysisTest extends TestCase
     {
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
+        $managerEmployee = Employee::factory()->create(['user_id' => $manager->id]);
 
         $position = Position::factory()->create(['title' => 'Reliability Engineer']);
         $skill = Skill::factory()->create(['name' => 'Vibration Analysis']);
@@ -58,7 +59,7 @@ class CompetencyGapAnalysisTest extends TestCase
             'required_competency_level_id' => $levelFour->id,
         ]);
 
-        $employeeWithGap = Employee::factory()->create(['position_id' => $position->id]);
+        $employeeWithGap = Employee::factory()->create(['position_id' => $position->id, 'supervisor_id' => $managerEmployee->id]);
         EmployeeSkillAssessment::factory()->create([
             'employee_id' => $employeeWithGap->id,
             'skill_id' => $skill->id,

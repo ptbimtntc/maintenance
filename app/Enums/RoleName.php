@@ -13,6 +13,7 @@ enum RoleName: string
     case MaintenanceSupervisor = 'Maintenance Supervisor';
     case MaintenanceStaff = 'Maintenance Staff';
     case PeopleDevelopment = 'People Development';
+    case Guest = 'Guest';
 
     public function label(): string
     {

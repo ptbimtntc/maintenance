@@ -37,14 +37,7 @@ class EmployeeController extends Controller
             'department', 'maintenanceArea', 'maintenanceTeam', 'position', 'employmentStatus',
         ]);
 
-        if ($user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
-            // no extra scoping - can see everyone
-        } elseif ($user->hasPermissionTo(PermissionName::ViewTeamEmployees->value)) {
-            $query->where('maintenance_team_id', $user->employee?->maintenance_team_id ?? 0);
-        } else {
-            // ViewOwnEmployee only
-            $query->where('user_id', $user->id);
-        }
+        $query->visibleTo($user);
 
         $query->search($request->string('search')->toString())
             ->when($request->filled('department_id'), fn ($q) => $q->where('department_id', $request->integer('department_id')))
