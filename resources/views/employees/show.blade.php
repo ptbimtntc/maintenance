@@ -310,13 +310,64 @@
             </div>
         </div>
 
-        @foreach (['certificates' => 'Certificate Management'] as $key => $moduleName)
-            <div x-show="tab === '{{ $key }}'">
-                <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center">
-                    <p class="text-sm font-medium text-gray-500">{{ $moduleName }} module not yet implemented</p>
-                    <p class="mt-1 text-xs text-gray-400">This tab will show real data once the module is built in a later phase.</p>
+        @php
+        $certStatusStyles = [
+            'valid' => 'bg-green-100 text-green-800',
+            'expiring_soon' => 'bg-amber-100 text-amber-800',
+            'expired' => 'bg-red-100 text-red-800',
+            'no_expiry' => 'bg-gray-100 text-gray-600',
+            'pending_verification' => 'bg-blue-100 text-blue-800',
+        ];
+        $certStatusLabels = \App\Models\Certificate::statusLabels();
+        @endphp
+
+        <div x-show="tab === 'certificates'">
+            <div class="space-y-4">
+                @can(\App\Enums\PermissionName::ManageCertificates->value)
+                    <div class="flex justify-end">
+                        <a href="{{ route('employees.certificates.create', $employee) }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Add Certificate</a>
+                    </div>
+                @endcan
+
+                <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Certificate</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Type</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Expiry Date</th>
+                                <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                                <th class="px-4 py-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @forelse ($employee->certificates as $certificate)
+                                <tr>
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $certificate->name }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
+                                    <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $certStatusStyles[$certificate->status()] }}">{{ $certStatusLabels[$certificate->status()] }}</span></td>
+                                    <td class="px-4 py-3 text-right space-x-3">
+                                        @if ($certificate->file_path)
+                                            <a href="{{ route('certificates.download', $certificate) }}" class="text-slate-600 hover:underline">Download</a>
+                                        @endif
+                                        @can(\App\Enums\PermissionName::ManageCertificates->value)
+                                            <a href="{{ route('employees.certificates.edit', [$employee, $certificate]) }}" class="text-slate-600 hover:underline">Edit</a>
+                                            <form method="POST" action="{{ route('employees.certificates.destroy', [$employee, $certificate]) }}" class="inline" onsubmit="return confirm('Remove this certificate?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                            </form>
+                                        @endcan
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">No certificates recorded yet.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        @endforeach
+        </div>
     </div>
 </x-app-layout>

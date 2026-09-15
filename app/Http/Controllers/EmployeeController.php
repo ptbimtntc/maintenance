@@ -93,6 +93,7 @@ class EmployeeController extends Controller
             'skillAssessments' => fn ($q) => $q->with(['skill', 'competencyLevel', 'assessedBy'])->orderByDesc('assessment_date')->orderByDesc('id'),
             'trainingRecords' => fn ($q) => $q->with('trainingProgram')->orderByDesc('training_date'),
             'developmentPlans' => fn ($q) => $q->with(['relatedSkill', 'currentCompetencyLevel', 'targetCompetencyLevel', 'mentor'])->orderByDesc('created_at'),
+            'certificates' => fn ($q) => $q->with('certificateType')->orderByDesc('created_at'),
         ]);
 
         return view('employees.show', [

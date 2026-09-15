@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CompetencyGapAnalysisController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
@@ -38,6 +39,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/employees/{employee}/development-plans/{plan}/edit', [EmployeeDevelopmentPlanController::class, 'edit'])->name('employees.development-plans.edit');
     Route::put('/employees/{employee}/development-plans/{plan}', [EmployeeDevelopmentPlanController::class, 'update'])->name('employees.development-plans.update');
     Route::delete('/employees/{employee}/development-plans/{plan}', [EmployeeDevelopmentPlanController::class, 'destroy'])->name('employees.development-plans.destroy');
+
+    Route::get('/employees/{employee}/certificates/create', [CertificateController::class, 'create'])->name('employees.certificates.create');
+    Route::post('/employees/{employee}/certificates', [CertificateController::class, 'store'])->name('employees.certificates.store');
+    Route::get('/employees/{employee}/certificates/{certificate}/edit', [CertificateController::class, 'edit'])->name('employees.certificates.edit');
+    Route::put('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'update'])->name('employees.certificates.update');
+    Route::delete('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'destroy'])->name('employees.certificates.destroy');
+    Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
 });
 
 Route::pattern('type', implode('|', array_keys(config('master_data'))));
@@ -118,6 +126,10 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
     ->get('/development-plans', [EmployeeDevelopmentPlanController::class, 'index'])
     ->name('development-plans.index');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCertificates->value])
+    ->get('/certificates', [CertificateController::class, 'index'])
+    ->name('certificates.index');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

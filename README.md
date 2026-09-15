@@ -4,9 +4,9 @@ An internal web application for the Maintenance Department of **PT Bekaert Indon
 
 > This project is under active development. It is not officially connected to, or endorsed by, any PT Bekaert Indonesia production system. The logo placeholder in the sidebar and login page is a stand-in for the official company logo, which can be added later.
 
-## Current status: Phase 5 — Training Management & Development Plans
+## Current status: Phase 6 — Certificate Management
 
-Phases 1 through 5 have been built so far. See [Roadmap](#roadmap) for what's next.
+Phases 1 through 6 have been built so far. See [Roadmap](#roadmap) for what's next.
 
 Implemented:
 - Laravel 13 application running on **MySQL** (not SQLite/demo storage).
@@ -24,10 +24,11 @@ Implemented:
 - **Training Management**: training programs (with related skills, category/type/provider, cost/duration), scheduled sessions with a calendar/list view, and participant assignment with per-participant attendance tracking. Session dates are validated (end can't be before start), and sessions respect a configurable maximum participant count.
 - **Training Records**: a per-employee training history (program, date, hours, attendance/completion status, assessment score/result, before/after competency level, certificate reference), a global searchable index, and a running total of training hours shown on the employee profile.
 - **Employee Development Plans**: objective, related skill/competency gap, current vs. target competency, a development action (formal training, OJT, coaching, mentoring, job rotation, self-learning, practical assessment, cross-training, certification), optional mentor and recommended training program, priority/status/progress tracking, and manager/employee remarks — visible on the employee profile and a global index.
-- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts, sample assessments, and a training/development-plan story that ties back to a real seeded competency gap so the modules show a consistent, believable narrative rather than disconnected sample rows.
-- Automated tests (85 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, and development plan authorization.
+- **Certificate Management**: certificates with type, number, issuing organization, issue/expiry dates, and secure file upload (PDF/JPG/PNG, 5MB max) stored on a **private disk** — never a public URL. Status (Valid / Expiring Soon / Expired / No Expiry / Pending Verification) is derived from the expiry date on every read rather than stored, so it can never go stale, and a certificate is never assumed valid just because a file was attached. Downloads are streamed through an authorized controller action that re-checks the same employee-visibility rules as the profile page.
+- Demo seed data (clearly fictional, not real company data), including employees linked to the demo login accounts, sample assessments, and a training/development-plan/certificate story that ties back to a real seeded competency gap so the modules show a consistent, believable narrative rather than disconnected sample rows.
+- Automated tests (95 passing) covering authentication guards, role/permission checks, employee visibility scoping, master data CRUD/validation, skill assessment recording, position requirements, the skill matrix and gap analysis calculations, the job description version/approval workflow, training session date/capacity validation, participant assignment, development plan authorization, and certificate upload/download/status computation (including a real file round-trip and rejection of disallowed file types).
 
-Not implemented yet: Certificates, Reports. These are planned for later phases (see below) and their UI/data will be built incrementally.
+Not implemented yet: Reports (a dedicated reporting/export module - most of the underlying data is already visible across the app's list views). This is planned for the final phase (see below).
 
 ## Technology stack
 
@@ -162,7 +163,7 @@ Role and permission names are centralised in `app/Enums/RoleName.php` and `app/E
 
 ## File storage
 
-Not yet applicable — no file uploads (e.g. certificates, job description attachments) have been implemented yet. When they are added, they will use Laravel's private local disk (`storage/app/private`), never `public/`, and access will be brokered through authorized controller actions rather than direct URLs.
+Certificate files are stored on Laravel's **private** local disk (`storage/app/private`, the `local` disk), never in `public/`. There is no public URL to a certificate file — the only way to retrieve one is the authenticated `certificates.download` route, which re-checks the viewer's access to the certificate's employee (the same rule as the employee profile page) before streaming the file. Uploads are restricted to PDF/JPG/PNG and 5MB max (`StoreCertificateRequest`).
 
 ## Troubleshooting
 
@@ -185,5 +186,5 @@ Not yet applicable — no file uploads (e.g. certificates, job description attac
 - ~~**Phase 3** — Job Descriptions, Skills & Competency levels, position skill requirements, Skill Matrix.~~ Done.
 - ~~**Phase 4** — Competency Gap Analysis.~~ Done.
 - ~~**Phase 5** — Training programs, schedules, records, Development Plans.~~ Done.
-- **Phase 6** — Certificate management with secure file storage and expiry tracking.
+- ~~**Phase 6** — Certificate management with secure file storage and expiry tracking.~~ Done.
 - **Phase 7** — Reports, audit logging, security review, UI polish.

@@ -135,6 +135,11 @@ class Employee extends Model
         return $this->hasMany(EmployeeDevelopmentPlan::class);
     }
 
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
     /**
      * The most recent assessment per skill, keyed by skill_id. Missing
      * assessments are simply absent from the collection - never treated as

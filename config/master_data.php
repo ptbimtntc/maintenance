@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\CertificateType;
 use App\Models\CompetencyLevel;
 use App\Models\Department;
 use App\Models\Division;
@@ -176,6 +177,13 @@ return [
         'model' => TrainingProvider::class,
         'label' => 'Training Providers',
         'singular' => 'Training Provider',
+        'name_field' => 'name',
+    ],
+
+    'certificate-types' => [
+        'model' => CertificateType::class,
+        'label' => 'Certificate Types',
+        'singular' => 'Certificate Type',
         'name_field' => 'name',
     ],
 ];

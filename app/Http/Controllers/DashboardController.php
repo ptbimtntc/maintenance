@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Certificate;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeSkillAssessment;
@@ -49,17 +50,14 @@ class DashboardController extends Controller
             'completed_sessions' => TrainingSession::where('status', 'completed')->count(),
         ];
 
-        $pendingModules = [
-            'Certificates Expiring Soon',
-            'Expired Certificates',
-        ];
+        $certificateSummary = $this->certificateSummary();
 
         return view('dashboard', [
             'orgSummary' => $orgSummary,
             'employeeSummary' => $employeeSummary,
             'skillSummary' => $skillSummary,
             'trainingSummary' => $trainingSummary,
-            'pendingModules' => $pendingModules,
+            'certificateSummary' => $certificateSummary,
         ]);
     }
 
@@ -82,6 +80,21 @@ class DashboardController extends Controller
         }
 
         return round($currentLevels->avg(fn (EmployeeSkillAssessment $assessment) => $assessment->competencyLevel->level_number), 1);
+    }
+
+    private function certificateSummary(): array
+    {
+        $today = now()->startOfDay();
+        $soonCutoff = $today->copy()->addDays(Certificate::EXPIRING_SOON_DAYS);
+
+        return [
+            'expiring_soon' => Certificate::where('verification_status', 'verified')
+                ->whereBetween('expiry_date', [$today, $soonCutoff])
+                ->count(),
+            'expired' => Certificate::where('verification_status', 'verified')
+                ->whereDate('expiry_date', '<', $today)
+                ->count(),
+        ];
     }
 
     /**

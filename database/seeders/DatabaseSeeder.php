@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             SkillsAndCompetencySeeder::class,
             JobDescriptionSeeder::class,
             TrainingSeeder::class,
+            CertificateSeeder::class,
         ]);
     }
 }
