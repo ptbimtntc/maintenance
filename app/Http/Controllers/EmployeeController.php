@@ -35,17 +35,27 @@ class EmployeeController extends Controller
         $user = $request->user();
 
         $query = Employee::query()->with([
-            'department', 'businessUnit', 'maintenanceArea', 'maintenanceTeam', 'position',
+            'department', 'businessUnit', 'maintenanceArea', 'maintenanceTeam', 'position', 'skillPosition',
             'employmentType', 'employmentSource', 'employmentStatus', 'shift', 'supervisor',
         ]);
 
         $query->visibleTo($user);
 
+        // The Status filter defaults to "Active" whenever the request
+        // doesn't explicitly mention it at all (a fresh visit, or the
+        // Reset link) - explicitly picking "All Statuses" sends the field
+        // as an empty string, which $request->has() still sees as present,
+        // so that choice is respected instead of being overridden back to
+        // the default.
+        $statusFilterId = $request->has('employment_status_id')
+            ? $request->string('employment_status_id')->toString()
+            : (string) (EmploymentStatus::where('code', 'ACTIVE')->value('id') ?? '');
+
         $query->search($request->string('search')->toString())
             ->when($request->filled('business_unit_id'), fn ($q) => $q->where('business_unit_id', $request->integer('business_unit_id')))
             ->when($request->filled('employment_type_id'), fn ($q) => $q->where('employment_type_id', $request->integer('employment_type_id')))
             ->when($request->filled('employment_source_id'), fn ($q) => $q->where('employment_source_id', $request->integer('employment_source_id')))
-            ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')))
+            ->when($statusFilterId !== '', fn ($q) => $q->where('employment_status_id', $statusFilterId))
             ->when($request->filled('supervisor_id'), fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')))
             ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')));
 
@@ -78,9 +88,12 @@ class EmployeeController extends Controller
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
             'supervisors' => Employee::query()->visibleTo($user)->whereHas('directReports')->orderBy('full_name')->get(['id', 'full_name', 'employee_number']),
             'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
-            'filters' => $request->only([
-                'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'employment_status_id', 'supervisor_id', 'shift_id',
-            ]),
+            'filters' => [
+                ...$request->only([
+                    'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'supervisor_id', 'shift_id',
+                ]),
+                'employment_status_id' => $statusFilterId,
+            ],
         ]);
     }
 
@@ -175,6 +188,36 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('employees.index')->with('status', 'Employee removed.');
+    }
+
+    /**
+     * Deletes several employees selected via checkboxes on the index page.
+     * Each one is re-authorized individually (not just checked against the
+     * submitted list) so a user can never delete someone outside both
+     * their visibility scope and the EmployeePolicy - the same rule single
+     * delete already enforces, just applied per row here.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $ids = $request->input('employee_ids', []);
+
+        $employees = Employee::query()
+            ->visibleTo($request->user())
+            ->whereIn('id', is_array($ids) ? $ids : [])
+            ->get();
+
+        $deleted = 0;
+
+        foreach ($employees as $employee) {
+            if ($request->user()->can('delete', $employee)) {
+                $employee->delete();
+                $deleted++;
+            }
+        }
+
+        $message = $deleted > 0 ? "{$deleted} employee(s) removed." : 'No employees were removed.';
+
+        return redirect()->route('employees.index')->with('status', $message);
     }
 
     /**

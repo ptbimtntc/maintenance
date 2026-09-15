@@ -69,47 +69,69 @@
             </div>
         </form>
 
+        @can('create', \App\Models\Employee::class)
+            <form id="bulk-delete-form" method="POST" action="{{ route('employees.bulk-destroy') }}"
+                  onsubmit="return confirm('Delete the selected employee(s)? This cannot be undone.');"
+                  x-data="{ checkedCount: 0 }">
+                @csrf
+        @endcan
+
         <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white">
             <table class="min-w-full divide-y divide-gray-200 text-sm">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-gray-500">Employee</th>
+                        @can('create', \App\Models\Employee::class)
+                            <th class="w-10 px-4 py-3">
+                                <input type="checkbox"
+                                       class="rounded border-gray-300"
+                                       @change="
+                                           const boxes = $el.closest('table').querySelectorAll('tbody input[type=checkbox]');
+                                           boxes.forEach(box => box.checked = $el.checked);
+                                           checkedCount = $el.checked ? boxes.length : 0;
+                                       ">
+                            </th>
+                        @endcan
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">Photo</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">NIK</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">Employee Name</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">Supervisor</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-500">Position</th>
-                        <th class="px-4 py-3 text-left font-medium text-gray-500">Area / Team</th>
-                        <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">Skill Position</th>
+                        <th class="px-4 py-3 text-left font-medium text-gray-500">Shift</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse ($employees as $employee)
                         <tr>
+                            @can('create', \App\Models\Employee::class)
+                                <td class="px-4 py-3">
+                                    <input type="checkbox" name="employee_ids[]" value="{{ $employee->id }}"
+                                           class="rounded border-gray-300"
+                                           @change="checkedCount += $el.checked ? 1 : -1">
+                                </td>
+                            @endcan
+                            <td class="px-4 py-3">
+                                @if ($employee->photo_path)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
+                                         alt="{{ $employee->full_name }}" class="h-10 w-10 rounded-full object-cover">
+                                @else
+                                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">
+                                        {{ \Illuminate\Support\Str::of($employee->full_name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $employee->employee_number }}</td>
                             <td class="px-4 py-3">
                                 <a href="{{ route('employees.show', $employee) }}" class="font-medium text-slate-900 hover:underline">{{ $employee->full_name }}</a>
-                                <p class="text-xs text-gray-500">{{ $employee->employee_number }}</p>
                             </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $employee->supervisor?->full_name ?? '—' }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ $employee->position?->title ?? '—' }}</td>
-                            <td class="px-4 py-3 text-gray-700">
-                                {{ $employee->maintenanceArea?->name ?? '—' }}
-                                @if ($employee->maintenanceTeam)
-                                    <span class="text-gray-400">/ {{ $employee->maintenanceTeam->name }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3">
-                                @if ($employee->employmentStatus)
-                                    <span @class([
-                                        'inline-flex rounded-full px-2 py-1 text-xs font-medium',
-                                        'bg-green-100 text-green-800' => $employee->employmentStatus->counts_as_active,
-                                        'bg-gray-100 text-gray-600' => ! $employee->employmentStatus->counts_as_active,
-                                    ])>
-                                        {{ $employee->employmentStatus->name }}
-                                    </span>
-                                @else
-                                    <span class="text-gray-400">—</span>
-                                @endif
-                            </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $employee->skillPosition?->name ?? '—' }}</td>
+                            <td class="px-4 py-3 text-gray-700">{{ $employee->shift?->name ?? '—' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-4 py-10 text-center text-gray-500">
+                            <td colspan="{{ auth()->user()->can('create', \App\Models\Employee::class) ? 8 : 7 }}" class="px-4 py-10 text-center text-gray-500">
                                 No employees match your filters yet.
                             </td>
                         </tr>
@@ -117,6 +139,17 @@
                 </tbody>
             </table>
         </div>
+
+        @can('create', \App\Models\Employee::class)
+                <div class="flex justify-end">
+                    <button type="submit"
+                            class="mt-3 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            :disabled="checkedCount === 0">
+                        Delete Selected (<span x-text="checkedCount"></span>)
+                    </button>
+                </div>
+            </form>
+        @endcan
 
         {{ $employees->links() }}
     </div>

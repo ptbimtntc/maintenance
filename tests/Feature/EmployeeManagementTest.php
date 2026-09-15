@@ -310,4 +310,79 @@ class EmployeeManagementTest extends TestCase
         $byEmailResponse = $this->actingAs($admin)->get(route('employees.index', ['search' => 'findable@example.com']));
         $byEmailResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 0);
     }
+
+    public function test_the_status_filter_defaults_to_active_when_not_specified(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $activeStatus = \App\Models\EmploymentStatus::factory()->create(['code' => 'ACTIVE']);
+        $resignedStatus = \App\Models\EmploymentStatus::factory()->create(['code' => 'RESIGNED']);
+
+        $activeEmployee = Employee::factory()->create(['employment_status_id' => $activeStatus->id]);
+        Employee::factory()->create(['employment_status_id' => $resignedStatus->id]);
+
+        // No employment_status_id in the URL at all -> defaults to Active only.
+        $response = $this->actingAs($admin)->get(route('employees.index'));
+        $response->assertViewHas('employees', fn ($employees) => $employees->total() === 1
+            && $employees->first()->id === $activeEmployee->id);
+        $response->assertViewHas('filters', fn ($filters) => (string) $filters['employment_status_id'] === (string) $activeStatus->id);
+
+        // Explicitly requesting "All Statuses" (empty value, but present) is respected.
+        $allResponse = $this->actingAs($admin)->get(route('employees.index', ['employment_status_id' => '']));
+        $allResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 2);
+    }
+
+    public function test_a_manager_can_bulk_delete_selected_employees(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $first = Employee::factory()->create();
+        $second = Employee::factory()->create();
+        $untouched = Employee::factory()->create();
+
+        $response = $this->actingAs($admin)->post(route('employees.bulk-destroy'), [
+            'employee_ids' => [$first->id, $second->id],
+        ]);
+
+        $response->assertRedirect(route('employees.index'));
+        $this->assertSoftDeleted($first);
+        $this->assertSoftDeleted($second);
+        $this->assertDatabaseHas('employees', ['id' => $untouched->id, 'deleted_at' => null]);
+    }
+
+    public function test_bulk_delete_is_forbidden_for_a_user_without_manage_employees(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        $employee = Employee::factory()->create();
+
+        $response = $this->actingAs($staff)->post(route('employees.bulk-destroy'), [
+            'employee_ids' => [$employee->id],
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseHas('employees', ['id' => $employee->id, 'deleted_at' => null]);
+    }
+
+    public function test_bulk_delete_only_removes_employees_visible_to_the_acting_user(): void
+    {
+        // Manager is both hierarchy-scoped (self + direct reports only) and
+        // holds ManageEmployees by default, so it can actually reach this
+        // action - Supervisor doesn't hold ManageEmployees at all.
+        $managerUser = User::factory()->create();
+        $managerUser->assignRole(RoleName::MaintenanceManager->value);
+        $managerEmployee = Employee::factory()->create(['user_id' => $managerUser->id]);
+        $directReport = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
+        $outsideScope = Employee::factory()->create();
+
+        $response = $this->actingAs($managerUser)->post(route('employees.bulk-destroy'), [
+            'employee_ids' => [$directReport->id, $outsideScope->id],
+        ]);
+
+        $response->assertRedirect(route('employees.index'));
+        $this->assertSoftDeleted($directReport);
+        $this->assertDatabaseHas('employees', ['id' => $outsideScope->id, 'deleted_at' => null]);
+    }
 }
