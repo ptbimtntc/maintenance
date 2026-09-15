@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ExportsCsv;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
@@ -23,7 +24,9 @@ use Illuminate\View\View;
 
 class EmployeeController extends Controller
 {
-    public function index(Request $request): View
+    use ExportsCsv;
+
+    public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $this->authorize('viewAny', Employee::class);
 
@@ -48,6 +51,22 @@ class EmployeeController extends Controller
             ->when($request->filled('maintenance_team_id'), fn ($q) => $q->where('maintenance_team_id', $request->integer('maintenance_team_id')))
             ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
             ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')));
+
+        if ($request->string('export') == 'csv') {
+            return $this->streamCsv(
+                'employees-'.now()->format('Y-m-d').'.csv',
+                ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'],
+                $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
+                    $e->employee_number,
+                    $e->full_name,
+                    $e->position?->title,
+                    $e->department?->name,
+                    $e->maintenanceArea?->name,
+                    $e->maintenanceTeam?->name,
+                    $e->employmentStatus?->name,
+                ])
+            );
+        }
 
         $employees = $query->orderBy('full_name')->paginate(15)->withQueryString();
 

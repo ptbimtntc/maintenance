@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CompetencyGapAnalysisController;
 use App\Http\Controllers\DashboardController;
@@ -11,6 +12,7 @@ use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SkillMatrixController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\TrainingRecordController;
@@ -130,6 +132,20 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPla
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCertificates->value])
     ->get('/certificates', [CertificateController::class, 'index'])
     ->name('certificates.index');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])
+    ->get('/audit-logs', [AuditLogController::class, 'index'])
+    ->name('audit-logs.index');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewReports->value])
+    ->prefix('reports')
+    ->name('reports.')
+    ->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/training-hours', [ReportController::class, 'trainingHours'])->name('training-hours');
+        Route::get('/development-summary', [ReportController::class, 'developmentSummary'])->name('development-summary');
+        Route::get('/assessment-history', [ReportController::class, 'assessmentHistory'])->name('assessment-history');
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

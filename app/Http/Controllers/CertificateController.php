@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ExportsCsv;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreCertificateRequest;
 use App\Models\Certificate;
@@ -17,9 +18,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CertificateController extends Controller
 {
+    use ExportsCsv;
+
     private const DISK = 'local';
 
-    public function index(Request $request): View
+    public function index(Request $request): View|StreamedResponse
     {
         $query = Certificate::query()
             ->with(['employee', 'certificateType'])
@@ -40,6 +43,25 @@ class CertificateController extends Controller
             'valid' => $query->where('verification_status', 'verified')->whereDate('expiry_date', '>', $soonCutoff),
             default => null,
         };
+
+        if ($request->string('export') == 'csv') {
+            $statusLabels = Certificate::statusLabels();
+
+            return $this->streamCsv(
+                'certificates-'.now()->format('Y-m-d').'.csv',
+                ['Employee', 'Certificate', 'Type', 'Number', 'Issuing Organization', 'Issue Date', 'Expiry Date', 'Status'],
+                $query->orderByDesc('created_at')->get()->map(fn (Certificate $c) => [
+                    $c->employee->full_name,
+                    $c->name,
+                    $c->certificateType?->name,
+                    $c->certificate_number,
+                    $c->issuing_organization,
+                    $c->issue_date?->format('Y-m-d'),
+                    $c->expiry_date?->format('Y-m-d'),
+                    $statusLabels[$c->status()],
+                ])
+            );
+        }
 
         $certificates = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
 

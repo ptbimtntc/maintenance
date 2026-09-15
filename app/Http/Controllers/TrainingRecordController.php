@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ExportsCsv;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreTrainingRecordRequest;
 use App\Models\CompetencyLevel;
@@ -16,18 +17,35 @@ use Illuminate\View\View;
 
 class TrainingRecordController extends Controller
 {
-    public function index(Request $request): View
+    use ExportsCsv;
+
+    public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $records = TrainingRecord::query()
+        $query = TrainingRecord::query()
             ->with(['employee', 'trainingProgram', 'trainingType'])
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
                 fn ($eq) => $eq->search($request->string('employee_search')->toString())
             ))
-            ->when($request->filled('completion_status'), fn ($q) => $q->where('completion_status', $request->string('completion_status')))
-            ->orderByDesc('training_date')
-            ->paginate(20)
-            ->withQueryString();
+            ->when($request->filled('completion_status'), fn ($q) => $q->where('completion_status', $request->string('completion_status')));
+
+        if ($request->string('export') == 'csv') {
+            return $this->streamCsv(
+                'training-records-'.now()->format('Y-m-d').'.csv',
+                ['Employee', 'Program', 'Date', 'Hours', 'Attendance', 'Completion', 'Score'],
+                $query->orderByDesc('training_date')->get()->map(fn (TrainingRecord $r) => [
+                    $r->employee->full_name,
+                    $r->trainingProgram?->title ?? 'Ad-hoc',
+                    $r->training_date->format('Y-m-d'),
+                    $r->duration_hours,
+                    $r->attendance_status,
+                    $r->completion_status,
+                    $r->assessment_score,
+                ])
+            );
+        }
+
+        $records = $query->orderByDesc('training_date')->paginate(20)->withQueryString();
 
         return view('training.records.index', [
             'records' => $records,
