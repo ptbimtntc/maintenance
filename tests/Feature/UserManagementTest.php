@@ -126,6 +126,42 @@ class UserManagementTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'budi.baru@mpd.test']);
     }
 
+    public function test_creating_a_user_can_link_it_to_an_unlinked_employee_in_one_step(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $position = Position::factory()->create();
+        $employee = Employee::factory()->create(['position_id' => $position->id, 'user_id' => null]);
+
+        $this->actingAs($admin)->post(route('admin.users.store'), [
+            'name' => 'Budi Baru',
+            'email' => 'budi.baru@mpd.test',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => RoleName::MaintenanceStaff->value,
+            'employee_id' => $employee->id,
+        ]);
+
+        $newUser = User::where('email', 'budi.baru@mpd.test')->firstOrFail();
+        $this->assertSame($newUser->id, $employee->fresh()->user_id);
+    }
+
+    public function test_the_create_form_only_lists_employees_not_already_linked_to_a_login(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $existingUser = User::factory()->create();
+        $linkedEmployee = Employee::factory()->create(['user_id' => $existingUser->id, 'full_name' => 'Already Linked']);
+        $unlinkedEmployee = Employee::factory()->create(['user_id' => null, 'full_name' => 'Not Linked Yet']);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.create'));
+
+        $response->assertSee('Not Linked Yet');
+        $response->assertDontSee('Already Linked');
+    }
+
     public function test_unchecking_a_menu_persists_as_an_explicit_denial(): void
     {
         $admin = User::factory()->create();

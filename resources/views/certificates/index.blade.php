@@ -12,6 +12,8 @@ $statusStyles = [
     <x-slot name="header">Certificates</x-slot>
 
     <div class="space-y-4">
+        <x-read-only-badge menu="certificates" />
+
         <form method="GET" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-4">
             <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md border-gray-300 text-sm" />
             <select name="certificate_type_id" class="rounded-md border-gray-300 text-sm">

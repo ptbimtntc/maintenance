@@ -6,6 +6,8 @@ $statusStyles = ['not_started' => 'bg-gray-100 text-gray-600', 'in_progress' => 
     <x-slot name="header">Employee Development Plans</x-slot>
 
     <div class="space-y-4">
+        <x-read-only-badge menu="development-plans" />
+
         <form method="GET" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-3">
             <select name="status" class="rounded-md border-gray-300 text-sm">
                 <option value="">All Statuses</option>

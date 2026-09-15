@@ -3,7 +3,10 @@
 
     <div class="space-y-6">
         <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-500">{{ $employees->total() }} employee(s) found.</p>
+            <div class="flex items-center gap-2">
+                <p class="text-sm text-gray-500">{{ $employees->total() }} employee(s) found.</p>
+                <x-read-only-badge menu="employees" />
+            </div>
 
             @can('create', \App\Models\Employee::class)
                 <a href="{{ route('employees.create') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">

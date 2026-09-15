@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\MenuKey;
 use App\Enums\RoleName;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,13 +39,18 @@ class UserManagementController extends Controller
     {
         return view('admin.users.create', [
             'roles' => RoleName::cases(),
+            'unlinkedEmployees' => Employee::query()
+                ->whereNull('user_id')
+                ->orderBy('full_name')
+                ->get(['id', 'full_name', 'employee_number']),
         ]);
     }
 
     /**
-     * Creates the login account only - linking it to an Employee record
-     * (and therefore a position) is done from the Employee form's existing
-     * "linked user" field, so that one piece of UI isn't duplicated here.
+     * Creates the login account, optionally linking it to an existing
+     * employee record (and therefore its position) in the same step -
+     * linking can also be done later from the Employee form's own "Linked
+     * User" field, so this is a convenience, not the only way to do it.
      * Email is marked verified immediately: an Administrator creating the
      * account is already vouching for it, so there's no self-registration
      * flow (and no email deliverability) to gate access behind.
@@ -56,6 +62,7 @@ class UserManagementController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', Rule::in(array_map(fn (RoleName $r) => $r->value, RoleName::cases()))],
+            'employee_id' => ['nullable', 'exists:employees,id'],
         ]);
 
         $user = User::create([
@@ -67,7 +74,11 @@ class UserManagementController extends Controller
 
         $user->assignRole($data['role']);
 
-        return redirect()->route('admin.users.edit', $user)->with('status', 'User created. Set their menu edit permissions below, and link them to an employee record from the Employee form if needed.');
+        if (! empty($data['employee_id'])) {
+            Employee::whereKey($data['employee_id'])->whereNull('user_id')->update(['user_id' => $user->id]);
+        }
+
+        return redirect()->route('admin.users.edit', $user)->with('status', 'User created.');
     }
 
     public function edit(User $user): View

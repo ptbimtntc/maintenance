@@ -39,9 +39,21 @@
                 <x-input-error :messages="$errors->get('role')" class="mt-1" />
             </div>
 
-            <p class="text-xs text-gray-500">
-                This only creates the login account. To link it to an employee record and position, edit that employee afterwards and set their "Linked User" field.
-            </p>
+            <div>
+                <x-input-label for="employee_id" value="Link to Employee Record (optional)" />
+                <select id="employee_id" name="employee_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <option value="">— Not linked yet —</option>
+                    @foreach ($unlinkedEmployees as $employee)
+                        <option value="{{ $employee->id }}" @selected((string) old('employee_id') === (string) $employee->id)>
+                            {{ $employee->full_name }} ({{ $employee->employee_number }})
+                        </option>
+                    @endforeach
+                </select>
+                <p class="mt-1 text-xs text-gray-500">
+                    Only employees not already linked to a login are listed. This gives the new account its position/department context - you can also do this later from the Employee form's "Linked User" field.
+                </p>
+                <x-input-error :messages="$errors->get('employee_id')" class="mt-1" />
+            </div>
 
             <div class="flex justify-end gap-3">
                 <a href="{{ route('admin.users.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>

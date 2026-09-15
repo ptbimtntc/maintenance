@@ -6,6 +6,8 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
     <x-slot name="header">Training Records</x-slot>
 
     <div class="space-y-4">
+        <x-read-only-badge menu="training" />
+
         <form method="GET" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-3">
             <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md border-gray-300 text-sm" />
             <select name="completion_status" class="rounded-md border-gray-300 text-sm">
