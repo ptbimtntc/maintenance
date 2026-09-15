@@ -77,7 +77,6 @@
                         <th class="px-4 py-3 text-left font-medium text-gray-500">Position</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-500">Area / Team</th>
                         <th class="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-                        <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
@@ -107,13 +106,10 @@
                                     <span class="text-gray-400">—</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-right">
-                                <a href="{{ route('employees.show', $employee) }}" class="text-slate-600 hover:underline">View</a>
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-10 text-center text-gray-500">
+                            <td colspan="4" class="px-4 py-10 text-center text-gray-500">
                                 No employees match your filters yet.
                             </td>
                         </tr>
