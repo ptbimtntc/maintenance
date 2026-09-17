@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Concerns\Auditable;
+use App\Enums\PermissionName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,8 +14,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'employee_number', 'full_name', 'preferred_name', 'photo_path', 'gender', 'date_of_birth',
-    'email', 'phone', 'department_id', 'division_id', 'maintenance_area_id', 'maintenance_team_id',
-    'position_id', 'employment_type_id', 'employment_status_id', 'location_id', 'shift_id',
+    'email', 'phone', 'department_id', 'business_unit_id', 'division_id', 'maintenance_area_id', 'maintenance_team_id',
+    'position_id', 'skill_position_id', 'employment_type_id', 'employment_source_id', 'workforce_category',
+    'employment_status_id', 'location_id', 'shift_id',
     'supervisor_id', 'manager_id', 'date_joined', 'education', 'technical_background',
     'years_of_experience', 'notes', 'user_id', 'created_by', 'updated_by',
 ])]
@@ -22,6 +24,15 @@ class Employee extends Model
 {
     /** @use HasFactory<\Database\Factories\EmployeeFactory> */
     use HasFactory, SoftDeletes, Auditable;
+
+    /**
+     * Workforce classification: BC (Blue Collar - operator/technician level)
+     * vs WCM (White Collar Management - staff and above).
+     */
+    public const WORKFORCE_CATEGORIES = [
+        'BC' => 'Blue Collar (BC)',
+        'WCM' => 'White Collar Management (WCM)',
+    ];
 
     protected function casts(): array
     {
@@ -41,6 +52,11 @@ class Employee extends Model
         return $this->belongsTo(Division::class);
     }
 
+    public function businessUnit(): BelongsTo
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
+
     public function maintenanceArea(): BelongsTo
     {
         return $this->belongsTo(MaintenanceArea::class);
@@ -56,9 +72,19 @@ class Employee extends Model
         return $this->belongsTo(Position::class);
     }
 
+    public function skillPosition(): BelongsTo
+    {
+        return $this->belongsTo(SkillPosition::class);
+    }
+
     public function employmentType(): BelongsTo
     {
         return $this->belongsTo(EmploymentType::class);
+    }
+
+    public function employmentSource(): BelongsTo
+    {
+        return $this->belongsTo(EmploymentSource::class);
     }
 
     public function employmentStatus(): BelongsTo
@@ -198,6 +224,43 @@ class Employee extends Model
         });
     }
 
+    /**
+     * The single source of truth for "which employees can this user see",
+     * reused by the Employee list/profile, Skill Matrix, Competency Gap
+     * Analysis, Training Records, Certificates, and Development Plans, so
+     * visibility can never drift between modules.
+     *
+     * - ViewAllEmployees: no restriction (Administrator, People Development,
+     *   and the Guest read-only account).
+     * - ViewSubordinateEmployees: the viewer's own record plus their direct
+     *   reports only (one level - not the whole reporting chain beneath
+     *   them). A viewer with no direct reports simply sees only themselves.
+     * - ViewOwnEmployee: only the viewer's own record.
+     * - None of the above: sees nothing (viewAny() on the policy already
+     *   blocks reaching these screens in that case).
+     */
+    public function scopeVisibleTo(Builder $query, User $user): Builder
+    {
+        if ($user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
+            return $query;
+        }
+
+        $viewerEmployeeId = $user->employee?->id;
+
+        if ($user->hasPermissionTo(PermissionName::ViewSubordinateEmployees->value)) {
+            return $query->where(function (Builder $q) use ($viewerEmployeeId) {
+                $q->where('id', $viewerEmployeeId ?? 0)
+                    ->orWhere('supervisor_id', $viewerEmployeeId ?? 0);
+            });
+        }
+
+        if ($user->hasPermissionTo(PermissionName::ViewOwnEmployee->value)) {
+            return $query->where('id', $viewerEmployeeId ?? 0);
+        }
+
+        return $query->whereRaw('1 = 0');
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (blank($term)) {
@@ -206,8 +269,7 @@ class Employee extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('full_name', 'like', "%{$term}%")
-                ->orWhere('employee_number', 'like', "%{$term}%")
-                ->orWhere('email', 'like', "%{$term}%");
+                ->orWhere('employee_number', 'like', "%{$term}%");
         });
     }
 }

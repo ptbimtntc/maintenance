@@ -2,30 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Concerns\ExportsCsv;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
+use App\Models\BusinessUnit;
 use App\Models\CompetencyLevel;
 use App\Models\Department;
-use App\Models\Division;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
-use App\Models\Location;
-use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
 use App\Models\Shift;
 use App\Models\Skill;
+use App\Models\SkillPosition;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 
 class EmployeeController extends Controller
 {
-    use ExportsCsv, ExportsSpreadsheet;
+    use ExportsSpreadsheet;
+
+    /**
+     * Column headers shared by export and import, in this exact order, so
+     * a file downloaded via "Export XLSX" can be edited and re-uploaded via
+     * "Import XLSX" to bulk-update the same employees without reshaping it.
+     */
+    private const IMPORT_COLUMNS = [
+        'Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
+        'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management',
+        'Employment Status', 'Shift', 'Supervisor (Employee Number)',
+    ];
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
@@ -34,56 +46,66 @@ class EmployeeController extends Controller
         $user = $request->user();
 
         $query = Employee::query()->with([
-            'department', 'maintenanceArea', 'maintenanceTeam', 'position', 'employmentStatus',
+            'department', 'businessUnit', 'maintenanceArea', 'maintenanceTeam', 'position', 'skillPosition',
+            'employmentType', 'employmentSource', 'employmentStatus', 'shift', 'supervisor',
         ]);
 
-        if ($user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
-            // no extra scoping - can see everyone
-        } elseif ($user->hasPermissionTo(PermissionName::ViewTeamEmployees->value)) {
-            $query->where('maintenance_team_id', $user->employee?->maintenance_team_id ?? 0);
-        } else {
-            // ViewOwnEmployee only
-            $query->where('user_id', $user->id);
-        }
+        $query->visibleTo($user);
+
+        // The Status filter defaults to "Active" whenever the request
+        // doesn't explicitly mention it at all (a fresh visit, or the
+        // Reset link) - explicitly picking "All Statuses" sends the field
+        // as an empty string, which $request->has() still sees as present,
+        // so that choice is respected instead of being overridden back to
+        // the default.
+        $statusFilterId = $request->has('employment_status_id')
+            ? $request->string('employment_status_id')->toString()
+            : (string) (EmploymentStatus::where('code', 'ACTIVE')->value('id') ?? '');
 
         $query->search($request->string('search')->toString())
-            ->when($request->filled('department_id'), fn ($q) => $q->where('department_id', $request->integer('department_id')))
-            ->when($request->filled('maintenance_area_id'), fn ($q) => $q->where('maintenance_area_id', $request->integer('maintenance_area_id')))
-            ->when($request->filled('maintenance_team_id'), fn ($q) => $q->where('maintenance_team_id', $request->integer('maintenance_team_id')))
-            ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
-            ->when($request->filled('employment_status_id'), fn ($q) => $q->where('employment_status_id', $request->integer('employment_status_id')));
+            ->when($request->filled('business_unit_id'), fn ($q) => $q->where('business_unit_id', $request->integer('business_unit_id')))
+            ->when($request->filled('employment_type_id'), fn ($q) => $q->where('employment_type_id', $request->integer('employment_type_id')))
+            ->when($request->filled('employment_source_id'), fn ($q) => $q->where('employment_source_id', $request->integer('employment_source_id')))
+            ->when($statusFilterId !== '', fn ($q) => $q->where('employment_status_id', $statusFilterId))
+            ->when($request->filled('supervisor_id'), fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')))
+            ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')));
 
-        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
-            $header = ['Employee Number', 'Full Name', 'Position', 'Department', 'Maintenance Area', 'Maintenance Team', 'Employment Status'];
+        if ($request->string('export') == 'xlsx') {
             $rows = $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
                 $e->employee_number,
                 $e->full_name,
-                $e->position?->title,
+                $e->businessUnit?->name,
                 $e->department?->name,
-                $e->maintenanceArea?->name,
                 $e->maintenanceTeam?->name,
+                $e->position?->title,
+                $e->skillPosition?->name,
+                $e->employmentType?->name,
+                $e->employmentSource?->name,
+                $e->workforce_category,
                 $e->employmentStatus?->name,
+                $e->shift?->name,
+                $e->supervisor?->employee_number,
             ]);
 
-            $basename = 'employees-'.now()->format('Y-m-d');
-
-            return $request->string('export') == 'xlsx'
-                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
-                : $this->streamCsv("{$basename}.csv", $header, $rows);
+            return $this->streamXlsx('employees-'.now()->format('Y-m-d').'.xlsx', self::IMPORT_COLUMNS, $rows);
         }
 
         $employees = $query->orderBy('full_name')->paginate(15)->withQueryString();
 
         return view('employees.index', [
             'employees' => $employees,
-            'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceAreas' => MaintenanceArea::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
-            'positions' => Position::where('is_active', true)->orderBy('title')->get(),
+            'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
+            'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
+            'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
-            'filters' => $request->only([
-                'search', 'department_id', 'maintenance_area_id', 'maintenance_team_id', 'position_id', 'employment_status_id',
-            ]),
+            'supervisors' => Employee::query()->visibleTo($user)->whereHas('directReports')->orderBy('full_name')->get(['id', 'full_name', 'employee_number']),
+            'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
+            'filters' => [
+                ...$request->only([
+                    'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'supervisor_id', 'shift_id',
+                ]),
+                'employment_status_id' => $statusFilterId,
+            ],
         ]);
     }
 
@@ -97,10 +119,12 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
         $employee = Employee::create([
-            ...$request->validated(),
+            ...$request->safe()->except('photo'),
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ]);
+
+        $this->storeUploadedPhoto($request, $employee);
 
         return redirect()->route('employees.show', $employee)->with('status', 'Employee created.');
     }
@@ -110,8 +134,8 @@ class EmployeeController extends Controller
         $this->authorize('view', $employee);
 
         $employee->load([
-            'department', 'division', 'maintenanceArea', 'maintenanceTeam', 'position',
-            'employmentType', 'employmentStatus', 'location', 'shift', 'supervisor', 'manager',
+            'department', 'businessUnit', 'maintenanceTeam', 'position', 'skillPosition',
+            'employmentType', 'employmentSource', 'employmentStatus', 'shift', 'supervisor',
             'position.skillRequirements.skill', 'position.skillRequirements.requiredCompetencyLevel',
             'skillAssessments' => fn ($q) => $q->with(['skill', 'competencyLevel', 'assessedBy'])->orderByDesc('assessment_date')->orderByDesc('id'),
             'trainingRecords' => fn ($q) => $q->with('trainingProgram')->orderByDesc('training_date'),
@@ -140,11 +164,33 @@ class EmployeeController extends Controller
     public function update(UpdateEmployeeRequest $request, Employee $employee): RedirectResponse
     {
         $employee->update([
-            ...$request->validated(),
+            ...$request->safe()->except('photo'),
             'updated_by' => $request->user()->id,
         ]);
 
+        $this->storeUploadedPhoto($request, $employee);
+
         return redirect()->route('employees.show', $employee)->with('status', 'Employee updated.');
+    }
+
+    /**
+     * Employee photos are a lower-sensitivity, display-oriented asset
+     * (unlike certificates), so they're stored on the public disk and
+     * served by direct URL rather than an authorized streaming route.
+     */
+    private function storeUploadedPhoto(Request $request, Employee $employee): void
+    {
+        if (! $request->hasFile('photo')) {
+            return;
+        }
+
+        if ($employee->photo_path) {
+            Storage::disk('public')->delete($employee->photo_path);
+        }
+
+        $path = $request->file('photo')->store('employee-photos', 'public');
+
+        $employee->update(['photo_path' => $path]);
     }
 
     public function destroy(Employee $employee): RedirectResponse
@@ -157,19 +203,180 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Deletes several employees selected via checkboxes on the index page.
+     * Each one is re-authorized individually (not just checked against the
+     * submitted list) so a user can never delete someone outside both
+     * their visibility scope and the EmployeePolicy - the same rule single
+     * delete already enforces, just applied per row here.
+     */
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $ids = $request->input('employee_ids', []);
+
+        $employees = Employee::query()
+            ->visibleTo($request->user())
+            ->whereIn('id', is_array($ids) ? $ids : [])
+            ->get();
+
+        $deleted = 0;
+
+        foreach ($employees as $employee) {
+            if ($request->user()->can('delete', $employee)) {
+                $employee->delete();
+                $deleted++;
+            }
+        }
+
+        $message = $deleted > 0 ? "{$deleted} employee(s) removed." : 'No employees were removed.';
+
+        return redirect()->route('employees.index')->with('status', $message);
+    }
+
+    /**
+     * Bulk-updates employees from an uploaded .xlsx file shaped like the
+     * "Export XLSX" output (see IMPORT_COLUMNS) - matched by Employee
+     * Number, which is required and never changed by the import itself.
+     * Every other column is optional per row: blank cells leave that field
+     * untouched, and a lookup value that doesn't match an existing record
+     * (Business Unit, Position, ...) is skipped with a reported error
+     * rather than silently creating new master data or guessing.
+     *
+     * Deliberately update-only: a row whose Employee Number doesn't match
+     * an existing, visible employee is reported as an error, never used to
+     * create a new one - that stays a deliberate action via "Add Employee".
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $this->authorize('create', Employee::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx'],
+        ]);
+
+        $rows = (new XlsxReader)->load($request->file('file')->getRealPath())
+            ->getActiveSheet()
+            ->toArray(null, true, true, false);
+
+        $header = array_map(fn ($cell) => trim((string) $cell), array_shift($rows) ?? []);
+
+        $lookups = [
+            'Business Unit' => [BusinessUnit::class, 'name', 'business_unit_id'],
+            'Department' => [Department::class, 'name', 'department_id'],
+            'Maintenance Team' => [MaintenanceTeam::class, 'name', 'maintenance_team_id'],
+            'Position' => [Position::class, 'title', 'position_id'],
+            'Skill Position' => [SkillPosition::class, 'name', 'skill_position_id'],
+            'Employment Type' => [EmploymentType::class, 'name', 'employment_type_id'],
+            'Employment Source' => [EmploymentSource::class, 'name', 'employment_source_id'],
+            'Employment Status' => [EmploymentStatus::class, 'name', 'employment_status_id'],
+            'Shift' => [Shift::class, 'name', 'shift_id'],
+        ];
+
+        $updated = 0;
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $rowNumber = $index + 2; // account for the header row
+            $data = array_combine($header, array_pad($row, count($header), null));
+
+            $employeeNumber = trim((string) ($data['Employee Number'] ?? ''));
+
+            if ($employeeNumber === '') {
+                continue;
+            }
+
+            $employee = Employee::query()->visibleTo($request->user())->where('employee_number', $employeeNumber)->first();
+
+            if (! $employee || ! $request->user()->can('update', $employee)) {
+                $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
+
+                continue;
+            }
+
+            $changes = [];
+
+            if (! empty($data['Full Name'])) {
+                $changes['full_name'] = trim((string) $data['Full Name']);
+            }
+
+            foreach ($lookups as $column => [$modelClass, $nameField, $foreignKey]) {
+                $value = trim((string) ($data[$column] ?? ''));
+
+                if ($value === '') {
+                    continue;
+                }
+
+                $match = $modelClass::where($nameField, $value)->first();
+
+                if (! $match) {
+                    $errors[] = "Row {$rowNumber}: {$column} \"{$value}\" not found - left unchanged.";
+
+                    continue;
+                }
+
+                $changes[$foreignKey] = $match->id;
+            }
+
+            $managementValue = strtoupper(trim((string) ($data['Management'] ?? '')));
+
+            if ($managementValue !== '') {
+                $code = match (true) {
+                    $managementValue === 'BC' || str_starts_with($managementValue, 'BLUE') => 'BC',
+                    $managementValue === 'WCM' || str_starts_with($managementValue, 'WHITE') => 'WCM',
+                    default => null,
+                };
+
+                if ($code) {
+                    $changes['workforce_category'] = $code;
+                } else {
+                    $errors[] = "Row {$rowNumber}: Management value \"{$data['Management']}\" not recognized (expected BC or WCM) - left unchanged.";
+                }
+            }
+
+            $supervisorNumber = trim((string) ($data['Supervisor (Employee Number)'] ?? ''));
+
+            if ($supervisorNumber !== '') {
+                $supervisor = Employee::where('employee_number', $supervisorNumber)->first();
+
+                if ($supervisor && $supervisor->id !== $employee->id) {
+                    $changes['supervisor_id'] = $supervisor->id;
+                } else {
+                    $errors[] = "Row {$rowNumber}: supervisor \"{$supervisorNumber}\" not found - left unchanged.";
+                }
+            }
+
+            if ($changes !== []) {
+                $employee->update([...$changes, 'updated_by' => $request->user()->id]);
+                $updated++;
+            }
+        }
+
+        $redirect = redirect()->route('employees.index')
+            ->with('status', "{$updated} employee(s) updated from import.");
+
+        if ($errors !== []) {
+            $shown = array_slice($errors, 0, 8);
+            $suffix = count($errors) > 8 ? ' …and '.(count($errors) - 8).' more.' : '';
+            $redirect->with('import_errors', count($errors).' issue(s) found: '.implode(' | ', $shown).$suffix);
+        }
+
+        return $redirect;
+    }
+
+    /**
      * Shared dropdown option lists for the create/edit forms.
      */
     private function formOptions(?Employee $employee = null): array
     {
         return [
             'departments' => Department::where('is_active', true)->orderBy('name')->get(),
-            'divisions' => Division::where('is_active', true)->orderBy('name')->get(),
-            'maintenanceAreas' => MaintenanceArea::where('is_active', true)->orderBy('name')->get(),
+            'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
             'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
             'positions' => Position::where('is_active', true)->orderBy('title')->get(),
+            'skillPositions' => SkillPosition::where('is_active', true)->orderBy('name')->get(),
             'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
+            'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
+            'workforceCategories' => Employee::WORKFORCE_CATEGORIES,
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
-            'locations' => Location::where('is_active', true)->orderBy('name')->get(),
             'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
             'possibleSupervisors' => Employee::query()
                 ->when($employee, fn ($q) => $q->where('id', '!=', $employee->id))

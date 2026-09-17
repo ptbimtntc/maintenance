@@ -18,7 +18,10 @@ $statusLabels = [
 
     <div class="space-y-4">
         <div class="flex items-center justify-between">
-            <p class="text-sm text-gray-500">{{ $jobDescriptions->total() }} job description(s), across all positions and versions.</p>
+            <div class="flex items-center gap-2">
+                <p class="text-sm text-gray-500">{{ $jobDescriptions->total() }} job description(s), across all positions and versions.</p>
+                <x-read-only-badge menu="job-descriptions" />
+            </div>
 
             @can(\App\Enums\PermissionName::ManageJobDescriptions->value)
                 <a href="{{ route('job-descriptions.create') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">

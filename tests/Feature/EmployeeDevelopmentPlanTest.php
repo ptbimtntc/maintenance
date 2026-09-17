@@ -32,7 +32,8 @@ class EmployeeDevelopmentPlanTest extends TestCase
     {
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
-        $employee = Employee::factory()->create();
+        $managerEmployee = Employee::factory()->create(['user_id' => $manager->id]);
+        $employee = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
 
         $response = $this->actingAs($manager)->post(route('employees.development-plans.store', $employee), [
             'development_objective' => 'Improve PLC troubleshooting skills',
@@ -71,8 +72,9 @@ class EmployeeDevelopmentPlanTest extends TestCase
     {
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
-        $employeeA = Employee::factory()->create();
-        $employeeB = Employee::factory()->create();
+        $managerEmployee = Employee::factory()->create(['user_id' => $manager->id]);
+        $employeeA = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
+        $employeeB = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
         $plan = EmployeeDevelopmentPlan::factory()->create(['employee_id' => $employeeA->id]);
 
         $response = $this->actingAs($manager)->get(route('employees.development-plans.edit', [$employeeB, $plan]));

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Concerns\ExportsCsv;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreTrainingRecordRequest;
@@ -18,11 +17,12 @@ use Illuminate\View\View;
 
 class TrainingRecordController extends Controller
 {
-    use ExportsCsv, ExportsSpreadsheet;
+    use ExportsSpreadsheet;
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
         $query = TrainingRecord::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'trainingProgram', 'trainingType'])
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
@@ -30,7 +30,7 @@ class TrainingRecordController extends Controller
             ))
             ->when($request->filled('completion_status'), fn ($q) => $q->where('completion_status', $request->string('completion_status')));
 
-        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+        if ($request->string('export') == 'xlsx') {
             $header = ['Employee', 'Program', 'Date', 'Hours', 'Attendance', 'Completion', 'Score'];
             $rows = $query->orderByDesc('training_date')->get()->map(fn (TrainingRecord $r) => [
                 $r->employee->full_name,
@@ -42,11 +42,7 @@ class TrainingRecordController extends Controller
                 $r->assessment_score,
             ]);
 
-            $basename = 'training-records-'.now()->format('Y-m-d');
-
-            return $request->string('export') == 'xlsx'
-                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
-                : $this->streamCsv("{$basename}.csv", $header, $rows);
+            return $this->streamXlsx('training-records-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
         }
 
         $records = $query->orderByDesc('training_date')->paginate(20)->withQueryString();
@@ -60,6 +56,7 @@ class TrainingRecordController extends Controller
 
     public function create(Employee $employee): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageTrainingRecords->value);
 
         return view('training.records.form', [
@@ -70,6 +67,8 @@ class TrainingRecordController extends Controller
 
     public function store(StoreTrainingRecordRequest $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
+
         $employee->trainingRecords()->create([
             ...$request->safe()->all(),
             'certificate_issued' => $request->boolean('certificate_issued'),
@@ -84,6 +83,7 @@ class TrainingRecordController extends Controller
 
     public function destroy(Employee $employee, TrainingRecord $record): RedirectResponse
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageTrainingRecords->value);
         abort_unless($record->employee_id === $employee->id, 404);
 

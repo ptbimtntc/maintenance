@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\BusinessUnit;
 use App\Models\CertificateType;
 use App\Models\CompetencyLevel;
 use App\Models\Department;
 use App\Models\Division;
+use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
 use App\Models\Location;
@@ -13,6 +15,7 @@ use App\Models\Position;
 use App\Models\Shift;
 use App\Models\Skill;
 use App\Models\SkillCategory;
+use App\Models\SkillPosition;
 use App\Models\TrainingCategory;
 use App\Models\TrainingProvider;
 use App\Models\TrainingType;
@@ -69,6 +72,27 @@ return [
             'model' => MaintenanceArea::class,
             'label' => 'Maintenance Area',
         ],
+    ],
+
+    'business-units' => [
+        'model' => BusinessUnit::class,
+        'label' => 'Business Units',
+        'singular' => 'Business Unit',
+        'name_field' => 'name',
+    ],
+
+    'skill-positions' => [
+        'model' => SkillPosition::class,
+        'label' => 'Skill Positions',
+        'singular' => 'Skill Position',
+        'name_field' => 'name',
+    ],
+
+    'employment-sources' => [
+        'model' => EmploymentSource::class,
+        'label' => 'Employment Sources',
+        'singular' => 'Employment Source',
+        'name_field' => 'name',
     ],
 
     'positions' => [

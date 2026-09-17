@@ -23,6 +23,7 @@ class CompetencyGapAnalysisController extends Controller
     public function index(Request $request): View
     {
         $employees = Employee::query()
+            ->visibleTo($request->user())
             ->with([
                 'position.skillRequirements.skill',
                 'position.skillRequirements.requiredCompetencyLevel',

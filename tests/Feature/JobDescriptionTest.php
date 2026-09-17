@@ -28,13 +28,52 @@ class JobDescriptionTest extends TestCase
         $response->assertRedirect('/login');
     }
 
-    public function test_maintenance_staff_can_view_but_not_create_job_descriptions(): void
+    public function test_maintenance_staff_can_view_and_create_job_descriptions_by_default(): void
     {
+        // Job Descriptions is the one menu that's editable by default for
+        // everyone (App\Enums\MenuKey::editableByDefault()), so staff can
+        // create/edit their own job description unless an administrator
+        // explicitly revokes it for them.
         $staff = User::factory()->create();
         $staff->assignRole(RoleName::MaintenanceStaff->value);
 
         $this->actingAs($staff)->get(route('job-descriptions.index'))->assertOk();
+        $this->actingAs($staff)->get(route('job-descriptions.create'))->assertOk();
+    }
+
+    public function test_job_description_edit_can_be_revoked_for_a_specific_user(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        $staff->menuPermissions()->create(['menu_key' => \App\Enums\MenuKey::JobDescriptions->value, 'can_edit' => false]);
+
         $this->actingAs($staff)->get(route('job-descriptions.create'))->assertForbidden();
+    }
+
+    public function test_administrator_can_still_approve_regardless_of_menu_overrides(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $position = Position::factory()->create();
+        $jobDescription = JobDescription::factory()->create(['position_id' => $position->id, 'status' => 'pending_review']);
+
+        $this->actingAs($admin)->post(route('job-descriptions.approve', $jobDescription))->assertRedirect();
+        $this->assertDatabaseHas('job_descriptions', ['id' => $jobDescription->id, 'status' => 'active']);
+    }
+
+    public function test_maintenance_staff_cannot_approve_job_descriptions(): void
+    {
+        // Approval is a governance action, deliberately kept strictly
+        // role-gated (ManageJobDescriptions) rather than covered by the
+        // "editable by default" menu permission that applies to drafting.
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $position = Position::factory()->create();
+        $jobDescription = JobDescription::factory()->create(['position_id' => $position->id, 'status' => 'pending_review']);
+
+        $this->actingAs($staff)->post(route('job-descriptions.approve', $jobDescription))->assertForbidden();
     }
 
     public function test_manager_can_create_a_job_description_as_version_one(): void

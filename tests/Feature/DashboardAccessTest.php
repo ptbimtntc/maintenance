@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RoleName;
 use App\Models\CompetencyLevel;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeSkillAssessment;
 use App\Models\Skill;
 use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -70,5 +72,38 @@ class DashboardAccessTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('4');
+    }
+
+    public function test_stat_cards_only_link_to_modules_the_viewer_is_permitted_to_open(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($staff)->get('/dashboard');
+
+        $response->assertOk();
+        // Staff lacks ViewCompetencyGap and ManageMasterData - those cards
+        // must render without a link rather than pointing somewhere that
+        // would 403 if clicked.
+        $response->assertDontSee('aria-label="Employees with Competency Gaps"', false);
+        $response->assertDontSee('aria-label="Maintenance Departments"', false);
+        // Staff does hold ViewCertificates, so that card should still link.
+        $response->assertSee('aria-label="Certificates Expiring Soon"', false);
+    }
+
+    public function test_an_administrator_sees_links_on_every_stat_card(): void
+    {
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->get('/dashboard');
+
+        $response->assertOk();
+        $response->assertSee('aria-label="Employees with Competency Gaps"', false);
+        $response->assertSee('aria-label="Maintenance Departments"', false);
     }
 }

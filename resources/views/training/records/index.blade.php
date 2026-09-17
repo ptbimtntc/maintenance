@@ -6,6 +6,8 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
     <x-slot name="header">Training Records</x-slot>
 
     <div class="space-y-4">
+        <x-read-only-badge menu="training" />
+
         <form method="GET" class="grid grid-cols-1 gap-3 rounded-lg border border-gray-200 bg-white p-4 sm:grid-cols-3">
             <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md border-gray-300 text-sm" />
             <select name="completion_status" class="rounded-md border-gray-300 text-sm">
@@ -17,7 +19,6 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
             <div class="flex gap-2">
                 <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
                 <a href="{{ route('training.records.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
-                <a href="{{ route('training.records.index', array_merge(request()->query(), ['export' => 'csv'])) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export CSV</a>
                 <a href="{{ route('training.records.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export XLSX</a>
             </div>
         </form>

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Concerns\ExportsCsv;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreCertificateRequest;
@@ -19,13 +18,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CertificateController extends Controller
 {
-    use ExportsCsv, ExportsSpreadsheet;
+    use ExportsSpreadsheet;
 
     private const DISK = 'local';
 
     public function index(Request $request): View|StreamedResponse
     {
         $query = Certificate::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'certificateType'])
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
@@ -45,7 +45,7 @@ class CertificateController extends Controller
             default => null,
         };
 
-        if (in_array($request->string('export')->toString(), ['csv', 'xlsx'])) {
+        if ($request->string('export') == 'xlsx') {
             $statusLabels = Certificate::statusLabels();
 
             $header = ['Employee', 'Certificate', 'Type', 'Number', 'Issuing Organization', 'Issue Date', 'Expiry Date', 'Status'];
@@ -60,11 +60,7 @@ class CertificateController extends Controller
                 $statusLabels[$c->status()],
             ]);
 
-            $basename = 'certificates-'.now()->format('Y-m-d');
-
-            return $request->string('export') == 'xlsx'
-                ? $this->streamXlsx("{$basename}.xlsx", $header, $rows)
-                : $this->streamCsv("{$basename}.csv", $header, $rows);
+            return $this->streamXlsx('certificates-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
         }
 
         $certificates = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
@@ -79,6 +75,7 @@ class CertificateController extends Controller
 
     public function create(Employee $employee): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
 
         return view('certificates.form', [
@@ -90,6 +87,8 @@ class CertificateController extends Controller
 
     public function store(StoreCertificateRequest $request, Employee $employee): RedirectResponse
     {
+        $this->authorize('view', $employee);
+
         $data = $request->safe()->except('file');
 
         $certificate = $employee->certificates()->create([
@@ -107,6 +106,7 @@ class CertificateController extends Controller
 
     public function edit(Employee $employee, Certificate $certificate): View
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
         abort_unless($certificate->employee_id === $employee->id, 404);
 
@@ -119,6 +119,7 @@ class CertificateController extends Controller
 
     public function update(StoreCertificateRequest $request, Employee $employee, Certificate $certificate): RedirectResponse
     {
+        $this->authorize('view', $employee);
         abort_unless($certificate->employee_id === $employee->id, 404);
 
         $certificate->update([
@@ -135,6 +136,7 @@ class CertificateController extends Controller
 
     public function destroy(Employee $employee, Certificate $certificate): RedirectResponse
     {
+        $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
         abort_unless($certificate->employee_id === $employee->id, 404);
 

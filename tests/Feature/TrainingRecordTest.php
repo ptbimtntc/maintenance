@@ -60,7 +60,8 @@ class TrainingRecordTest extends TestCase
     {
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
-        $employee = Employee::factory()->create();
+        $managerEmployee = Employee::factory()->create(['user_id' => $manager->id]);
+        $employee = Employee::factory()->create(['supervisor_id' => $managerEmployee->id]);
 
         $employee->trainingRecords()->create([
             'training_date' => now()->subMonth(),
