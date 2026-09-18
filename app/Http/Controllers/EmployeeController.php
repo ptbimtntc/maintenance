@@ -139,8 +139,25 @@ class EmployeeController extends Controller
         ]);
 
         $this->storeUploadedPhoto($request, $employee);
+        $employee->generateOnboardingToken();
 
         return redirect()->route('employees.show', $employee)->with('status', 'Employee created.');
+    }
+
+    /**
+     * (Re)issues the QR/link-based onboarding token shown on the employee
+     * profile - used when the previous link expired, was already used, or
+     * simply wasn't generated (older employees created before this
+     * feature existed).
+     */
+    public function regenerateOnboardingLink(Request $request, Employee $employee): RedirectResponse
+    {
+        $this->authorize('update', $employee);
+
+        $employee->generateOnboardingToken();
+
+        return redirect()->route('employees.show', $employee)
+            ->with('status', 'A new onboarding link has been generated.');
     }
 
     public function show(Employee $employee): View
@@ -247,17 +264,21 @@ class EmployeeController extends Controller
     }
 
     /**
-     * Bulk-updates employees from an uploaded .xlsx file shaped like the
-     * "Export XLSX" output (see IMPORT_COLUMNS) - matched by Employee
-     * Number, which is required and never changed by the import itself.
-     * Every other column is optional per row: blank cells leave that field
-     * untouched, and a lookup value that doesn't match an existing record
-     * (Business Unit, Position, ...) is skipped with a reported error
-     * rather than silently creating new master data or guessing.
+     * Bulk-creates and bulk-updates employees from an uploaded .xlsx file
+     * shaped like the "Export XLSX" output (see IMPORT_COLUMNS) - matched
+     * by Employee Number, which is required and never changed by the
+     * import itself. Every other column is optional per row: blank cells
+     * leave that field untouched on an update, and a lookup value that
+     * doesn't match an existing record (Business Unit, Position, ...) is
+     * skipped with a reported error rather than silently creating new
+     * master data or guessing.
      *
-     * Deliberately update-only: a row whose Employee Number doesn't match
-     * an existing, visible employee is reported as an error, never used to
-     * create a new one - that stays a deliberate action via "Add Employee".
+     * A row whose Employee Number matches an existing employee updates it
+     * (respecting visibility - an Employee Number that exists but isn't
+     * visible to this user is reported as "not found", never silently
+     * updated or duplicated). A row whose Employee Number doesn't exist
+     * anywhere creates a new employee, provided Full Name is filled in
+     * (required to create a valid record).
      */
     public function import(Request $request): RedirectResponse
     {
@@ -285,6 +306,7 @@ class EmployeeController extends Controller
             'Shift' => [Shift::class, 'name', 'shift_id'],
         ];
 
+        $created = 0;
         $updated = 0;
         $errors = [];
 
@@ -299,11 +321,35 @@ class EmployeeController extends Controller
             }
 
             $employee = Employee::query()->visibleTo($request->user())->where('employee_number', $employeeNumber)->first();
+            $isNew = false;
 
-            if (! $employee || ! $request->user()->can('update', $employee)) {
+            if ($employee && ! $request->user()->can('update', $employee)) {
                 $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
 
                 continue;
+            }
+
+            if (! $employee) {
+                // Exists but outside this user's visibility (e.g. a
+                // Supervisor importing a number from another team) -
+                // reported the same as "not found", never silently
+                // updated or duplicated with a conflicting number.
+                if (Employee::withTrashed()->where('employee_number', $employeeNumber)->exists()) {
+                    $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
+
+                    continue;
+                }
+
+                $fullName = trim((string) ($data['Full Name'] ?? ''));
+
+                if ($fullName === '') {
+                    $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" doesn't exist yet and Full Name is required to create it - row skipped.";
+
+                    continue;
+                }
+
+                $employee = new Employee(['employee_number' => $employeeNumber]);
+                $isNew = true;
             }
 
             $changes = [];
@@ -366,14 +412,22 @@ class EmployeeController extends Controller
                 }
             }
 
-            if ($changes !== []) {
+            if ($isNew) {
+                $employee->fill([
+                    ...$changes,
+                    'created_by' => $request->user()->id,
+                    'updated_by' => $request->user()->id,
+                ])->save();
+                $employee->generateOnboardingToken();
+                $created++;
+            } elseif ($changes !== []) {
                 $employee->update([...$changes, 'updated_by' => $request->user()->id]);
                 $updated++;
             }
         }
 
         $redirect = redirect()->route('employees.index')
-            ->with('status', "{$updated} employee(s) updated from import.");
+            ->with('status', "{$created} employee(s) created, {$updated} employee(s) updated from import.");
 
         if ($errors !== []) {
             $shown = array_slice($errors, 0, 8);

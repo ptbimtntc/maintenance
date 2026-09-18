@@ -8,6 +8,7 @@ use App\Http\Controllers\CompetencyGapAnalysisController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeDevelopmentPlanController;
+use App\Http\Controllers\EmployeeOnboardingController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
 use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
@@ -28,6 +29,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/guest-login', [GuestSessionController::class, 'start'])->name('guest-login');
 
+// Public, unauthenticated: a new employee completes their own profile via
+// the QR/link shown on their profile page - see EmployeeOnboardingController.
+Route::get('/onboarding/{token}', [EmployeeOnboardingController::class, 'edit'])->name('onboarding.edit');
+Route::post('/onboarding/{token}', [EmployeeOnboardingController::class, 'update'])->name('onboarding.update');
+
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');
 });
@@ -45,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'menu.edit:'.MenuKey::Employees->value);
     Route::post('/employees-bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.bulk-destroy');
     Route::post('/employees-import', [EmployeeController::class, 'import'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.import');
+    Route::post('/employees/{employee}/onboarding-link', [EmployeeController::class, 'regenerateOnboardingLink'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.onboarding-link');
     Route::post('/employees/{employee}/skill-assessments', [EmployeeSkillAssessmentController::class, 'store'])->middleware('menu.edit:'.MenuKey::SkillsCompetencies->value)->name('employees.skill-assessments.store');
     Route::delete('/employees/{employee}/skill-assessments/{assessment}', [EmployeeSkillAssessmentController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::SkillsCompetencies->value)->name('employees.skill-assessments.destroy');
 

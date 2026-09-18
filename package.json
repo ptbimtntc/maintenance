@@ -21,6 +21,26 @@
         "@laravel/multiplex": "^0.4.1"
     },
     "dependencies": {
-        "chart.js": "^4.5.1"
-    }
+        "chart.js": "^4.5.1",
+        "playwright": "^1.63.0",
+        "qrcode": "^1.5.4"
+    },
+    "name": "maintenance",
+    "version": "1.0.0",
+    "description": "An internal web application for the Maintenance Department of **PT Bekaert Indonesia**, used to manage maintenance employees, competency/skill matrices, job descriptions, training, and certificates.",
+    "main": "postcss.config.js",
+    "directories": {
+        "test": "tests"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ptbimtntc/maintenance.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/ptbimtntc/maintenance/issues"
+    },
+    "homepage": "https://github.com/ptbimtntc/maintenance#readme"
 }

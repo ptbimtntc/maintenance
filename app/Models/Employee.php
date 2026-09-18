@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'employee_number', 'lototo_number', 'sap_id', 'full_name', 'preferred_name', 'photo_path', 'gender', 'date_of_birth',
@@ -34,12 +35,51 @@ class Employee extends Model
         'WCM' => 'White Collar Management (WCM)',
     ];
 
+    /**
+     * Fields a brand-new employee is allowed to fill in themselves via the
+     * QR/link-based onboarding form (see EmployeeOnboardingController) -
+     * personal, self-known details only. Organizational fields (position,
+     * department, supervisor, employment status, ...) stay HR-controlled
+     * and are deliberately excluded, since that unauthenticated form has no
+     * login to protect them with.
+     */
+    public const SELF_SERVICE_FIELDS = [
+        'preferred_name', 'photo_path', 'gender', 'date_of_birth', 'email', 'phone',
+        'education', 'technical_background', 'years_of_experience',
+    ];
+
     protected function casts(): array
     {
         return [
             'date_of_birth' => 'date',
             'date_joined' => 'date',
+            'profile_completion_expires_at' => 'datetime',
+            'profile_completed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Generates (or replaces) the one-time onboarding token a new employee
+     * uses to complete their own profile, valid for 14 days.
+     */
+    public function generateOnboardingToken(): string
+    {
+        $token = Str::random(40);
+
+        $this->forceFill([
+            'profile_completion_token' => $token,
+            'profile_completion_expires_at' => now()->addDays(14),
+            'profile_completed_at' => null,
+        ])->save();
+
+        return $token;
+    }
+
+    public function onboardingLinkIsActive(): bool
+    {
+        return $this->profile_completion_token !== null
+            && $this->profile_completed_at === null
+            && $this->profile_completion_expires_at?->isFuture();
     }
 
     public function department(): BelongsTo

@@ -28,6 +28,64 @@
             </div>
         </div>
 
+        @can('update', $employee)
+            <div class="rounded-lg border border-brand-200 bg-brand-50 p-4 sm:p-6" x-data="{ copied: false }">
+                @if ($employee->onboardingLinkIsActive())
+                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <canvas data-onboarding-qrcode="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
+                                class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
+
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm font-semibold text-neutral-900">New employee onboarding</h3>
+                            <p class="mt-1 text-sm text-neutral-600">
+                                Scan this QR code, or share the link below, so {{ $employee->full_name }} can fill in the rest of their own profile (photo, contact details, education, ...).
+                            </p>
+
+                            <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                                <input type="text" readonly id="onboarding-link-{{ $employee->id }}"
+                                       value="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
+                                       class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-white text-sm text-neutral-700"
+                                       onclick="this.select()">
+                                <button type="button"
+                                        @click="navigator.clipboard.writeText(document.getElementById('onboarding-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)"
+                                        class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                                    <span x-show="!copied">Copy Link</span>
+                                    <span x-show="copied" x-cloak>Copied!</span>
+                                </button>
+                            </div>
+
+                            <p class="mt-2 text-xs text-neutral-500">
+                                Expires {{ $employee->profile_completion_expires_at->format('d M Y') }}.
+                                <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}" class="inline" onsubmit="return confirm('Generate a new link? The current QR code and link will stop working.');">
+                                    @csrf
+                                    <button type="submit" class="font-medium text-brand-700 hover:underline">Generate new link</button>
+                                </form>
+                            </p>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-neutral-900">New employee onboarding</h3>
+                            <p class="mt-1 text-sm text-neutral-600">
+                                @if ($employee->profile_completed_at)
+                                    {{ $employee->full_name }} completed their profile via the onboarding link on {{ $employee->profile_completed_at->format('d M Y') }}.
+                                @else
+                                    Generate a QR code / link so {{ $employee->full_name }} can fill in the rest of their own profile.
+                                @endif
+                            </p>
+                        </div>
+                        <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}">
+                            @csrf
+                            <button type="submit" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+                                Generate {{ $employee->profile_completed_at ? 'New' : '' }} Onboarding Link
+                            </button>
+                        </form>
+                    </div>
+                @endif
+            </div>
+        @endcan
+
         <div class="border-b border-neutral-200">
             <nav class="-mb-px flex flex-wrap gap-4 text-sm font-medium">
                 @foreach ([
