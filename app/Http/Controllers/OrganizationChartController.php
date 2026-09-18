@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use App\Models\EmploymentStatus;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -22,6 +23,7 @@ class OrganizationChartController extends Controller
 
         $employees = Employee::query()
             ->visibleTo($request->user())
+            ->whereHas('employmentStatus', fn ($q) => $q->where('code', 'ACTIVE'))
             ->with('skillPosition')
             ->orderBy('full_name')
             ->get();
@@ -32,7 +34,9 @@ class OrganizationChartController extends Controller
         // visible set - for an org-wide viewer that's the top of the
         // company; for someone scoped to themselves + direct reports,
         // their own record naturally has no visible supervisor, so they
-        // become the root of their own (shallow) chart.
+        // become the root of their own (shallow) chart. Filtering to Active
+        // employees above means a non-active supervisor's chain is excluded
+        // too - their active reports simply surface as roots instead.
         $roots = $employees->filter(
             fn (Employee $employee) => ! $employee->supervisor_id || ! $visibleIds->has($employee->supervisor_id)
         )->values();

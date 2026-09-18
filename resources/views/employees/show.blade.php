@@ -52,6 +52,8 @@
         <div x-show="tab === 'overview'">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <x-profile-field label="Employee Number" :value="$employee->employee_number" />
+                <x-profile-field label="Nomor LOTOTO" :value="$employee->lototo_number" />
+                <x-profile-field label="ID SAP" :value="$employee->sap_id" />
                 <x-profile-field label="Email" :value="$employee->email" />
                 <x-profile-field label="Phone" :value="$employee->phone" />
                 <x-profile-field label="Gender" :value="$employee->gender" />

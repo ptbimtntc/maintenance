@@ -66,7 +66,11 @@ class CompetencyGapAnalysisController extends Controller
 
         $positionBreakdown = $employeeSummaries
             ->groupBy(fn ($summary) => $summary['employee']->position_id)
-            ->filter(fn ($group, $key) => $key !== null)
+            // groupBy() keys go through PHP array-key casting, which turns a
+            // null position_id into the empty-string key '' rather than
+            // null - so filtering on $key !== null let those groups through
+            // and crashed the view on ->title of a null position.
+            ->filter(fn ($group, $key) => $key !== null && $key !== '')
             ->map(function (Collection $group) {
                 $position = $group->first()['employee']->position;
 
@@ -81,7 +85,7 @@ class CompetencyGapAnalysisController extends Controller
 
         $areaBreakdown = $employeeSummaries
             ->groupBy(fn ($summary) => $summary['employee']->maintenance_area_id)
-            ->filter(fn ($group, $key) => $key !== null)
+            ->filter(fn ($group, $key) => $key !== null && $key !== '')
             ->map(function (Collection $group) {
                 $area = $group->first()['employee']->maintenanceArea;
 

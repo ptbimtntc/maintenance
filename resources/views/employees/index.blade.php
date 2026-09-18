@@ -2,7 +2,7 @@
     <x-slot name="header">Employees</x-slot>
 
     <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2">
                 <p class="text-sm text-gray-500">{{ $employees->total() }} employee(s) found.</p>
                 <x-read-only-badge menu="employees" />
@@ -10,14 +10,32 @@
 
             @can('create', \App\Models\Employee::class)
                 <div class="flex items-center gap-2">
-                    <form method="POST" action="{{ route('employees.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">
+                    <a href="{{ route('employees.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}"
+                       class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                        </svg>
+                        Export XLSX
+                    </a>
+
+                    <form method="POST" action="{{ route('employees.import') }}" enctype="multipart/form-data">
                         @csrf
-                        <label class="cursor-pointer rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                        <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-4.5L12 16.5m0 0 4.5-4.5M12 16.5V3" />
+                            </svg>
                             Import XLSX
                             <input type="file" name="file" accept=".xlsx" class="hidden" onchange="this.form.requestSubmit()">
                         </label>
                     </form>
-                    <a href="{{ route('employees.create') }}" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
+
+                    <div class="h-6 w-px bg-gray-200"></div>
+
+                    <a href="{{ route('employees.create') }}"
+                       class="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
                         Add Employee
                     </a>
                 </div>
@@ -79,7 +97,6 @@
             <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-6">
                 <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Filter</button>
                 <a href="{{ route('employees.index') }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Reset</a>
-                <a href="{{ route('employees.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Export XLSX</a>
             </div>
         </form>
 
@@ -134,10 +151,10 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-gray-700">{{ $employee->employee_number }}</td>
                             <td class="px-4 py-3">
-                                <a href="{{ route('employees.show', $employee) }}" class="font-medium text-slate-900 hover:underline">{{ $employee->full_name }}</a>
+                                <a href="{{ route('employees.show', $employee) }}" class="font-medium text-slate-900 hover:underline">{{ $employee->employee_number }}</a>
                             </td>
+                            <td class="px-4 py-3 text-gray-700">{{ $employee->full_name }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ $employee->supervisor?->full_name ?? '—' }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ $employee->position?->title ?? '—' }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ $employee->skillPosition?->name ?? '—' }}</td>

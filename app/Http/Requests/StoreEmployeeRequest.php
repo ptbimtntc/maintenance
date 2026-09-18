@@ -18,6 +18,8 @@ class StoreEmployeeRequest extends FormRequest
     {
         return [
             'employee_number' => ['required', 'string', 'max:50', 'unique:employees,employee_number'],
+            'lototo_number' => ['nullable', 'string', 'max:50'],
+            'sap_id' => ['nullable', 'string', 'max:50', 'unique:employees,sap_id'],
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['nullable', Rule::in(['Male', 'Female'])],
             'date_of_birth' => ['nullable', 'date', 'before:today'],

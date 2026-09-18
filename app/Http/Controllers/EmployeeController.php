@@ -34,7 +34,7 @@ class EmployeeController extends Controller
      * "Import XLSX" to bulk-update the same employees without reshaping it.
      */
     private const IMPORT_COLUMNS = [
-        'Employee Number', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
+        'Employee Number', 'Nomor LOTOTO', 'ID SAP', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
         'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management',
         'Employment Status', 'Shift', 'Supervisor (Employee Number)',
     ];
@@ -73,6 +73,8 @@ class EmployeeController extends Controller
         if ($request->string('export') == 'xlsx') {
             $rows = $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
                 $e->employee_number,
+                $e->lototo_number,
+                $e->sap_id,
                 $e->full_name,
                 $e->businessUnit?->name,
                 $e->department?->name,
@@ -90,7 +92,24 @@ class EmployeeController extends Controller
             return $this->streamXlsx('employees-'.now()->format('Y-m-d').'.xlsx', self::IMPORT_COLUMNS, $rows);
         }
 
-        $employees = $query->orderBy('full_name')->paginate(15)->withQueryString();
+        $filters = [
+            ...$request->only([
+                'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'supervisor_id', 'shift_id',
+            ]),
+            'employment_status_id' => $statusFilterId,
+        ];
+
+        // Built from $filters (not ->withQueryString()): the "All Statuses"
+        // option submits employment_status_id as an empty string, which the
+        // ConvertEmptyStringsToNull middleware turns into null on the
+        // request before pagination links are built. withQueryString()
+        // would then drop that null-valued key from page 2+ links, making
+        // the "no explicit status" default-to-Active logic above silently
+        // reassert itself - which paginates against the wrong result count
+        // and shows an empty page 2. $statusFilterId is already resolved to
+        // the real string ('' included), so appending it directly keeps
+        // "All Statuses" honored across pages.
+        $employees = $query->orderBy('full_name')->paginate(15)->appends($filters);
 
         return view('employees.index', [
             'employees' => $employees,
@@ -100,12 +119,7 @@ class EmployeeController extends Controller
             'employmentStatuses' => EmploymentStatus::where('is_active', true)->orderBy('name')->get(),
             'supervisors' => Employee::query()->visibleTo($user)->whereHas('directReports')->orderBy('full_name')->get(['id', 'full_name', 'employee_number']),
             'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
-            'filters' => [
-                ...$request->only([
-                    'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'supervisor_id', 'shift_id',
-                ]),
-                'employment_status_id' => $statusFilterId,
-            ],
+            'filters' => $filters,
         ]);
     }
 
@@ -296,6 +310,14 @@ class EmployeeController extends Controller
 
             if (! empty($data['Full Name'])) {
                 $changes['full_name'] = trim((string) $data['Full Name']);
+            }
+
+            if (! empty($data['Nomor LOTOTO'])) {
+                $changes['lototo_number'] = trim((string) $data['Nomor LOTOTO']);
+            }
+
+            if (! empty($data['ID SAP'])) {
+                $changes['sap_id'] = trim((string) $data['ID SAP']);
             }
 
             foreach ($lookups as $column => [$modelClass, $nameField, $foreignKey]) {

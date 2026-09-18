@@ -11,6 +11,18 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
+        <x-input-label for="lototo_number" value="Nomor LOTOTO" />
+        <x-text-input id="lototo_number" name="lototo_number" class="mt-1 block w-full" value="{{ $old('lototo_number') }}" />
+        <x-input-error :messages="$errors->get('lototo_number')" class="mt-1" />
+    </div>
+
+    <div>
+        <x-input-label for="sap_id" value="ID SAP" />
+        <x-text-input id="sap_id" name="sap_id" class="mt-1 block w-full" value="{{ $old('sap_id') }}" />
+        <x-input-error :messages="$errors->get('sap_id')" class="mt-1" />
+    </div>
+
+    <div>
         <x-input-label for="full_name" value="Full Name" />
         <x-text-input id="full_name" name="full_name" class="mt-1 block w-full" value="{{ $old('full_name') }}" required />
         <x-input-error :messages="$errors->get('full_name')" class="mt-1" />
@@ -149,10 +161,16 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
 
     <div>
         <x-input-label for="employment_status_id" value="Employment Status" />
+        @php
+            // New employees default to "Active" so they aren't silently
+            // hidden by the Employees list's default status filter; editing
+            // an existing employee still reflects whatever it actually has.
+            $defaultStatusId = $employee ? null : $employmentStatuses->firstWhere('code', 'ACTIVE')?->id;
+        @endphp
         <select id="employment_status_id" name="employment_status_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
             <option value="">—</option>
             @foreach ($employmentStatuses as $status)
-                <option value="{{ $status->id }}" @selected($old('employment_status_id') == $status->id)>{{ $status->name }}</option>
+                <option value="{{ $status->id }}" @selected($old('employment_status_id', $defaultStatusId) == $status->id)>{{ $status->name }}</option>
             @endforeach
         </select>
         <x-input-error :messages="$errors->get('employment_status_id')" class="mt-1" />

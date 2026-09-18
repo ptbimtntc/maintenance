@@ -20,6 +20,8 @@ class UpdateEmployeeRequest extends FormRequest
 
         return [
             'employee_number' => ['required', 'string', 'max:50', Rule::unique('employees', 'employee_number')->ignore($employeeId)],
+            'lototo_number' => ['nullable', 'string', 'max:50'],
+            'sap_id' => ['nullable', 'string', 'max:50', Rule::unique('employees', 'sap_id')->ignore($employeeId)],
             'full_name' => ['required', 'string', 'max:255'],
             'gender' => ['nullable', Rule::in(['Male', 'Female'])],
             'date_of_birth' => ['nullable', 'date', 'before:today'],

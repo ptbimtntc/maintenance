@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'employee_number', 'full_name', 'preferred_name', 'photo_path', 'gender', 'date_of_birth',
+    'employee_number', 'lototo_number', 'sap_id', 'full_name', 'preferred_name', 'photo_path', 'gender', 'date_of_birth',
     'email', 'phone', 'department_id', 'business_unit_id', 'division_id', 'maintenance_area_id', 'maintenance_team_id',
     'position_id', 'skill_position_id', 'employment_type_id', 'employment_source_id', 'workforce_category',
     'employment_status_id', 'location_id', 'shift_id',
@@ -269,7 +269,9 @@ class Employee extends Model
 
         return $query->where(function (Builder $q) use ($term) {
             $q->where('full_name', 'like', "%{$term}%")
-                ->orWhere('employee_number', 'like', "%{$term}%");
+                ->orWhere('employee_number', 'like', "%{$term}%")
+                ->orWhere('lototo_number', 'like', "%{$term}%")
+                ->orWhere('sap_id', 'like', "%{$term}%");
         });
     }
 }
