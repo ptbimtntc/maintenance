@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">Add Training Record — {{ $employee->full_name }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-gray-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
         <form method="POST" action="{{ route('employees.training-records.store', $employee) }}">
             @csrf
 
             <div class="space-y-4">
                 <div>
                     <x-input-label for="training_program_id" value="Training Program (optional)" />
-                    <select id="training_program_id" name="training_program_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <select id="training_program_id" name="training_program_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                         <option value="">— Ad-hoc / not linked to a program —</option>
                         @foreach ($programs as $program)
                             <option value="{{ $program->id }}" @selected(old('training_program_id') == $program->id)>{{ $program->title }}</option>
@@ -31,7 +31,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label for="training_type_id" value="Training Type" />
-                        <select id="training_type_id" name="training_type_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="training_type_id" name="training_type_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="">—</option>
                             @foreach ($types as $type)
                                 <option value="{{ $type->id }}" @selected(old('training_type_id') == $type->id)>{{ $type->name }}</option>
@@ -40,7 +40,7 @@
                     </div>
                     <div>
                         <x-input-label for="training_provider_id" value="Provider (if external)" />
-                        <select id="training_provider_id" name="training_provider_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="training_provider_id" name="training_provider_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="">—</option>
                             @foreach ($providers as $provider)
                                 <option value="{{ $provider->id }}" @selected(old('training_provider_id') == $provider->id)>{{ $provider->name }}</option>
@@ -57,7 +57,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label for="attendance_status" value="Attendance" />
-                        <select id="attendance_status" name="attendance_status" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="attendance_status" name="attendance_status" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="attended" selected>Attended</option>
                             <option value="absent">Absent</option>
                             <option value="excused">Excused</option>
@@ -65,7 +65,7 @@
                     </div>
                     <div>
                         <x-input-label for="completion_status" value="Completion" />
-                        <select id="completion_status" name="completion_status" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="completion_status" name="completion_status" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="completed" selected>Completed</option>
                             <option value="incomplete">Incomplete</option>
                             <option value="failed">Failed</option>
@@ -80,7 +80,7 @@
                     </div>
                     <div>
                         <x-input-label for="assessment_result" value="Assessment Result (optional)" />
-                        <select id="assessment_result" name="assessment_result" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="assessment_result" name="assessment_result" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="">—</option>
                             <option value="pass">Pass</option>
                             <option value="fail">Fail</option>
@@ -91,7 +91,7 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label for="competency_before_level_id" value="Competency Before (optional)" />
-                        <select id="competency_before_level_id" name="competency_before_level_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="competency_before_level_id" name="competency_before_level_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="">—</option>
                             @foreach ($competencyLevels as $level)
                                 <option value="{{ $level->id }}">{{ $level->level_number }} — {{ $level->name }}</option>
@@ -100,7 +100,7 @@
                     </div>
                     <div>
                         <x-input-label for="competency_after_level_id" value="Competency After (optional)" />
-                        <select id="competency_after_level_id" name="competency_after_level_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="competency_after_level_id" name="competency_after_level_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             <option value="">—</option>
                             @foreach ($competencyLevels as $level)
                                 <option value="{{ $level->id }}">{{ $level->level_number }} — {{ $level->name }}</option>
@@ -110,8 +110,8 @@
                 </div>
 
                 <label class="flex items-center gap-2">
-                    <input type="checkbox" name="certificate_issued" value="1" class="rounded border-gray-300" />
-                    <span class="text-sm text-gray-700">Certificate Issued</span>
+                    <input type="checkbox" name="certificate_issued" value="1" class="rounded border-neutral-300" />
+                    <span class="text-sm text-neutral-700">Certificate Issued</span>
                 </label>
 
                 <div>
@@ -121,13 +121,13 @@
 
                 <div>
                     <x-input-label for="remarks" value="Remarks (optional)" />
-                    <textarea id="remarks" name="remarks" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-sm">{{ old('remarks') }}</textarea>
+                    <textarea id="remarks" name="remarks" rows="2" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">{{ old('remarks') }}</textarea>
                 </div>
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-                <a href="{{ route('employees.show', $employee) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
-                <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Save Record</button>
+                <a href="{{ route('employees.show', $employee) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</a>
+                <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Save Record</button>
             </div>
         </form>
     </div>

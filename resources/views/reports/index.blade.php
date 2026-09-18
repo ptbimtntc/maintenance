@@ -34,12 +34,12 @@ $sections = [
     <div class="space-y-8">
         @foreach ($sections as $section => $reports)
             <div>
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $section }}</h2>
+                <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ $section }}</h2>
                 <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($reports as $report)
-                        <a href="{{ $report['href'] }}" class="rounded-lg border border-gray-200 bg-white p-5 hover:border-slate-400 hover:shadow-sm">
-                            <p class="font-medium text-gray-900">{{ $report['label'] }}</p>
-                            <p class="mt-1 text-sm text-gray-500">{{ $report['desc'] }}</p>
+                        <a href="{{ $report['href'] }}" class="rounded-lg border border-neutral-200 bg-white p-5 hover:border-neutral-400 hover:shadow-sm">
+                            <p class="font-medium text-neutral-900">{{ $report['label'] }}</p>
+                            <p class="mt-1 text-sm text-neutral-500">{{ $report['desc'] }}</p>
                         </a>
                     @endforeach
                 </div>

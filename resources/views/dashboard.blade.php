@@ -26,8 +26,8 @@ $icons = [
 
     <div class="space-y-10">
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Employees</h2>
-            <p class="mt-1 text-sm text-gray-500">Live counts from the Employee Database module.</p>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Employees</h2>
+            <p class="mt-1 text-sm text-neutral-500">Live counts from the Employee Database module.</p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
@@ -52,8 +52,8 @@ $icons = [
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Skills &amp; Competency</h2>
-            <p class="mt-1 text-sm text-gray-500">Live counts from the Skills &amp; Competency Management module.</p>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Skills &amp; Competency</h2>
+            <p class="mt-1 text-sm text-neutral-500">Live counts from the Skills &amp; Competency Management module.</p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
@@ -85,8 +85,8 @@ $icons = [
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Training &amp; Development</h2>
-            <p class="mt-1 text-sm text-gray-500">Live counts from the Training Management module.</p>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Training &amp; Development</h2>
+            <p class="mt-1 text-sm text-neutral-500">Live counts from the Training Management module.</p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
@@ -118,8 +118,8 @@ $icons = [
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Certificates</h2>
-            <p class="mt-1 text-sm text-gray-500">Live counts from the Certificate Management module.</p>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Certificates</h2>
+            <p class="mt-1 text-sm text-neutral-500">Live counts from the Certificate Management module.</p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
@@ -145,8 +145,8 @@ $icons = [
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-500">Organization Overview</h2>
-            <p class="mt-1 text-sm text-gray-500">Live counts from the Organization &amp; Master Data module.</p>
+            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Organization Overview</h2>
+            <p class="mt-1 text-sm text-neutral-500">Live counts from the Organization &amp; Master Data module.</p>
 
             <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat

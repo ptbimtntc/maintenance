@@ -3,10 +3,10 @@
 @php
 $styles = [
     'meets' => ['label' => 'Meets Requirement', 'class' => 'bg-green-100 text-green-800'],
-    'exceeds' => ['label' => 'Exceeds Requirement', 'class' => 'bg-blue-100 text-blue-800'],
+    'exceeds' => ['label' => 'Exceeds Requirement', 'class' => 'bg-accent-100 text-accent-800'],
     'gap' => ['label' => 'Development Required', 'class' => 'bg-red-100 text-red-800'],
     'incomplete' => ['label' => 'Not Assessed', 'class' => 'bg-amber-100 text-amber-800'],
-    'no-requirements' => ['label' => 'No Requirements Defined', 'class' => 'bg-gray-100 text-gray-600'],
+    'no-requirements' => ['label' => 'No Requirements Defined', 'class' => 'bg-neutral-100 text-neutral-600'],
 ];
 $style = $styles[$status] ?? $styles['no-requirements'];
 @endphp

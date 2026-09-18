@@ -39,6 +39,8 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ViewDevelopmentPlans,
                 PermissionName::ManageDevelopmentPlans,
                 PermissionName::ViewReports,
+                PermissionName::ViewSafety,
+                PermissionName::ManageSafety,
             ],
 
             RoleName::MaintenanceSupervisor->value => [
@@ -50,6 +52,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ViewTraining,
                 PermissionName::ViewCertificates,
                 PermissionName::ViewDevelopmentPlans,
+                PermissionName::ViewSafety,
             ],
 
             RoleName::MaintenanceStaff->value => [
@@ -59,6 +62,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ViewTraining,
                 PermissionName::ViewCertificates,
                 PermissionName::ViewDevelopmentPlans,
+                PermissionName::ViewSafety,
             ],
 
             RoleName::PeopleDevelopment->value => [
@@ -74,6 +78,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ViewDevelopmentPlans,
                 PermissionName::ManageDevelopmentPlans,
                 PermissionName::ViewReports,
+                PermissionName::ViewSafety,
             ],
 
             // Read-only, org-wide access for the "View as Guest" button on
@@ -91,6 +96,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 PermissionName::ViewCertificates,
                 PermissionName::ViewDevelopmentPlans,
                 PermissionName::ViewReports,
+                PermissionName::ViewSafety,
             ],
         ];
 

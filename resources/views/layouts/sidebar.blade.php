@@ -13,14 +13,14 @@ $trainingRecordsActive = request()->routeIs('training.records.*');
 $developmentPlansActive = request()->routeIs('development-plans.*');
 @endphp
 
-<div class="flex h-full grow flex-col bg-slate-900">
-    <div class="flex h-16 shrink-0 items-center gap-3 border-b border-slate-800 px-4">
-        <div class="flex h-9 w-9 items-center justify-center rounded bg-slate-800 text-xs font-semibold text-slate-400" title="PT Bekaert Indonesia logo placeholder">
+<div class="flex h-full grow flex-col bg-neutral-900">
+    <div class="flex h-16 shrink-0 items-center gap-3 border-b border-neutral-800 px-4">
+        <div class="flex h-9 w-9 items-center justify-center rounded bg-brand-500 text-xs font-semibold text-white" title="PT Bekaert Indonesia logo placeholder">
             LOGO
         </div>
         <div class="leading-tight">
             <p class="text-sm font-semibold text-white">MPD System</p>
-            <p class="text-[11px] text-slate-400">PT Bekaert Indonesia</p>
+            <p class="text-[11px] text-neutral-400">PT Bekaert Indonesia</p>
         </div>
     </div>
 
@@ -32,7 +32,7 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
         </div>
 
         <div>
-            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">People &amp; Organization</p>
+            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">People &amp; Organization</p>
             <div class="space-y-1">
                 @can('viewAny', \App\Models\Employee::class)
                     <x-nav-item :href="route('employees.index')" :active="$employeesActive" icon="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z">
@@ -65,7 +65,7 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
         </div>
 
         <div>
-            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Competency</p>
+            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Competency</p>
             <div class="space-y-1">
                 @can(\App\Enums\PermissionName::ViewJobDescriptions->value)
                     <x-nav-item :href="route('job-descriptions.index')" :active="$jobDescriptionsActive" icon="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25">
@@ -104,7 +104,7 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
         </div>
 
         <div>
-            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Training &amp; Development</p>
+            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Training &amp; Development</p>
             <div class="space-y-1">
                 @can(\App\Enums\PermissionName::ViewTraining->value)
                     <x-nav-item :href="route('training.programs.index')" :active="$trainingManagementActive" icon="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5">
@@ -149,7 +149,22 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
         </div>
 
         <div>
-            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Insights &amp; System</p>
+            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Safety</p>
+            <div class="space-y-1">
+                @can(\App\Enums\PermissionName::ViewSafety->value)
+                    <x-nav-item :href="route('safety.lototo.index')" :active="request()->routeIs('safety.lototo.*')" icon="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z">
+                        LOTOTO
+                    </x-nav-item>
+                @else
+                    <x-nav-item disabled icon="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z">
+                        LOTOTO
+                    </x-nav-item>
+                @endcan
+            </div>
+        </div>
+
+        <div>
+            <p class="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-500">Insights &amp; System</p>
             <div class="space-y-1">
                 @can(\App\Enums\PermissionName::ViewReports->value)
                     <x-nav-item :href="route('reports.index')" :active="request()->routeIs('reports.*')" icon="M3 13.5l3-3m0 0l3 3m-3-3v9m6-9l3-3m0 0l3 3m-3-3v12">
@@ -181,7 +196,7 @@ $developmentPlansActive = request()->routeIs('development-plans.*');
         </div>
     </nav>
 
-    <div class="border-t border-slate-800 p-4 text-[11px] leading-relaxed text-slate-500">
+    <div class="border-t border-neutral-800 p-4 text-[11px] leading-relaxed text-neutral-500">
         Development build. Not officially connected to PT Bekaert Indonesia systems.
     </div>
 </div>

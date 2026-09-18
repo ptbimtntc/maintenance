@@ -48,6 +48,10 @@ enum PermissionName: string
     // Reports
     case ViewReports = 'reports.view';
 
+    // Safety (LOTOTO, ...)
+    case ViewSafety = 'safety.view';
+    case ManageSafety = 'safety.manage';
+
     public static function all(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());

@@ -12,8 +12,10 @@ use App\Models\Skill;
 use App\Models\TrainingProgram;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CertificateController extends Controller
@@ -21,6 +23,18 @@ class CertificateController extends Controller
     use ExportsSpreadsheet;
 
     private const DISK = 'local';
+
+    /**
+     * Column headers the "Import XLSX" upload is expected to have, in this
+     * order. Unlike the Employees import, this always creates new
+     * certificates (there's no single natural key to match an existing
+     * certificate row against) - the file itself still has to be attached
+     * afterwards via Edit, since a spreadsheet cell can't carry a PDF/image.
+     */
+    private const IMPORT_COLUMNS = [
+        'Employee Number', 'Certificate Name', 'Certificate Type', 'Number',
+        'Issuing Organization', 'Issue Date', 'Expiry Date', 'Verification Status',
+    ];
 
     public function index(Request $request): View|StreamedResponse
     {
@@ -71,6 +85,143 @@ class CertificateController extends Controller
             'statusLabels' => Certificate::statusLabels(),
             'filters' => $request->only(['employee_search', 'certificate_type_id', 'status']),
         ]);
+    }
+
+    /**
+     * Bulk-creates certificates from an uploaded .xlsx file shaped like
+     * IMPORT_COLUMNS. Each row always creates a new certificate (never
+     * updates one) since certificates don't have a single natural key to
+     * match against the way an Employee Number does for employees - and the
+     * certificate file itself still has to be attached afterwards via Edit,
+     * since a spreadsheet cell can't carry a PDF/image upload.
+     */
+    public function import(Request $request): RedirectResponse
+    {
+        $this->authorize(PermissionName::ManageCertificates->value);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx'],
+        ]);
+
+        $rows = (new XlsxReader)->load($request->file('file')->getRealPath())
+            ->getActiveSheet()
+            ->toArray(null, true, true, false);
+
+        $header = array_map(fn ($cell) => trim((string) $cell), array_shift($rows) ?? []);
+
+        $created = 0;
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $rowNumber = $index + 2;
+            $data = array_combine($header, array_pad($row, count($header), null));
+
+            $employeeNumber = trim((string) ($data['Employee Number'] ?? ''));
+            $name = trim((string) ($data['Certificate Name'] ?? ''));
+
+            if ($employeeNumber === '' && $name === '') {
+                continue;
+            }
+
+            if ($employeeNumber === '') {
+                $errors[] = "Row {$rowNumber}: Employee Number is required.";
+
+                continue;
+            }
+
+            $employee = Employee::query()->visibleTo($request->user())->where('employee_number', $employeeNumber)->first();
+
+            if (! $employee) {
+                $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
+
+                continue;
+            }
+
+            if ($name === '') {
+                $errors[] = "Row {$rowNumber}: Certificate Name is required.";
+
+                continue;
+            }
+
+            $certificateTypeId = null;
+            $typeName = trim((string) ($data['Certificate Type'] ?? ''));
+
+            if ($typeName !== '') {
+                $certificateType = CertificateType::where('name', $typeName)->first();
+
+                if (! $certificateType) {
+                    $errors[] = "Row {$rowNumber}: Certificate Type \"{$typeName}\" not found - left blank.";
+                } else {
+                    $certificateTypeId = $certificateType->id;
+                }
+            }
+
+            $issueDate = $this->parseImportDate($data['Issue Date'] ?? null, $rowNumber, 'Issue Date', $errors);
+            $expiryDate = $this->parseImportDate($data['Expiry Date'] ?? null, $rowNumber, 'Expiry Date', $errors);
+
+            if ($issueDate && $expiryDate && $expiryDate < $issueDate) {
+                $errors[] = "Row {$rowNumber}: Expiry Date is before Issue Date - Expiry Date left blank.";
+                $expiryDate = null;
+            }
+
+            $verificationStatus = 'pending_verification';
+            $statusValue = strtolower(trim((string) ($data['Verification Status'] ?? '')));
+
+            if ($statusValue !== '') {
+                $verificationStatus = match (true) {
+                    str_starts_with($statusValue, 'verified') => 'verified',
+                    str_starts_with($statusValue, 'pending') => 'pending_verification',
+                    default => null,
+                };
+
+                if ($verificationStatus === null) {
+                    $errors[] = "Row {$rowNumber}: Verification Status \"{$data['Verification Status']}\" not recognized - defaulted to Pending Verification.";
+                    $verificationStatus = 'pending_verification';
+                }
+            }
+
+            $employee->certificates()->create([
+                'certificate_type_id' => $certificateTypeId,
+                'name' => $name,
+                'certificate_number' => trim((string) ($data['Number'] ?? '')) ?: null,
+                'issuing_organization' => trim((string) ($data['Issuing Organization'] ?? '')) ?: null,
+                'issue_date' => $issueDate,
+                'expiry_date' => $expiryDate,
+                'verification_status' => $verificationStatus,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $created++;
+        }
+
+        $redirect = redirect()->route('certificates.index')
+            ->with('status', "{$created} certificate(s) created from import.");
+
+        if ($errors !== []) {
+            $shown = array_slice($errors, 0, 8);
+            $suffix = count($errors) > 8 ? ' …and '.(count($errors) - 8).' more.' : '';
+            $redirect->with('import_errors', count($errors).' issue(s) found: '.implode(' | ', $shown).$suffix);
+        }
+
+        return $redirect;
+    }
+
+    private function parseImportDate(mixed $value, int $rowNumber, string $label, array &$errors): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+
+        if ($value === '') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Throwable) {
+            $errors[] = "Row {$rowNumber}: {$label} \"{$value}\" is not a valid date - left blank.";
+
+            return null;
+        }
     }
 
     public function create(Employee $employee): View

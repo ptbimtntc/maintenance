@@ -6,7 +6,7 @@ $old = fn ($field, $default = null) => old($field, $session?->$field ?? $default
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit Session' : 'Add Session' }} — {{ $program->title }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-gray-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
         <form method="POST" action="{{ $isEdit ? route('training.sessions.update', $session) : route('training.programs.sessions.store', $program) }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif
@@ -44,7 +44,7 @@ $old = fn ($field, $default = null) => old($field, $session?->$field ?? $default
 
                 <div>
                     <x-input-label for="location_id" value="Location" />
-                    <select id="location_id" name="location_id" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                    <select id="location_id" name="location_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                         <option value="">—</option>
                         @foreach ($locations as $location)
                             <option value="{{ $location->id }}" @selected($old('location_id') == $location->id)>{{ $location->name }}</option>
@@ -64,7 +64,7 @@ $old = fn ($field, $default = null) => old($field, $session?->$field ?? $default
                     </div>
                     <div>
                         <x-input-label for="status" value="Status" />
-                        <select id="status" name="status" class="mt-1 block w-full rounded-md border-gray-300 text-sm">
+                        <select id="status" name="status" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                             @foreach ($statuses as $status)
                                 <option value="{{ $status }}" @selected($old('status', 'scheduled') === $status)>{{ ucfirst($status) }}</option>
                             @endforeach
@@ -74,13 +74,13 @@ $old = fn ($field, $default = null) => old($field, $session?->$field ?? $default
 
                 <div>
                     <x-input-label for="notes" value="Notes (optional)" />
-                    <textarea id="notes" name="notes" rows="2" class="mt-1 block w-full rounded-md border-gray-300 text-sm">{{ $old('notes') }}</textarea>
+                    <textarea id="notes" name="notes" rows="2" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">{{ $old('notes') }}</textarea>
                 </div>
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-                <a href="{{ $isEdit ? route('training.sessions.show', $session) : route('training.programs.show', $program) }}" class="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
-                <button type="submit" class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Save</button>
+                <a href="{{ $isEdit ? route('training.sessions.show', $session) : route('training.programs.show', $program) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</a>
+                <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Save</button>
             </div>
         </form>
     </div>

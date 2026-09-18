@@ -12,7 +12,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-gray-50" x-data="{ sidebarOpen: false }">
+    <body class="font-sans antialiased bg-neutral-50" x-data="{ sidebarOpen: false }">
         <div class="flex h-screen overflow-hidden">
             <!-- Desktop sidebar -->
             <div class="hidden lg:flex lg:w-64 lg:shrink-0">
@@ -21,7 +21,7 @@
 
             <!-- Mobile sidebar (off-canvas) -->
             <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-40 flex lg:hidden" role="dialog" aria-modal="true">
-                <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900/70" @click="sidebarOpen = false"></div>
+                <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition-opacity ease-linear duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-neutral-900/70" @click="sidebarOpen = false"></div>
 
                 <div x-show="sidebarOpen" x-transition:enter="transition ease-in-out duration-200 transform" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in-out duration-150 transform" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="relative flex w-64 max-w-[80%] flex-1">
                     <div class="absolute right-0 top-0 -mr-12 pt-2">

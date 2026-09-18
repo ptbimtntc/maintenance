@@ -20,6 +20,7 @@ enum MenuKey: string
     case Training = 'training';
     case Certificates = 'certificates';
     case DevelopmentPlans = 'development-plans';
+    case Safety = 'safety';
 
     public function label(): string
     {
@@ -31,6 +32,7 @@ enum MenuKey: string
             self::Training => 'Training (Programs, Sessions, Records)',
             self::Certificates => 'Certificates',
             self::DevelopmentPlans => 'Development Plans',
+            self::Safety => 'Safety (LOTOTO)',
         };
     }
 
@@ -63,6 +65,7 @@ enum MenuKey: string
             self::Training => [P::ManageTraining->value, P::ManageTrainingRecords->value],
             self::Certificates => [P::ManageCertificates->value],
             self::DevelopmentPlans => [P::ManageDevelopmentPlans->value],
+            self::Safety => [P::ManageSafety->value],
         };
     }
 
@@ -89,6 +92,7 @@ enum MenuKey: string
             P::ManageTraining->value, P::ManageTrainingRecords->value => self::Training,
             P::ManageCertificates->value => self::Certificates,
             P::ManageDevelopmentPlans->value => self::DevelopmentPlans,
+            P::ManageSafety->value => self::Safety,
             default => null,
         };
     }

@@ -51,24 +51,24 @@
     </style>
 
     <div class="space-y-4">
-        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 text-sm">
-            <span class="font-medium text-gray-700">Legend:</span>
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-sm">
+            <span class="font-medium text-neutral-700">Legend:</span>
             <span class="inline-flex items-center gap-2">
-                <span class="h-4 w-4 rounded border border-blue-700 bg-blue-600"></span>
+                <span class="h-4 w-4 rounded border border-accent-700 bg-accent-600"></span>
                 Blue Collar (BC)
             </span>
             <span class="inline-flex items-center gap-2">
-                <span class="h-4 w-4 rounded border border-gray-300 bg-white"></span>
+                <span class="h-4 w-4 rounded border border-neutral-300 bg-white"></span>
                 White Collar Management (WCM)
             </span>
         </div>
 
         @if ($roots->isEmpty())
-            <div class="rounded-lg border border-dashed border-gray-300 bg-white p-10 text-center text-sm text-gray-500">
+            <div class="rounded-lg border border-dashed border-neutral-300 bg-white p-10 text-center text-sm text-neutral-500">
                 No employees to show yet.
             </div>
         @else
-            <div class="overflow-x-auto rounded-lg border border-gray-200 bg-white p-8">
+            <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white p-8">
                 <ul class="org-chart-tree">
                     @foreach ($roots as $root)
                         @include('organization-chart._node', ['employee' => $root, 'childrenByParent' => $childrenByParent])

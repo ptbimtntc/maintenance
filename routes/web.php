@@ -11,6 +11,7 @@ use App\Http\Controllers\EmployeeDevelopmentPlanController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
 use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
+use App\Http\Controllers\LototoController;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationChartController;
@@ -63,6 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'update'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('employees.certificates.update');
     Route::delete('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('employees.certificates.destroy');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
+    Route::post('/certificates-import', [CertificateController::class, 'import'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('certificates.import');
 });
 
 Route::pattern('type', implode('|', array_keys(config('master_data'))));
@@ -123,6 +125,7 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
     ->group(function () {
         Route::get('/calendar', [TrainingSessionController::class, 'calendar'])->name('calendar');
         Route::get('/records', [TrainingRecordController::class, 'index'])->name('records.index');
+        Route::post('/records-import', [TrainingRecordController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('records.import');
 
         Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program'])
             ->middlewareFor(['create', 'store', 'edit', 'update'], 'menu.edit:'.MenuKey::Training->value);
@@ -178,6 +181,14 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewReports->value
         Route::get('/training-hours', [ReportController::class, 'trainingHours'])->name('training-hours');
         Route::get('/development-summary', [ReportController::class, 'developmentSummary'])->name('development-summary');
         Route::get('/assessment-history', [ReportController::class, 'assessmentHistory'])->name('assessment-history');
+        Route::post('/assessment-history-import', [ReportController::class, 'assessmentHistoryImport'])->name('assessment-history.import');
+    });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSafety->value])
+    ->prefix('safety')
+    ->name('safety.')
+    ->group(function () {
+        Route::get('/lototo', [LototoController::class, 'index'])->name('lototo.index');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {
