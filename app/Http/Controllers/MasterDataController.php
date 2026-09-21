@@ -16,9 +16,38 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class MasterDataController extends Controller
 {
+    /**
+     * How the landing page groups the master data types. Any type not
+     * listed here still shows up, under "Other", so a newly added entry
+     * in config/master_data.php is never silently hidden.
+     */
+    private const LANDING_GROUPS = [
+        'Organization Structure' => ['departments', 'divisions', 'maintenance-areas', 'maintenance-teams', 'business-units', 'locations'],
+        'Positions & Employment' => ['positions', 'skill-positions', 'employment-types', 'employment-sources', 'employment-statuses', 'shifts'],
+        'Skills & Competency' => ['skill-categories', 'skills', 'competency-levels'],
+        'Training & Certification' => ['training-categories', 'training-types', 'training-providers', 'certificate-types'],
+    ];
+
     public function landing(): View
     {
-        return view('organization.landing', ['types' => Config::get('master_data')]);
+        $types = Config::get('master_data');
+        $groups = [];
+
+        foreach (self::LANDING_GROUPS as $title => $slugs) {
+            $items = collect($slugs)->filter(fn ($slug) => isset($types[$slug]))->mapWithKeys(fn ($slug) => [$slug => $types[$slug]]);
+
+            if ($items->isNotEmpty()) {
+                $groups[$title] = $items;
+            }
+        }
+
+        $ungrouped = collect($types)->except(collect(self::LANDING_GROUPS)->flatten()->all());
+
+        if ($ungrouped->isNotEmpty()) {
+            $groups['Other'] = $ungrouped;
+        }
+
+        return view('organization.landing', ['groups' => $groups]);
     }
 
     public function index(string $type): View
