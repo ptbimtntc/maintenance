@@ -28,22 +28,39 @@ $sections = [
 ];
 @endphp
 
+@php
+$palette = [
+    ['bar' => 'bg-brand-500', 'title' => 'text-brand-700', 'hover' => 'hover:border-brand-400 hover:bg-brand-50/40', 'arrow' => 'text-brand-500'],
+    ['bar' => 'bg-accent-500', 'title' => 'text-accent-700', 'hover' => 'hover:border-accent-400 hover:bg-accent-50/40', 'arrow' => 'text-accent-500'],
+];
+@endphp
+
 <x-app-layout>
     <x-slot name="header">Reports</x-slot>
 
-    <div class="space-y-8">
+    <div class="space-y-5">
         @foreach ($sections as $section => $reports)
-            <div>
-                <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ $section }}</h2>
-                <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @php $c = $palette[$loop->index % 2]; @endphp
+            <section>
+                <div class="mb-2 flex items-center gap-2">
+                    <span class="h-4 w-1 rounded-full {{ $c['bar'] }}"></span>
+                    <h2 class="text-xs font-semibold uppercase tracking-wide {{ $c['title'] }}">{{ $section }}</h2>
+                    <span class="text-xs text-neutral-400">{{ count($reports) }}</span>
+                    <div class="h-px flex-1 bg-neutral-200"></div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
                     @foreach ($reports as $report)
-                        <a href="{{ $report['href'] }}" class="rounded-lg border border-neutral-200 bg-white p-5 hover:border-neutral-400 hover:shadow-sm">
-                            <p class="font-medium text-neutral-900">{{ $report['label'] }}</p>
-                            <p class="mt-1 text-sm text-neutral-500">{{ $report['desc'] }}</p>
+                        <a href="{{ $report['href'] }}" class="group flex items-start justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 transition {{ $c['hover'] }}">
+                            <span class="min-w-0">
+                                <span class="block truncate text-sm font-medium text-neutral-800" title="{{ $report['label'] }}">{{ $report['label'] }}</span>
+                                <span class="block truncate text-xs text-neutral-500" title="{{ $report['desc'] }}">{{ $report['desc'] }}</span>
+                            </span>
+                            <span class="mt-0.5 shrink-0 {{ $c['arrow'] }}">&rarr;</span>
                         </a>
                     @endforeach
                 </div>
-            </div>
+            </section>
         @endforeach
     </div>
 </x-app-layout>

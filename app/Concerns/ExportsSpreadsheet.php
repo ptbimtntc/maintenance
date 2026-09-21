@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -27,8 +28,8 @@ trait ExportsSpreadsheet
             $rowNumber++;
         }
 
-        foreach (range('A', $sheet->getHighestColumn()) as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
+        for ($i = 1, $last = Coordinate::columnIndexFromString($sheet->getHighestColumn()); $i <= $last; $i++) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($i))->setAutoSize(true);
         }
 
         $writer = new Xlsx($spreadsheet);

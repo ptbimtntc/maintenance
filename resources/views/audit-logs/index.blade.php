@@ -37,23 +37,23 @@ $actionStyles = ['created' => 'bg-green-100 text-green-800', 'updated' => 'bg-ac
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">When</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">User</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Action</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Record</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Changes</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">When</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">User</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Action</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Record</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Changes</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($logs as $log)
                         <tr>
-                            <td class="px-4 py-3 text-neutral-600">{{ $log->created_at->format('d M Y H:i') }}</td>
-                            <td class="px-4 py-3 text-neutral-800">{{ $log->user?->name ?? 'System' }}</td>
-                            <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $actionStyles[$log->action] }}">{{ ucfirst($log->action) }}</span></td>
-                            <td class="px-4 py-3 text-neutral-800">{{ $log->auditableLabel() }} #{{ $log->auditable_id }}</td>
-                            <td class="px-4 py-3 text-neutral-600">
+                            <td class="px-3 py-2 text-neutral-600">{{ $log->created_at->format('d M Y H:i') }}</td>
+                            <td class="px-3 py-2 text-neutral-800">{{ $log->user?->name ?? 'System' }}</td>
+                            <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $actionStyles[$log->action] }}">{{ ucfirst($log->action) }}</span></td>
+                            <td class="px-3 py-2 text-neutral-800">{{ $log->auditableLabel() }} #{{ $log->auditable_id }}</td>
+                            <td class="px-3 py-2 text-neutral-600">
                                 @if ($log->changes)
                                     <details>
                                         <summary class="cursor-pointer text-neutral-600">{{ count($log->changes) }} field(s)</summary>

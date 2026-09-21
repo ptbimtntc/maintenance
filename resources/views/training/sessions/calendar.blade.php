@@ -79,23 +79,23 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ $month }}</h2>
                 <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Dates</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Program</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Location</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                                <th class="px-4 py-3"></th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Dates</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Program</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Location</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                                <th class="px-3 py-2"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @foreach ($sessions as $session)
                                 <tr>
-                                    <td class="px-4 py-3 text-neutral-800">{{ $session->start_date->format('d M') }} &ndash; {{ $session->end_date->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $session->trainingProgram->title }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $session->location?->name ?? '—' }}</td>
-                                    <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $sessionStatusStyles[$session->status] }}">{{ ucfirst($session->status) }}</span></td>
-                                    <td class="px-4 py-3 text-right"><a href="{{ route('training.sessions.show', $session) }}" class="text-neutral-600 hover:underline">Manage</a></td>
+                                    <td class="px-3 py-2 text-neutral-800">{{ $session->start_date->format('d M') }} &ndash; {{ $session->end_date->format('d M Y') }}</td>
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $session->trainingProgram->title }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $session->location?->name ?? '—' }}</td>
+                                    <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $sessionStatusStyles[$session->status] }}">{{ ucfirst($session->status) }}</span></td>
+                                    <td class="px-3 py-2 text-right"><a href="{{ route('training.sessions.show', $session) }}" class="text-neutral-600 hover:underline">Manage</a></td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -10,25 +10,25 @@
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Required Level</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Notes</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Required Level</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Notes</th>
+                        <th class="px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($position->skillRequirements as $requirement)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $requirement->skill->name }}</td>
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $requirement->skill->name }}</td>
+                            <td class="px-3 py-2">
                                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium" style="background-color: {{ $requirement->requiredCompetencyLevel->color ?? '#e5e7eb' }}22; color: {{ $requirement->requiredCompetencyLevel->color ?? '#374151' }}">
                                     {{ $requirement->requiredCompetencyLevel->level_number }} — {{ $requirement->requiredCompetencyLevel->name }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $requirement->notes ?? '—' }}</td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-3 py-2 text-neutral-600">{{ $requirement->notes ?? '—' }}</td>
+                            <td class="px-3 py-2 text-right">
                                 <form method="POST" action="{{ route('skills.positions.requirements.destroy', [$position, $requirement]) }}" onsubmit="return confirm('Remove this requirement?');">
                                     @csrf
                                     @method('DELETE')

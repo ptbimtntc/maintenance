@@ -24,7 +24,7 @@ class OrganizationChartController extends Controller
         $employees = Employee::query()
             ->visibleTo($request->user())
             ->whereHas('employmentStatus', fn ($q) => $q->where('code', 'ACTIVE'))
-            ->with('skillPosition')
+            ->with(['skillPosition', 'position'])
             ->orderBy('full_name')
             ->get();
 

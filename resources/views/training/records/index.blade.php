@@ -66,25 +66,25 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Program</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Date</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Duration (hrs)</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Completion</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Program</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Date</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Duration (hrs)</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Completion</th>
+                        <th class="px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($records as $record)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $record->employee->full_name }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $record->trainingProgram?->title ?? '—' }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $record->training_date->format('d M Y') }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $record->duration_hours ?? '—' }}</td>
-                            <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
-                            <td class="px-4 py-3 text-right"><a href="{{ route('employees.show', $record->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $record->employee->full_name }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $record->trainingProgram?->title ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $record->training_date->format('d M Y') }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $record->duration_hours ?? '—' }}</td>
+                            <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
+                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', $record->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No training records yet.</td></tr>

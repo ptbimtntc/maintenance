@@ -91,6 +91,24 @@ $old = fn ($field, $default = null) => old($field, $certificate?->$field ?? $def
                     @endif
                 </div>
 
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div>
+                        <x-input-label for="trainer_name" value="Trainer (printed on certificate)" />
+                        <x-text-input id="trainer_name" name="trainer_name" class="mt-1 block w-full" value="{{ $old('trainer_name') }}" />
+                        <x-input-error :messages="$errors->get('trainer_name')" class="mt-1" />
+                    </div>
+                    <div>
+                        <x-input-label for="authorizer_name" value="Authorizer Name" />
+                        <x-text-input id="authorizer_name" name="authorizer_name" class="mt-1 block w-full" value="{{ $old('authorizer_name') }}" />
+                        <x-input-error :messages="$errors->get('authorizer_name')" class="mt-1" />
+                    </div>
+                    <div>
+                        <x-input-label for="authorizer_title" value="Authorizer Title" />
+                        <x-text-input id="authorizer_title" name="authorizer_title" class="mt-1 block w-full" value="{{ $old('authorizer_title') }}" placeholder="Maintenance Manager" />
+                        <x-input-error :messages="$errors->get('authorizer_title')" class="mt-1" />
+                    </div>
+                </div>
+
                 <div>
                     <x-input-label for="verification_notes" value="Verification Notes (optional)" />
                     <textarea id="verification_notes" name="verification_notes" rows="2" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">{{ $old('verification_notes') }}</textarea>

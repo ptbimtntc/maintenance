@@ -117,10 +117,10 @@
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
                         @can('create', \App\Models\Employee::class)
-                            <th class="w-10 px-4 py-3">
+                            <th class="w-10 px-3 py-2">
                                 <input type="checkbox"
                                        class="rounded border-neutral-300"
                                        @change="
@@ -130,26 +130,26 @@
                                        ">
                             </th>
                         @endcan
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Photo</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">NIK</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee Name</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Supervisor</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Position</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill Position</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Shift</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Photo</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">NIK</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee Name</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Supervisor</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill Position</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Shift</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($employees as $employee)
                         <tr>
                             @can('create', \App\Models\Employee::class)
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2">
                                     <input type="checkbox" name="employee_ids[]" value="{{ $employee->id }}"
                                            class="rounded border-neutral-300"
                                            @change="checkedCount += $el.checked ? 1 : -1">
                                 </td>
                             @endcan
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-2">
                                 @if ($employee->photo_path)
                                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
                                          alt="{{ $employee->full_name }}" class="h-10 w-10 rounded-full object-cover">
@@ -159,14 +159,14 @@
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-2">
                                 <a href="{{ route('employees.show', $employee) }}" class="font-medium text-neutral-900 hover:underline">{{ $employee->employee_number }}</a>
                             </td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $employee->full_name }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $employee->supervisor?->full_name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $employee->position?->title ?? '—' }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $employee->skillPosition?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $employee->shift?->name ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $employee->full_name }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $employee->supervisor?->full_name ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $employee->position?->title ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $employee->skillPosition?->name ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $employee->shift?->name ?? '—' }}</td>
                         </tr>
                     @empty
                         <tr>

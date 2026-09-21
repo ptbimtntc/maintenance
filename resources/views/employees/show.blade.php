@@ -86,6 +86,40 @@
             </div>
         @endcan
 
+        @php
+            $trainingAssignments = \App\Models\TrainingParticipant::where('employee_id', $employee->id)
+                ->with(['trainingSession.trainingProgram', 'certificate'])->latest('id')->get();
+            $isOwnProfile = auth()->id() !== null && $employee->user_id === auth()->id();
+        @endphp
+        @if ($trainingAssignments->isNotEmpty() && ($isOwnProfile || auth()->user()->can('update', $employee)))
+            <div class="rounded-lg border border-neutral-200 border-t-2 border-t-accent-500 bg-white p-4">
+                <h3 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Assigned trainings &amp; quiz</h3>
+                <ul class="mt-2 divide-y divide-neutral-100 text-sm">
+                    @foreach ($trainingAssignments as $assignment)
+                        @php [$canQuiz, $why] = $assignment->quizEligibility(); @endphp
+                        <li class="flex flex-wrap items-center justify-between gap-2 py-2">
+                            <div>
+                                <p class="font-medium text-neutral-900">{{ $assignment->trainingSession->trainingProgram->title }}</p>
+                                <p class="text-xs text-neutral-500">
+                                    {{ $assignment->trainingSession->start_date->format('d M Y') }} &middot; attendance: {{ $assignment->attendance_status }}
+                                    @if ($assignment->quiz_submitted_at) &middot; score {{ $assignment->quiz_score }} @endif
+                                </p>
+                            </div>
+                            @if ($isOwnProfile)
+                                @if ($canQuiz)
+                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">Take Quiz</a>
+                                @elseif ($assignment->quiz_submitted_at)
+                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="text-xs font-medium text-brand-700 hover:underline">{{ $assignment->certificate_id ? 'View result & certificate' : 'View result' }}</a>
+                                @else
+                                    <span class="text-xs text-neutral-500">{{ \App\Models\TrainingParticipant::quizMessage($why, $assignment->trainingSession) }}</span>
+                                @endif
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="border-b border-neutral-200">
             <nav class="-mb-px flex flex-wrap gap-4 text-sm font-medium">
                 @foreach ([
@@ -146,23 +180,23 @@
             <div class="space-y-6">
                 <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Current Level</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Assessed On</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Assessed By</th>
-                                <th class="px-4 py-3"></th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Current Level</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Assessed On</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Assessed By</th>
+                                <th class="px-3 py-2"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($currentSkillLevels as $assessment)
                                 <tr>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $assessment->skill->name }}</td>
-                                    <td class="px-4 py-3 text-neutral-700">{{ $assessment->competencyLevel->level_number }} — {{ $assessment->competencyLevel->name }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $assessment->assessment_date->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $assessment->assessedBy?->name ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $assessment->skill->name }}</td>
+                                    <td class="px-3 py-2 text-neutral-700">{{ $assessment->competencyLevel->level_number }} — {{ $assessment->competencyLevel->name }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $assessment->assessment_date->format('d M Y') }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $assessment->assessedBy?->name ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-right">
                                         @can(\App\Enums\PermissionName::AssessCompetencies->value)
                                             <form method="POST" action="{{ route('employees.skill-assessments.destroy', [$employee, $assessment]) }}" onsubmit="return confirm('Remove this assessment record?');">
                                                 @csrf
@@ -225,21 +259,21 @@
             @php $gapRows = $employee->skillGapRows(); @endphp
             <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Current</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Required</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Current</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Required</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($gapRows as $row)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $row['skill']->name }}</td>
-                                <td class="px-4 py-3 text-neutral-700">{{ $row['current'] ? $row['current']->level_number.' — '.$row['current']->name : '—' }}</td>
-                                <td class="px-4 py-3 text-neutral-700">{{ $row['required']->level_number }} — {{ $row['required']->name }}</td>
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $row['skill']->name }}</td>
+                                <td class="px-3 py-2 text-neutral-700">{{ $row['current'] ? $row['current']->level_number.' — '.$row['current']->name : '—' }}</td>
+                                <td class="px-3 py-2 text-neutral-700">{{ $row['required']->level_number }} — {{ $row['required']->name }}</td>
+                                <td class="px-3 py-2">
                                     <x-gap-status-badge :status="$row['status']" />
                                 </td>
                             </tr>
@@ -292,25 +326,25 @@
 
                 <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Program</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Date</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Hours</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Completion</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Certificate</th>
-                                <th class="px-4 py-3"></th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Program</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Date</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Hours</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Completion</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Certificate</th>
+                                <th class="px-3 py-2"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($employee->trainingRecords as $record)
                                 <tr>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $record->trainingProgram?->title ?? 'Ad-hoc training' }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $record->training_date->format('d M Y') }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $record->duration_hours ?? '—' }}</td>
-                                    <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $record->certificate_issued ? ($record->certificate_reference ?? 'Yes') : '—' }}</td>
-                                    <td class="px-4 py-3 text-right">
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $record->trainingProgram?->title ?? 'Ad-hoc training' }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $record->training_date->format('d M Y') }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $record->duration_hours ?? '—' }}</td>
+                                    <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $record->certificate_issued ? ($record->certificate_reference ?? 'Yes') : '—' }}</td>
+                                    <td class="px-3 py-2 text-right">
                                         @can(\App\Enums\PermissionName::ManageTrainingRecords->value)
                                             <form method="POST" action="{{ route('employees.training-records.destroy', [$employee, $record]) }}" onsubmit="return confirm('Remove this training record?');">
                                                 @csrf
@@ -397,25 +431,26 @@
 
                 <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Certificate</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Type</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Expiry Date</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                                <th class="px-4 py-3"></th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Certificate</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Type</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Expiry Date</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                                <th class="px-3 py-2"></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($employee->certificates as $certificate)
                                 <tr>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $certificate->name }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
-                                    <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $certStatusStyles[$certificate->status()] }}">{{ $certStatusLabels[$certificate->status()] }}</span></td>
-                                    <td class="px-4 py-3 text-right space-x-3">
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $certificate->name }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
+                                    <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $certStatusStyles[$certificate->status()] }}">{{ $certStatusLabels[$certificate->status()] }}</span></td>
+                                    <td class="px-3 py-2 text-right space-x-3">
+                                        <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-brand-700 hover:underline">View Certificate</a>
                                         @if ($certificate->file_path)
-                                            <a href="{{ route('certificates.download', $certificate) }}" class="text-neutral-600 hover:underline">Download</a>
+                                            <a href="{{ route('certificates.download', $certificate) }}" class="ml-3 text-neutral-600 hover:underline">Download</a>
                                         @endif
                                         @can(\App\Enums\PermissionName::ManageCertificates->value)
                                             <a href="{{ route('employees.certificates.edit', [$employee, $certificate]) }}" class="text-neutral-600 hover:underline">Edit</a>

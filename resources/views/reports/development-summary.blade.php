@@ -16,7 +16,7 @@
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byStatus as $status => $count)
-                                <tr><td class="px-4 py-3 text-neutral-800">{{ ucwords(str_replace('_', ' ', $status)) }}</td><td class="px-4 py-3 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
+                                <tr><td class="px-3 py-2 text-neutral-800">{{ ucwords(str_replace('_', ' ', $status)) }}</td><td class="px-3 py-2 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
                             @empty
                                 <tr><td class="px-4 py-8 text-center text-neutral-500">No plans yet.</td></tr>
                             @endforelse
@@ -31,7 +31,7 @@
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byAction as $action => $count)
-                                <tr><td class="px-4 py-3 text-neutral-800">{{ \App\Models\EmployeeDevelopmentPlan::ACTIONS[$action] ?? $action }}</td><td class="px-4 py-3 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
+                                <tr><td class="px-3 py-2 text-neutral-800">{{ \App\Models\EmployeeDevelopmentPlan::ACTIONS[$action] ?? $action }}</td><td class="px-3 py-2 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
                             @empty
                                 <tr><td class="px-4 py-8 text-center text-neutral-500">No plans yet.</td></tr>
                             @endforelse
@@ -46,7 +46,7 @@
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byPriority as $priority => $count)
-                                <tr><td class="px-4 py-3 text-neutral-800">{{ ucfirst($priority) }}</td><td class="px-4 py-3 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
+                                <tr><td class="px-3 py-2 text-neutral-800">{{ ucfirst($priority) }}</td><td class="px-3 py-2 text-right font-medium text-neutral-900">{{ $count }}</td></tr>
                             @empty
                                 <tr><td class="px-4 py-8 text-center text-neutral-500">No plans yet.</td></tr>
                             @endforelse

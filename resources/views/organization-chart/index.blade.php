@@ -39,6 +39,17 @@
         .org-chart-tree li:first-child::after { border-radius: 6px 0 0 0; }
         .org-chart-tree > li { padding-top: 0; }
         .org-chart-tree > li::before, .org-chart-tree > li::after { display: none; }
+        /* An all-Blue-Collar group: two columns under a single vertical line
+           instead of one long row of siblings. */
+        .org-chart-tree ul.org-chart-stack {
+            display: grid;
+            grid-template-columns: repeat(2, max-content);
+            justify-content: center;
+            padding-top: 16px;
+        }
+        .org-chart-tree ul.org-chart-stack > li { padding-top: 12px; }
+        .org-chart-tree ul.org-chart-stack > li::before,
+        .org-chart-tree ul.org-chart-stack > li::after { display: none; }
         .org-chart-tree ul::before {
             content: '';
             position: absolute;
@@ -60,6 +71,10 @@
             <span class="inline-flex items-center gap-2">
                 <span class="h-4 w-4 rounded border border-neutral-300 bg-white"></span>
                 White Collar Management (WCM)
+            </span>
+            <span class="ml-auto inline-flex gap-2">
+                <button type="button" @click="$dispatch('org-expand-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">Expand all</button>
+                <button type="button" @click="$dispatch('org-collapse-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">Collapse all</button>
             </span>
         </div>
 

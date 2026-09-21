@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'menu.edit' => EnsureMenuEditPermission::class,
         ]);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -315,6 +315,29 @@ class CertificateController extends Controller
         return Storage::disk(self::DISK)->download($certificate->file_path, $certificate->file_original_name ?? 'certificate');
     }
 
+    /**
+     * The printable certificate sheet (A4 landscape, "Print / Save PDF").
+     * Only a verified certificate that has a number is presentable - a
+     * pending one is never rendered as if it were valid.
+     */
+    public function show(Certificate $certificate): View
+    {
+        $certificate->load(['employee', 'certificateType']);
+        $this->authorize('view', $certificate->employee);
+
+        $available = $certificate->verification_status === 'verified' && filled($certificate->certificate_number);
+
+        $score = $certificate->related_training_program_id
+            ? \App\Models\TrainingRecord::where('employee_id', $certificate->employee_id)
+                ->where('training_program_id', $certificate->related_training_program_id)
+                ->whereNotNull('assessment_score')
+                ->orderByDesc('training_date')
+                ->value('assessment_score')
+            : null;
+
+        return view('certificates.show', ['certificate' => $certificate, 'available' => $available, 'score' => $score]);
+    }
+
     private function storeUploadedFile(Request $request, Certificate $certificate): void
     {
         if (! $request->hasFile('file')) {

@@ -11,7 +11,13 @@ $statusLabels = [
     <x-slot name="header">Skill Matrix</x-slot>
 
     <div class="space-y-4">
-        <a href="{{ route('skills.landing') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Skills &amp; Competencies</a>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <a href="{{ route('skills.landing') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Skills &amp; Competencies</a>
+            <a href="{{ route('skill-matrix.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
+                Export XLSX
+            </a>
+        </div>
 
         @php
             $activeFieldClass = 'border-brand-400 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200';
@@ -72,26 +78,26 @@ $statusLabels = [
         @else
             <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="sticky left-0 bg-neutral-50 px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Position</th>
+                            <th class="sticky left-0 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
                             @foreach ($skills as $skill)
-                                <th class="px-3 py-3 text-center font-medium text-neutral-500" title="{{ $skill->name }}">{{ $skill->name }}</th>
+                                <th class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-brand-700" title="{{ $skill->name }}">{{ $skill->name }}</th>
                             @endforeach
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Overall Status</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Overall Status</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($matrix as $row)
                             <tr>
-                                <td class="sticky left-0 bg-white px-4 py-3">
+                                <td class="sticky left-0 bg-white px-3 py-2">
                                     <a href="{{ route('employees.show', $row['employee']) }}" class="font-medium text-neutral-900 hover:underline">{{ $row['employee']->full_name }}</a>
                                 </td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row['employee']->position?->title ?? '—' }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row['employee']->position?->title ?? '—' }}</td>
                                 @foreach ($skills as $skill)
                                     @php $cell = $row['cells'][$skill->id]; @endphp
-                                    <td class="px-3 py-3 text-center">
+                                    <td class="px-3 py-2 text-center">
                                         @if ($cell['required'] === null)
                                             <span class="text-neutral-300">—</span>
                                         @elseif ($cell['current'] === null)
@@ -107,7 +113,7 @@ $statusLabels = [
                                         @endif
                                     </td>
                                 @endforeach
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2">
                                     <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusLabels[$row['overall_status']]['class'] }}">
                                         {{ $statusLabels[$row['overall_status']]['label'] }}
                                     </span>

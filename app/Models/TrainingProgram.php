@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'title', 'code', 'training_category_id', 'training_type_id', 'description', 'objectives',
     'target_audience', 'is_internal', 'trainer_name', 'training_provider_id', 'location_id',
     'duration_value', 'duration_unit', 'estimated_cost', 'budget_reference', 'status', 'remarks',
-    'created_by',
+    'validity_months', 'passing_score', 'authorizer_name', 'authorizer_title', 'created_by',
 ])]
 class TrainingProgram extends Model
 {
@@ -30,6 +30,11 @@ class TrainingProgram extends Model
             'duration_value' => 'decimal:1',
             'estimated_cost' => 'decimal:2',
         ];
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(TrainingQuestion::class);
     }
 
     public function trainingCategory(): BelongsTo

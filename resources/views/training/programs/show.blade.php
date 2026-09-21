@@ -52,23 +52,23 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
 
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Dates</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Location</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Participants</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                            <th class="px-4 py-3"></th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Dates</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Location</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Participants</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                            <th class="px-3 py-2"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($program->sessions as $session)
                             <tr>
-                                <td class="px-4 py-3 text-neutral-800">{{ $session->start_date->format('d M Y') }} &ndash; {{ $session->end_date->format('d M Y') }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $session->location?->name ?? '—' }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $session->participants()->count() }}{{ $session->max_participants ? ' / '.$session->max_participants : '' }}</td>
-                                <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $sessionStatusStyles[$session->status] }}">{{ ucfirst($session->status) }}</span></td>
-                                <td class="px-4 py-3 text-right"><a href="{{ route('training.sessions.show', $session) }}" class="text-neutral-600 hover:underline">Manage</a></td>
+                                <td class="px-3 py-2 text-neutral-800">{{ $session->start_date->format('d M Y') }} &ndash; {{ $session->end_date->format('d M Y') }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $session->location?->name ?? '—' }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $session->participants()->count() }}{{ $session->max_participants ? ' / '.$session->max_participants : '' }}</td>
+                                <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $sessionStatusStyles[$session->status] }}">{{ ucfirst($session->status) }}</span></td>
+                                <td class="px-3 py-2 text-right"><a href="{{ route('training.sessions.show', $session) }}" class="text-neutral-600 hover:underline">Manage</a></td>
                             </tr>
                         @empty
                             <tr><td colspan="5" class="px-4 py-8 text-center text-neutral-500">No sessions scheduled yet.</td></tr>

@@ -49,29 +49,29 @@
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Skills with the Largest Gaps</h2>
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Employees Required</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">With Gap</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Not Assessed</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Avg. Gap</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employees Required</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">With Gap</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Not Assessed</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Avg. Gap</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($skillBreakdown as $row)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $row['skill']->name }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row['employees_required'] }}</td>
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $row['skill']->name }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row['employees_required'] }}</td>
+                                <td class="px-3 py-2">
                                     @if ($row['employees_with_gap'] > 0)
                                         <span class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">{{ $row['employees_with_gap'] }}</span>
                                     @else
                                         <span class="text-neutral-400">0</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row['employees_incomplete'] }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row['average_gap'] ?? '—' }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row['employees_incomplete'] }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row['average_gap'] ?? '—' }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="5" class="px-4 py-8 text-center text-neutral-500">No skill requirements defined yet.</td></tr>
@@ -86,19 +86,19 @@
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Positions with the Largest Gaps</h2>
                 <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Position</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Employees</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">With Gap</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employees</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">With Gap</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($positionBreakdown as $row)
                                 <tr>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $row['position']->title }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $row['employee_count'] }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $row['employees_with_gap'] }}</td>
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $row['position']->title }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $row['employee_count'] }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $row['employees_with_gap'] }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="3" class="px-4 py-8 text-center text-neutral-500">No data available.</td></tr>
@@ -112,19 +112,19 @@
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Areas Requiring Development</h2>
                 <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                        <thead class="bg-neutral-50">
+                        <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Maintenance Area</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">Employees</th>
-                                <th class="px-4 py-3 text-left font-medium text-neutral-500">With Gap</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Maintenance Area</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employees</th>
+                                <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">With Gap</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($areaBreakdown as $row)
                                 <tr>
-                                    <td class="px-4 py-3 font-medium text-neutral-900">{{ $row['area']->name }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $row['employee_count'] }}</td>
-                                    <td class="px-4 py-3 text-neutral-600">{{ $row['employees_with_gap'] }}</td>
+                                    <td class="px-3 py-2 font-medium text-neutral-900">{{ $row['area']->name }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $row['employee_count'] }}</td>
+                                    <td class="px-3 py-2 text-neutral-600">{{ $row['employees_with_gap'] }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="3" class="px-4 py-8 text-center text-neutral-500">No data available.</td></tr>
@@ -139,23 +139,23 @@
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Employees with Competency Gaps</h2>
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Position</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Skills Below Requirement</th>
-                            <th class="px-4 py-3"></th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skills Below Requirement</th>
+                            <th class="px-3 py-2"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($employeesWithGaps as $summary)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $summary['employee']->full_name }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $summary['employee']->position?->title ?? '—' }}</td>
-                                <td class="px-4 py-3 text-neutral-600">
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $summary['employee']->full_name }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $summary['employee']->position?->title ?? '—' }}</td>
+                                <td class="px-3 py-2 text-neutral-600">
                                     {{ $summary['rows']->where('status', 'gap')->pluck('skill.name')->implode(', ') }}
                                 </td>
-                                <td class="px-4 py-3 text-right">
+                                <td class="px-3 py-2 text-right">
                                     <a href="{{ route('employees.show', $summary['employee']) }}" class="text-neutral-600 hover:underline">View Profile</a>
                                 </td>
                             </tr>

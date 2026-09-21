@@ -14,6 +14,8 @@ use Illuminate\View\View;
 
 class SkillMatrixController extends Controller
 {
+    use \App\Concerns\ExportsSpreadsheet;
+
     /**
      * Build an employee x skill competency matrix.
      *
@@ -22,8 +24,10 @@ class SkillMatrixController extends Controller
      * been assessed on is shown explicitly as "Not assessed" rather than
      * silently treated as meeting the requirement.
      */
-    public function index(Request $request): View
+    public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
+        $exporting = $request->string('export')->toString() === 'xlsx';
+
         $employees = Employee::query()
             ->visibleTo($request->user())
             ->with(['position.skillRequirements.requiredCompetencyLevel', 'maintenanceArea', 'maintenanceTeam'])
@@ -32,8 +36,9 @@ class SkillMatrixController extends Controller
             ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
             ->search($request->string('search')->toString())
             ->orderBy('full_name')
-            ->paginate(15)
-            ->withQueryString();
+            ;
+
+        $employees = $exporting ? $employees->get() : $employees->paginate(15)->withQueryString();
 
         $skillsQuery = Skill::where('is_active', true);
 
@@ -78,6 +83,25 @@ class SkillMatrixController extends Controller
                 'overall_status' => $overallStatus,
             ];
         });
+
+        if ($exporting) {
+            $header = ['Employee Number', 'Employee', 'Position', 'Overall Status'];
+            foreach ($skills as $skill) {
+                array_push($header, $skill->name.' - Current', $skill->name.' - Required', $skill->name.' - Gap');
+            }
+
+            $rows = $matrix->map(function ($row) use ($skills) {
+                $line = [$row['employee']->employee_number, $row['employee']->full_name, $row['employee']->position?->title, $row['overall_status']];
+                foreach ($skills as $skill) {
+                    $cell = $row['cells'][$skill->id];
+                    array_push($line, $cell['current'] ? $cell['current']->level_number.' - '.$cell['current']->name : null, $cell['required'] ? $cell['required']->level_number.' - '.$cell['required']->name : null, $cell['gap']);
+                }
+
+                return $line;
+            });
+
+            return $this->streamXlsx('skill-matrix-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
+        }
 
         return view('skill-matrix.index', [
             'employees' => $employees,

@@ -24,12 +24,15 @@ $icons = [
 <x-app-layout>
     <x-slot name="header">Dashboard</x-slot>
 
-    <div class="space-y-10">
+    <div class="space-y-5">
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Employees</h2>
-            <p class="mt-1 text-sm text-neutral-500">Live counts from the Employee Database module.</p>
+            <div class="mb-2 flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
+                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Employees</h2>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Total Maintenance Employees"
                     :value="$employeeSummary['total']"
@@ -46,21 +49,24 @@ $icons = [
                     chartType="doughnut"
                     :chartLabels="['Active', 'Inactive']"
                     :chartValues="[$employeeSummary['active'], $employeeSummary['inactive']]"
-                    :chartColors="['#16a34a', '#e5e7eb']"
+                    :chartColors="['#16a34a', '#EBE9E5']"
                 />
             </div>
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Skills &amp; Competency</h2>
-            <p class="mt-1 text-sm text-neutral-500">Live counts from the Skills &amp; Competency Management module.</p>
+            <div class="mb-2 flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-accent-500"></span>
+                <h2 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Skills &amp; Competency</h2>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Total Skills Tracked"
                     :value="$skillSummary['total_skills']"
                     icon="{{ $icons['skills'] }}"
-                    color="purple"
+                    color="brand"
                     :href="route('skills.landing')"
                 />
                 <x-dashboard-stat
@@ -79,16 +85,19 @@ $icons = [
                     chartType="bar"
                     :chartLabels="['Meets', 'Gap', 'Incomplete', 'No Req.']"
                     :chartValues="[$skillSummary['breakdown']['meets'], $skillSummary['breakdown']['gap'], $skillSummary['breakdown']['incomplete'], $skillSummary['breakdown']['no_requirements']]"
-                    :chartColors="['#16a34a', '#dc2626', '#f59e0b', '#9ca3af']"
+                    :chartColors="['#16a34a', '#dc2626', '#f59e0b', '#B8B2A8']"
                 />
             </div>
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Training &amp; Development</h2>
-            <p class="mt-1 text-sm text-neutral-500">Live counts from the Training Management module.</p>
+            <div class="mb-2 flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
+                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Training &amp; Development</h2>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Active Training Programs"
                     :value="$trainingSummary['programs']"
@@ -112,16 +121,19 @@ $icons = [
                     chartType="bar"
                     :chartLabels="['Programs', 'Upcoming', 'Completed']"
                     :chartValues="[$trainingSummary['programs'], $trainingSummary['upcoming_sessions'], $trainingSummary['completed_sessions']]"
-                    :chartColors="['#2563eb', '#f59e0b', '#16a34a']"
+                    :chartColors="['#01ADEF', '#f59e0b', '#16a34a']"
                 />
             </div>
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Certificates</h2>
-            <p class="mt-1 text-sm text-neutral-500">Live counts from the Certificate Management module.</p>
+            <div class="mb-2 flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-accent-500"></span>
+                <h2 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Certificates</h2>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Certificates Expiring Soon"
                     :value="$certificateSummary['expiring_soon']"
@@ -138,48 +150,51 @@ $icons = [
                     chartType="doughnut"
                     :chartLabels="['Valid', 'Expiring Soon', 'Expired', 'Pending']"
                     :chartValues="[$certificateSummary['valid'], $certificateSummary['expiring_soon'], $certificateSummary['expired'], $certificateSummary['pending_verification']]"
-                    :chartColors="['#16a34a', '#f59e0b', '#dc2626', '#3b82f6']"
+                    :chartColors="['#16a34a', '#f59e0b', '#dc2626', '#01ADEF']"
                     :chartLegend="true"
                 />
             </div>
         </div>
 
         <div>
-            <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Organization Overview</h2>
-            <p class="mt-1 text-sm text-neutral-500">Live counts from the Organization &amp; Master Data module.</p>
+            <div class="mb-2 flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
+                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Organization Overview</h2>
+                <div class="h-px flex-1 bg-neutral-200"></div>
+            </div>
 
-            <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Maintenance Departments"
                     :value="$orgSummary['departments']"
                     icon="{{ $icons['organization'] }}"
-                    color="slate"
+                    color="brand"
                     :href="$canManageMasterData ? route('organization.index', 'departments') : null"
                 />
                 <x-dashboard-stat
                     label="Maintenance Areas"
                     :value="$orgSummary['maintenance_areas']"
                     icon="{{ $icons['organization'] }}"
-                    color="slate"
+                    color="brand"
                     :href="$canManageMasterData ? route('organization.index', 'maintenance-areas') : null"
                 />
                 <x-dashboard-stat
                     label="Maintenance Teams"
                     :value="$orgSummary['maintenance_teams']"
                     icon="{{ $icons['organization'] }}"
-                    color="slate"
+                    color="brand"
                     :href="$canManageMasterData ? route('organization.index', 'maintenance-teams') : null"
                 />
                 <x-dashboard-stat
                     label="Positions"
                     :value="$orgSummary['positions']"
                     icon="{{ $icons['organization'] }}"
-                    color="slate"
+                    color="brand"
                     :href="$canManageMasterData ? route('organization.index', 'positions') : null"
                     chartType="bar"
                     :chartLabels="['Depts', 'Areas', 'Teams', 'Positions']"
                     :chartValues="[$orgSummary['departments'], $orgSummary['maintenance_areas'], $orgSummary['maintenance_teams'], $orgSummary['positions']]"
-                    :chartColors="['#64748b', '#64748b', '#64748b', '#64748b']"
+                    :chartColors="['#FF602C', '#FF602C', '#FF602C', '#FF602C']"
                 />
             </div>
         </div>

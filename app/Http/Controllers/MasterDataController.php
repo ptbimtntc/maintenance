@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ExportsSpreadsheet;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -16,6 +21,8 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class MasterDataController extends Controller
 {
+    use ExportsSpreadsheet;
+
     /**
      * How the landing page groups the master data types. Any type not
      * listed here still shows up, under "Other", so a newly added entry
@@ -124,6 +131,228 @@ class MasterDataController extends Controller
         $record->delete();
 
         return redirect()->route('organization.index', $type)->with('status', "{$config['singular']} removed.");
+    }
+
+    /**
+     * Spreadsheet columns for a type, in order: ID, name, Code, Description,
+     * the parent's name (if any), every extra field, then Active. The same
+     * shape is used for export and import so a downloaded file can be edited
+     * and uploaded straight back.
+     *
+     * @return array<int, array{header: string, key: string, kind: string}>
+     */
+    private function sheetColumns(array $config): array
+    {
+        $columns = [
+            ['header' => 'ID', 'key' => 'id', 'kind' => 'id'],
+            ['header' => $config['singular'].' Name', 'key' => $config['name_field'], 'kind' => 'text'],
+            ['header' => 'Code', 'key' => 'code', 'kind' => 'text'],
+            ['header' => 'Description', 'key' => 'description', 'kind' => 'text'],
+        ];
+
+        if (isset($config['parent'])) {
+            $columns[] = ['header' => $config['parent']['label'], 'key' => $config['parent']['field'], 'kind' => 'parent'];
+        }
+
+        foreach ($config['extra_fields'] ?? [] as $field => $meta) {
+            $columns[] = ['header' => $meta['label'], 'key' => $field, 'kind' => $meta['type']];
+        }
+
+        $columns[] = ['header' => 'Active', 'key' => 'is_active', 'kind' => 'boolean'];
+
+        return $columns;
+    }
+
+    public function export(string $type): StreamedResponse
+    {
+        $config = $this->configFor($type);
+        $columns = $this->sheetColumns($config);
+        $parentNames = isset($config['parent'])
+            ? $config['parent']['model']::withTrashed()->pluck('name', 'id')
+            : collect();
+
+        $rows = $config['model']::query()->orderBy($config['name_field'])->get()->map(function ($record) use ($columns, $config, $parentNames) {
+            return array_map(function ($column) use ($record, $config, $parentNames) {
+                $value = $record->{$column['key']};
+
+                return match ($column['kind']) {
+                    'parent' => $parentNames[$value] ?? null,
+                    'boolean' => $value ? 'Yes' : 'No',
+                    'select' => $config['extra_fields'][$column['key']]['options'][$value] ?? $value,
+                    'time' => $value ? substr((string) $value, 0, 5) : null,
+                    default => $value,
+                };
+            }, $columns);
+        });
+
+        return $this->streamXlsx($type.'-'.now()->format('Y-m-d').'.xlsx', array_column($columns, 'header'), $rows);
+    }
+
+    /**
+     * Bulk create/update from an .xlsx shaped like export(). A row is matched
+     * to an existing record by ID, else Code, else name; no match creates a
+     * new record. On an update a blank cell leaves that field untouched.
+     * Every row is validated with the same rules as the single-record form,
+     * and a bad row is reported and skipped without stopping the rest.
+     */
+    public function import(Request $request, string $type): RedirectResponse
+    {
+        $config = $this->configFor($type);
+        $request->validate(['file' => ['required', 'file', 'mimes:xlsx']]);
+
+        $columns = $this->sheetColumns($config);
+        $model = $config['model'];
+        $nameField = $config['name_field'];
+
+        $rows = (new XlsxReader)->load($request->file('file')->getRealPath())->getActiveSheet()->toArray(null, true, true, false);
+        $header = array_map(fn ($cell) => trim((string) $cell), array_shift($rows) ?? []);
+
+        if (! in_array($config['singular'].' Name', $header, true)) {
+            return redirect()->route('organization.index', $type)
+                ->with('import_errors', "The file has no \"{$config['singular']} Name\" column - use the Export XLSX file as the template.");
+        }
+
+        $parentIds = isset($config['parent'])
+            ? $config['parent']['model']::pluck('id', 'name')
+            : collect();
+
+        $created = 0;
+        $updated = 0;
+        $errors = [];
+
+        foreach ($rows as $index => $row) {
+            $rowNumber = $index + 2;
+            $data = array_combine($header, array_pad($row, count($header), null));
+            $cells = [];
+
+            foreach ($columns as $column) {
+                $raw = $data[$column['header']] ?? null;
+                $raw = is_string($raw) ? trim($raw) : $raw;
+                $cells[$column['key']] = ($raw === '' || $raw === null) ? null : $raw;
+            }
+
+            if (collect($cells)->filter(fn ($v) => $v !== null)->isEmpty()) {
+                continue;
+            }
+
+            $record = null;
+
+            if ($cells['id'] !== null) {
+                $record = $model::find((int) $cells['id']);
+
+                if (! $record) {
+                    $errors[] = "Row {$rowNumber}: ID {$cells['id']} not found.";
+
+                    continue;
+                }
+            } elseif ($cells['code'] !== null) {
+                $record = $model::where('code', (string) $cells['code'])->first();
+            }
+
+            $record ??= $cells[$nameField] !== null ? $model::where($nameField, (string) $cells[$nameField])->first() : null;
+
+            if (! $record && $cells[$nameField] === null) {
+                $errors[] = "Row {$rowNumber}: {$config['singular']} Name is required to create a new record.";
+
+                continue;
+            }
+
+            $payload = [];
+            $rowFailed = false;
+
+            foreach ($columns as $column) {
+                $value = $cells[$column['key']];
+
+                if ($column['kind'] === 'id' || $value === null) {
+                    continue;
+                }
+
+                switch ($column['kind']) {
+                    case 'parent':
+                        if (! isset($parentIds[(string) $value])) {
+                            $errors[] = "Row {$rowNumber}: {$column['header']} \"{$value}\" not found - row skipped.";
+                            $rowFailed = true;
+                        } else {
+                            $payload[$column['key']] = $parentIds[(string) $value];
+                        }
+                        break;
+                    case 'boolean':
+                        $flag = strtolower((string) $value);
+                        $payload[$column['key']] = in_array($flag, ['yes', 'y', '1', 'true', 'active'], true);
+                        break;
+                    case 'select':
+                        $options = $config['extra_fields'][$column['key']]['options'];
+                        $key = array_search(strtolower((string) $value), array_map('strtolower', $options), true);
+                        $payload[$column['key']] = $key !== false ? $key : (array_key_exists($value, $options) ? $value : $value);
+                        break;
+                    case 'time':
+                        try {
+                            $payload[$column['key']] = is_numeric($value)
+                                ? Carbon::createFromTime(0, 0)->addSeconds((int) round($value * 86400))->format('H:i')
+                                : Carbon::parse((string) $value)->format('H:i');
+                        } catch (\Throwable) {
+                            $errors[] = "Row {$rowNumber}: {$column['header']} \"{$value}\" is not a valid time - row skipped.";
+                            $rowFailed = true;
+                        }
+                        break;
+                    case 'number':
+                        $payload[$column['key']] = is_numeric($value) ? (int) $value : $value;
+                        break;
+                    default:
+                        $payload[$column['key']] = (string) $value;
+                }
+            }
+
+            if ($rowFailed) {
+                continue;
+            }
+
+            if (! $record && ! array_key_exists('is_active', $payload)) {
+                $payload['is_active'] = true;
+            }
+
+            $validator = Validator::make($payload, $this->importRules($config, $record?->id, (bool) $record));
+
+            if ($validator->fails()) {
+                $errors[] = "Row {$rowNumber}: ".$validator->errors()->first().' - row skipped.';
+
+                continue;
+            }
+
+            if ($record) {
+                $record->update($payload);
+                $updated++;
+            } else {
+                $model::create($payload);
+                $created++;
+            }
+        }
+
+        $redirect = redirect()->route('organization.index', $type)
+            ->with('status', "{$created} {$config['label']} created, {$updated} updated from import.");
+
+        if ($errors !== []) {
+            $shown = array_slice($errors, 0, 8);
+            $suffix = count($errors) > 8 ? ' …and '.(count($errors) - 8).' more.' : '';
+            $redirect->with('import_errors', count($errors).' issue(s) found: '.implode(' | ', $shown).$suffix);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * The form's rules, minus "required" when updating: a blank cell on an
+     * existing row just means "leave this field as it is".
+     */
+    private function importRules(array $config, ?int $ignoreId, bool $isUpdate): array
+    {
+        $rules = $this->rules($config, $ignoreId);
+
+        if ($isUpdate) {
+            $rules = array_map(fn ($fieldRules) => array_map(fn ($r) => $r === 'required' ? 'sometimes' : $r, (array) $fieldRules), $rules);
+        }
+
+        return $rules;
     }
 
     private function configFor(string $type): array

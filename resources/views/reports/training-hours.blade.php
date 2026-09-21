@@ -11,19 +11,19 @@
             </div>
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Total Hours</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Completed Trainings</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Total Hours</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Completed Trainings</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($rows as $row)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $row->full_name }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row->training_records_sum_duration_hours }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $row->completed_trainings_count }}</td>
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $row->full_name }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row->training_records_sum_duration_hours }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $row->completed_trainings_count }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="3" class="px-4 py-8 text-center text-neutral-500">No training hours recorded yet.</td></tr>
@@ -37,17 +37,17 @@
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Department</h2>
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Department</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Total Hours</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Department</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Total Hours</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($byDepartment as $department => $hours)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $department }}</td>
-                                <td class="px-4 py-3 text-neutral-600">{{ $hours }}</td>
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $department }}</td>
+                                <td class="px-3 py-2 text-neutral-600">{{ $hours }}</td>
                             </tr>
                         @empty
                             <tr><td colspan="2" class="px-4 py-8 text-center text-neutral-500">No training hours recorded yet.</td></tr>

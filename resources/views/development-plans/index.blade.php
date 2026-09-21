@@ -37,25 +37,25 @@ $statusStyles = ['not_started' => 'bg-neutral-100 text-neutral-600', 'in_progres
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Objective</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Priority</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Progress</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Objective</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Priority</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Progress</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                        <th class="px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($plans as $plan)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $plan->employee->full_name }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $plan->development_objective }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ ucfirst($plan->priority) }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $plan->progress_percentage }}%</td>
-                            <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span></td>
-                            <td class="px-4 py-3 text-right"><a href="{{ route('employees.show', $plan->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $plan->employee->full_name }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $plan->development_objective }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ ucfirst($plan->priority) }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $plan->progress_percentage }}%</td>
+                            <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span></td>
+                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', $plan->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No development plans yet.</td></tr>

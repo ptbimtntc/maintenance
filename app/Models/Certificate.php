@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
-    'employee_id', 'certificate_type_id', 'name', 'certificate_number', 'issuing_organization',
+    'employee_id', 'certificate_type_id', 'name', 'certificate_number', 'issuing_organization', 'trainer_name', 'authorizer_name', 'authorizer_title',
     'issue_date', 'expiry_date', 'related_skill_id', 'related_training_program_id',
     'verification_status', 'file_path', 'file_original_name', 'verification_notes', 'remarks',
     'previous_certificate_id', 'created_by', 'updated_by',
@@ -103,6 +103,23 @@ class Certificate extends Model
         }
 
         return 'valid';
+    }
+
+    /**
+     * Automatic certificate number, PTBI/{year}/{month in roman}/{code}/{seq},
+     * e.g. PTBI/2026/IX/BMM/00001. The code is the program's code (or its
+     * first three letters); the sequence counts the numbers already issued
+     * for that program.
+     */
+    public static function generateNumber(TrainingProgram $program, \Illuminate\Support\Carbon $date): string
+    {
+        $roman = [1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'][$date->month];
+        $code = trim((string) $program->code) !== ''
+            ? strtoupper($program->code)
+            : str_pad(substr(strtoupper(preg_replace('/[^A-Za-z]/', '', $program->title)), 0, 3), 3, 'X');
+        $sequence = self::withTrashed()->where('related_training_program_id', $program->id)->whereNotNull('certificate_number')->count() + 1;
+
+        return sprintf('PTBI/%d/%s/%s/%05d', $date->year, $roman, $code, $sequence);
     }
 
     public static function statusLabels(): array

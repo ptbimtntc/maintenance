@@ -78,25 +78,25 @@ $statusStyles = [
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Certificate</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Type</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Expiry Date</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Certificate</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Type</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Expiry Date</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                        <th class="px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($certificates as $certificate)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $certificate->employee->full_name }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $certificate->name }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
-                            <td class="px-4 py-3"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$certificate->status()] }}">{{ $statusLabels[$certificate->status()] }}</span></td>
-                            <td class="px-4 py-3 text-right"><a href="{{ route('employees.show', $certificate->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $certificate->employee->full_name }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $certificate->name }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
+                            <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$certificate->status()] }}">{{ $statusLabels[$certificate->status()] }}</span></td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap"><a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-brand-700 hover:underline">View Certificate</a> <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No certificates recorded yet.</td></tr>

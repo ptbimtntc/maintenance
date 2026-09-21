@@ -61,27 +61,27 @@ $statusLabels = [
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Position</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Job Title</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Version</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Status</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Effective Date</th>
-                        <th class="px-4 py-3"></th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Job Title</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Version</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Effective Date</th>
+                        <th class="px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($jobDescriptions as $jd)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $jd->position->title }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $jd->job_title }}</td>
-                            <td class="px-4 py-3 text-neutral-600">v{{ $jd->version }}</td>
-                            <td class="px-4 py-3">
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $jd->position->title }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $jd->job_title }}</td>
+                            <td class="px-3 py-2 text-neutral-600">v{{ $jd->version }}</td>
+                            <td class="px-3 py-2">
                                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$jd->status] }}">{{ $statusLabels[$jd->status] }}</span>
                             </td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $jd->effective_date?->format('d M Y') ?? '—' }}</td>
-                            <td class="px-4 py-3 text-right">
+                            <td class="px-3 py-2 text-neutral-600">{{ $jd->effective_date?->format('d M Y') ?? '—' }}</td>
+                            <td class="px-3 py-2 text-right">
                                 <a href="{{ route('job-descriptions.show', $jd) }}" class="text-neutral-600 hover:underline">View</a>
                             </td>
                         </tr>

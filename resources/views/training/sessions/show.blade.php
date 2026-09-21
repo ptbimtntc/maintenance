@@ -32,18 +32,18 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
 
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                    <thead class="bg-neutral-50">
+                    <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                            <th class="px-4 py-3 text-left font-medium text-neutral-500">Attendance</th>
-                            <th class="px-4 py-3"></th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                            <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Attendance</th>
+                            <th class="px-3 py-2"></th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($trainingSession->participants as $participant)
                             <tr>
-                                <td class="px-4 py-3 font-medium text-neutral-900">{{ $participant->employee->full_name }}</td>
-                                <td class="px-4 py-3">
+                                <td class="px-3 py-2 font-medium text-neutral-900">{{ $participant->employee->full_name }}</td>
+                                <td class="px-3 py-2">
                                     @can(\App\Enums\PermissionName::ManageTraining->value)
                                         <form method="POST" action="{{ route('training.sessions.participants.update', [$trainingSession, $participant]) }}" class="inline-flex items-center gap-2">
                                             @csrf
@@ -58,7 +58,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                                         <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $attendanceStyles[$participant->attendance_status] }}">{{ ucfirst($participant->attendance_status) }}</span>
                                     @endcan
                                 </td>
-                                <td class="px-4 py-3 text-right">
+                                <td class="px-3 py-2 text-right">
                                     @can(\App\Enums\PermissionName::ManageTraining->value)
                                         <form method="POST" action="{{ route('training.sessions.participants.destroy', [$trainingSession, $participant]) }}" onsubmit="return confirm('Remove this participant?');">
                                             @csrf

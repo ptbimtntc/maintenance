@@ -70,6 +70,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/employees/{employee}/certificates/{certificate}/edit', [CertificateController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('employees.certificates.edit');
     Route::put('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'update'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('employees.certificates.update');
     Route::delete('/employees/{employee}/certificates/{certificate}', [CertificateController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('employees.certificates.destroy');
+    Route::get('/certificates/{certificate}/view', [CertificateController::class, 'show'])->name('certificates.show');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     Route::post('/certificates-import', [CertificateController::class, 'import'])->middleware('menu.edit:'.MenuKey::Certificates->value)->name('certificates.import');
 });
@@ -82,6 +83,8 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageMasterData->
     ->group(function () {
         Route::get('/', [MasterDataController::class, 'landing'])->name('landing');
         Route::get('/{type}', [MasterDataController::class, 'index'])->name('index');
+        Route::get('/{type}/export', [MasterDataController::class, 'export'])->name('export');
+        Route::post('/{type}/import', [MasterDataController::class, 'import'])->middleware('menu.edit:'.MenuKey::Organization->value)->name('import');
         Route::get('/{type}/create', [MasterDataController::class, 'create'])->middleware('menu.edit:'.MenuKey::Organization->value)->name('create');
         Route::post('/{type}', [MasterDataController::class, 'store'])->middleware('menu.edit:'.MenuKey::Organization->value)->name('store');
         Route::get('/{type}/{id}/edit', [MasterDataController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Organization->value)->name('edit');
@@ -96,6 +99,8 @@ Route::middleware(['auth', 'verified'])->prefix('skills')->name('skills.')->grou
 
     Route::middleware('can:'.PermissionName::ManageSkills->value)->prefix('positions')->name('positions.')->group(function () {
         Route::get('/', [PositionSkillRequirementController::class, 'index'])->name('index');
+        Route::get('/export', [PositionSkillRequirementController::class, 'export'])->name('export');
+        Route::post('/import', [PositionSkillRequirementController::class, 'import'])->middleware('menu.edit:'.MenuKey::SkillsCompetencies->value)->name('import');
         Route::get('/{position}/edit', [PositionSkillRequirementController::class, 'edit'])->name('edit');
         Route::post('/{position}/requirements', [PositionSkillRequirementController::class, 'store'])->middleware('menu.edit:'.MenuKey::SkillsCompetencies->value)->name('requirements.store');
         Route::delete('/{position}/requirements/{requirement}', [PositionSkillRequirementController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::SkillsCompetencies->value)->name('requirements.destroy');
@@ -132,6 +137,11 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
     ->group(function () {
         Route::get('/calendar', [TrainingSessionController::class, 'calendar'])->name('calendar');
         Route::get('/records', [TrainingRecordController::class, 'index'])->name('records.index');
+        Route::get('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'show'])->name('quiz.show');
+        Route::post('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'submit'])->name('quiz.submit');
+        Route::get('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'index'])->name('programs.questions.index');
+        Route::post('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.store');
+        Route::delete('/programs/{program}/questions/{question}', [\App\Http\Controllers\TrainingQuestionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.destroy');
         Route::post('/records-import', [TrainingRecordController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('records.import');
 
         Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program'])

@@ -51,23 +51,23 @@
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
-                <thead class="bg-neutral-50">
+                <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Employee</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Skill</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Level</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Date</th>
-                        <th class="px-4 py-3 text-left font-medium text-neutral-500">Assessed By</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Level</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Date</th>
+                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Assessed By</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
                     @forelse ($assessments as $assessment)
                         <tr>
-                            <td class="px-4 py-3 font-medium text-neutral-900">{{ $assessment->employee->full_name }}</td>
-                            <td class="px-4 py-3 text-neutral-700">{{ $assessment->skill->name }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $assessment->competencyLevel->level_number }} — {{ $assessment->competencyLevel->name }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $assessment->assessment_date->format('d M Y') }}</td>
-                            <td class="px-4 py-3 text-neutral-600">{{ $assessment->assessedBy?->name ?? '—' }}</td>
+                            <td class="px-3 py-2 font-medium text-neutral-900">{{ $assessment->employee->full_name }}</td>
+                            <td class="px-3 py-2 text-neutral-700">{{ $assessment->skill->name }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $assessment->competencyLevel->level_number }} — {{ $assessment->competencyLevel->name }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $assessment->assessment_date->format('d M Y') }}</td>
+                            <td class="px-3 py-2 text-neutral-600">{{ $assessment->assessedBy?->name ?? '—' }}</td>
                         </tr>
                     @empty
                         <tr><td colspan="5" class="px-4 py-10 text-center text-neutral-500">No assessments recorded yet.</td></tr>

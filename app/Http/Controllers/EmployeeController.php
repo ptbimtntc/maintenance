@@ -308,6 +308,7 @@ class EmployeeController extends Controller
 
         $created = 0;
         $updated = 0;
+        $restored = 0;
         $errors = [];
 
         foreach ($rows as $index => $row) {
@@ -327,6 +328,27 @@ class EmployeeController extends Controller
                 $errors[] = "Row {$rowNumber}: employee \"{$employeeNumber}\" not found.";
 
                 continue;
+            }
+
+            if (! $employee) {
+                // A previously deleted employee with this number is brought
+                // back (the import is an explicit request for them) and then
+                // updated like any other row. The number can't be reused for
+                // a fresh record anyway - it's unique even among deleted ones.
+                $trashed = Employee::onlyTrashed()->visibleTo($request->user())->where('employee_number', $employeeNumber)->first();
+
+                if ($trashed) {
+                    // The policy only recognises live records, so restore
+                    // first and put it back if this user couldn't edit it.
+                    $trashed->restore();
+
+                    if ($request->user()->can('update', $trashed)) {
+                        $employee = $trashed;
+                        $restored++;
+                    } else {
+                        $trashed->delete();
+                    }
+                }
             }
 
             if (! $employee) {
@@ -427,7 +449,7 @@ class EmployeeController extends Controller
         }
 
         $redirect = redirect()->route('employees.index')
-            ->with('status', "{$created} employee(s) created, {$updated} employee(s) updated from import.");
+            ->with('status', "{$created} employee(s) created, {$updated} updated".($restored ? " ({$restored} of them restored from deleted)" : '').' from import.');
 
         if ($errors !== []) {
             $shown = array_slice($errors, 0, 8);

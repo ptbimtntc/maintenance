@@ -87,6 +87,28 @@ $selectedSkills = old('skills', $program?->skills->pluck('id')->toArray() ?? [])
                     <span class="text-sm text-neutral-700">Internal Training</span>
                 </label>
 
+                <div class="rounded-md border border-brand-200 bg-brand-50/40 p-4">
+                    <p class="mb-3 text-sm font-semibold text-neutral-800">Certification (used by the quiz &amp; certificate)</p>
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div>
+                            <x-input-label for="validity_months" value="Certificate Validity (months, blank = no expiry)" />
+                            <x-text-input id="validity_months" type="number" min="1" max="120" name="validity_months" class="mt-1 block w-full" value="{{ $old('validity_months') }}" />
+                        </div>
+                        <div>
+                            <x-input-label for="passing_score" value="Passing Score (0-100)" />
+                            <x-text-input id="passing_score" type="number" min="0" max="100" name="passing_score" class="mt-1 block w-full" value="{{ $old('passing_score') }}" />
+                        </div>
+                        <div>
+                            <x-input-label for="authorizer_name" value="Authorizer Name" />
+                            <x-text-input id="authorizer_name" name="authorizer_name" class="mt-1 block w-full" value="{{ $old('authorizer_name') }}" />
+                        </div>
+                        <div>
+                            <x-input-label for="authorizer_title" value="Authorizer Title" />
+                            <x-text-input id="authorizer_title" name="authorizer_title" class="mt-1 block w-full" value="{{ $old('authorizer_title') }}" placeholder="Maintenance Manager" />
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                         <x-input-label for="trainer_name" value="Trainer Name" />
