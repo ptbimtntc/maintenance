@@ -45,6 +45,9 @@ $parentField = $config['parent']['field'] ?? null;
                                 <input type="checkbox" name="{{ $field }}" value="1" @checked($old($field, false)) class="rounded border-neutral-300" />
                                 <span class="text-sm text-neutral-700">{{ $meta['label'] }}</span>
                             </label>
+                        @elseif ($meta['type'] === 'textarea')
+                            <x-input-label for="{{ $field }}" :value="$meta['label']" />
+                            <textarea id="{{ $field }}" name="{{ $field }}" rows="4" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">{{ $old($field) }}</textarea>
                         @elseif ($meta['type'] === 'select')
                             <x-input-label for="{{ $field }}" :value="$meta['label']" />
                             <select id="{{ $field }}" name="{{ $field }}" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">

@@ -209,5 +209,8 @@ return [
         'label' => 'Certificate Types',
         'singular' => 'Certificate Type',
         'name_field' => 'name',
+        'extra_fields' => [
+            'scope' => ['type' => 'textarea', 'label' => 'Authorization Scope (one item per line)'],
+        ],
     ],
 ];

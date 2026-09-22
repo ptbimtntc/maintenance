@@ -50,6 +50,11 @@
         .description-section { margin: 0 14px; padding: 15px 16px; border-bottom: 1px solid #e4e7eb; }
         .description-section p { margin: 0; font-size: 12px; line-height: 1.6; color: #333b47; }
 
+        .scope-section { margin: 0 14px; padding: 15px 16px; border-bottom: 1px solid #e4e7eb; }
+        .scope-section h3 { font-size: 12px; color: #153f7d; margin-bottom: 10px; font-weight: bold; }
+        .scope-item { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #333b47; line-height: 1.5; }
+        .scope-check { width: 15px; height: 15px; flex-shrink: 0; border-radius: 50%; background: #25a244; color: white; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; margin-top: 1px; }
+
         .note-box { margin: 15px 14px 20px; padding: 12px; border: 1px solid #d4e4f7; background: #f2f8ff; border-radius: 8px; display: flex; gap: 10px; color: #24528c; }
         .note-icon { font-size: 17px; }
         .note-box strong { font-size: 11px; }
@@ -127,6 +132,9 @@
 
             <div class="information-section">
                 <h3>INFORMASI UMUM</h3>
+                @if ($employee->license_number)
+                    <div class="information-row"><span>License ID</span><strong>: {{ $employee->license_number }}</strong></div>
+                @endif
                 <div class="information-row"><span>Issue Date</span><strong>: {{ $certificate->issue_date?->format('d M Y') ?? '-' }}</strong></div>
                 <div class="information-row"><span>Expiry Date</span><strong>: {{ $certificate->expiry_date?->format('d M Y') ?? 'No Expiry' }}</strong></div>
                 <div class="information-row"><span>Department</span><strong>: {{ $employee->department?->name ?? '-' }}</strong></div>
@@ -156,6 +164,23 @@
                 <div class="description-section">
                     <h3>DESKRIPSI KOMPETENSI</h3>
                     <p>{{ $description }}</p>
+                </div>
+            @endif
+
+            @php
+                $scopeItems = collect(preg_split('/\r\n|\n|\r/', (string) $certificate->certificateType?->scope))
+                    ->map(fn ($item) => trim($item))
+                    ->filter();
+            @endphp
+            @if ($scopeItems->isNotEmpty())
+                <div class="scope-section">
+                    <h3>RUANG LINGKUP OTORISASI</h3>
+                    @foreach ($scopeItems as $item)
+                        <div class="scope-item">
+                            <span class="scope-check">&#10003;</span>
+                            <span>{{ $item }}</span>
+                        </div>
+                    @endforeach
                 </div>
             @endif
 

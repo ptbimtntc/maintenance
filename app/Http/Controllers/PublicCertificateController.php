@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Certificate;
 use App\Models\Employee;
+use App\Models\TrainingParticipant;
 use App\Models\TrainingRecord;
 use Illuminate\View\View;
 
@@ -27,7 +28,36 @@ class PublicCertificateController extends Controller
             ->orderByDesc('issue_date')
             ->get();
 
-        return view('certificates.public-profile', ['employee' => $employee, 'certificates' => $certificates]);
+        // Trainings scheduled but not yet passed - either the quiz hasn't
+        // been taken yet ("Assigned") or it was taken and failed
+        // ("Failed"); a pass already shows up above as a Certificate, so
+        // certificate_id being set is what excludes it here.
+        $pendingParticipations = $employee->trainingParticipations()
+            ->whereNull('certificate_id')
+            ->with('trainingSession.trainingProgram')
+            ->get()
+            ->sortBy(fn (TrainingParticipant $p) => $p->trainingSession->start_date)
+            ->values();
+
+        return view('certificates.public-profile', [
+            'employee' => $employee,
+            'certificates' => $certificates,
+            'pendingParticipations' => $pendingParticipations,
+        ]);
+    }
+
+    /**
+     * Read-only info for a scheduled-but-not-yet-passed training - no quiz
+     * can be taken here (that stays behind login at
+     * TrainingQuizController::show, gated to the employee's own account).
+     */
+    public function participant(TrainingParticipant $participant): View
+    {
+        $participant->load(['employee.department', 'employee.position', 'trainingSession.trainingProgram']);
+
+        abort_if($participant->certificate_id !== null, 404);
+
+        return view('certificates.public-participant', ['participant' => $participant]);
     }
 
     /**

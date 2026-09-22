@@ -42,6 +42,7 @@ Route::post('/onboarding/{token}', [EmployeeOnboardingController::class, 'update
 Route::get('/verify/{employee:employee_number}', [PublicCertificateController::class, 'employee'])->name('verify.employee');
 Route::get('/verify/certificates/{certificate}', [PublicCertificateController::class, 'detail'])->name('verify.certificate');
 Route::get('/verify/certificates/{certificate}/certificate', [PublicCertificateController::class, 'certificate'])->name('verify.certificate.print');
+Route::get('/verify/participants/{participant}', [PublicCertificateController::class, 'participant'])->name('verify.participant');
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');

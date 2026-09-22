@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\Certificate;
+use App\Models\CertificateType;
 use App\Models\Employee;
+use App\Models\TrainingParticipant;
+use App\Models\TrainingProgram;
+use App\Models\TrainingSession;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -217,5 +221,115 @@ class CertificateTest extends TestCase
         $response = $this->get(route('verify.certificate', $certificate));
 
         $response->assertSee(route('verify.certificate.print', $certificate));
+    }
+
+    public function test_public_profile_shows_a_scheduled_training_as_assigned(): void
+    {
+        $employee = Employee::factory()->create(['employee_number' => 'EMP-ASSIGNED']);
+        $program = TrainingProgram::factory()->create(['title' => 'Confined Space Entry']);
+        $session = TrainingSession::factory()->create(['training_program_id' => $program->id]);
+        TrainingParticipant::factory()->create([
+            'employee_id' => $employee->id,
+            'training_session_id' => $session->id,
+            'attendance_status' => 'confirmed',
+        ]);
+
+        $response = $this->get(route('verify.employee', $employee));
+
+        $response->assertOk();
+        $response->assertSee('Confined Space Entry');
+        $response->assertSee('Assigned');
+    }
+
+    public function test_public_profile_shows_a_failed_quiz_attempt_as_failed_not_assigned(): void
+    {
+        $employee = Employee::factory()->create();
+        $program = TrainingProgram::factory()->create(['title' => 'Rigging Basics']);
+        $session = TrainingSession::factory()->create(['training_program_id' => $program->id]);
+        TrainingParticipant::factory()->create([
+            'employee_id' => $employee->id,
+            'training_session_id' => $session->id,
+            'attendance_status' => 'attended',
+            'quiz_submitted_at' => now(),
+            'quiz_score' => 40,
+        ]);
+
+        $response = $this->get(route('verify.employee', $employee));
+
+        $response->assertOk();
+        $response->assertSee('Rigging Basics');
+        $response->assertSee('Failed');
+    }
+
+    public function test_a_passed_participation_does_not_duplicate_as_assigned(): void
+    {
+        $employee = Employee::factory()->create();
+        $program = TrainingProgram::factory()->create(['title' => 'Passed Program']);
+        $session = TrainingSession::factory()->create(['training_program_id' => $program->id]);
+        $certificate = Certificate::factory()->create([
+            'employee_id' => $employee->id,
+            'name' => 'Passed Program',
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-PASS',
+        ]);
+        TrainingParticipant::factory()->create([
+            'employee_id' => $employee->id,
+            'training_session_id' => $session->id,
+            'attendance_status' => 'attended',
+            'quiz_submitted_at' => now(),
+            'quiz_score' => 90,
+            'certificate_id' => $certificate->id,
+        ]);
+
+        $response = $this->get(route('verify.employee', $employee));
+
+        $response->assertOk();
+        $response->assertDontSee('Assigned');
+        $response->assertDontSee('Failed');
+    }
+
+    public function test_guest_can_view_a_scheduled_participants_read_only_detail_page(): void
+    {
+        $employee = Employee::factory()->create();
+        $session = TrainingSession::factory()->create();
+        $participant = TrainingParticipant::factory()->create([
+            'employee_id' => $employee->id,
+            'training_session_id' => $session->id,
+        ]);
+
+        $this->get(route('verify.participant', $participant))->assertOk();
+    }
+
+    public function test_a_passed_participants_detail_page_is_not_publicly_reachable(): void
+    {
+        $employee = Employee::factory()->create();
+        $session = TrainingSession::factory()->create();
+        $certificate = Certificate::factory()->create(['employee_id' => $employee->id, 'verification_status' => 'verified']);
+        $participant = TrainingParticipant::factory()->create([
+            'employee_id' => $employee->id,
+            'training_session_id' => $session->id,
+            'certificate_id' => $certificate->id,
+        ]);
+
+        $this->get(route('verify.participant', $participant))->assertNotFound();
+    }
+
+    public function test_certificate_detail_page_lists_the_certificate_types_authorization_scope(): void
+    {
+        $certificateType = CertificateType::factory()->create([
+            'scope' => "Operate forklift within warehouse zone\nMaximum load 2 tons\n\n  ",
+        ]);
+        $certificate = Certificate::factory()->create([
+            'certificate_type_id' => $certificateType->id,
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-SCOPE-1',
+        ]);
+
+        $response = $this->get(route('verify.certificate', $certificate));
+
+        $response->assertOk();
+        $response->assertSee('RUANG LINGKUP OTORISASI');
+        $response->assertSee('Operate forklift within warehouse zone');
+        $response->assertSee('Maximum load 2 tons');
     }
 }

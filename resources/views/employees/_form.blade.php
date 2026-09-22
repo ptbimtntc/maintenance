@@ -23,6 +23,13 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
     </div>
 
     <div>
+        <x-input-label for="license_number" value="Nomor Lisensi" />
+        <x-text-input id="license_number" name="license_number" class="mt-1 block w-full" value="{{ $old('license_number') }}" />
+        <p class="mt-1 text-xs text-neutral-400">Misal: SIO, SIM operator, atau lisensi profesi lain.</p>
+        <x-input-error :messages="$errors->get('license_number')" class="mt-1" />
+    </div>
+
+    <div>
         <x-input-label for="full_name" value="Full Name" />
         <x-text-input id="full_name" name="full_name" class="mt-1 block w-full" value="{{ $old('full_name') }}" required />
         <x-input-error :messages="$errors->get('full_name')" class="mt-1" />

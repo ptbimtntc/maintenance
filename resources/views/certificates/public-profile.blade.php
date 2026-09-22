@@ -47,6 +47,10 @@
         .status-pill-danger { background: #fde2e1; color: #b42318; }
         .status-pill-secondary { background: #e8eaed; color: #5f6b7a; }
         .status-pill-info { background: #dbeafe; color: #1d4ed8; }
+        .competency-icon.icon-info { background: #dbeafe; }
+        .competency-icon.icon-danger { background: #fde2e1; }
+        .competency-icon.icon-valid { background: #dff4df; }
+        .competency-icon.icon-warning { background: #fff2cc; }
 
         .empty-state { padding: 30px 20px; text-align: center; color: #68717d; font-size: 13px; }
     </style>
@@ -86,6 +90,27 @@
             </div>
 
             <div class="competency-list">
+                @foreach ($pendingParticipations as $participant)
+                    @php
+                        $isFailed = $participant->quiz_submitted_at !== null;
+                    @endphp
+                    <a href="{{ route('verify.participant', $participant) }}" class="competency-item">
+                        <div class="competency-icon {{ $isFailed ? 'icon-danger' : 'icon-info' }}">{{ $isFailed ? '✗' : '📅' }}</div>
+                        <div class="competency-content">
+                            <div class="competency-name">{{ $participant->trainingSession->trainingProgram->title }}</div>
+                            <div class="competency-info">
+                                <div>Scheduled Date <strong>{{ $participant->trainingSession->start_date->format('d M Y') }}</strong></div>
+                                <div>Attendance <strong>{{ ucfirst($participant->attendance_status) }}</strong></div>
+                                @if ($isFailed)
+                                    <div>Score <strong>{{ $participant->quiz_score }} / 100</strong></div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="competency-status {{ $isFailed ? 'status-pill-danger' : 'status-pill-info' }}">{{ $isFailed ? 'Failed' : 'Assigned' }}</div>
+                        <div class="competency-arrow">&rsaquo;</div>
+                    </a>
+                @endforeach
+
                 @forelse ($certificates as $certificate)
                     @php
                         $status = $certificate->status();
@@ -101,9 +126,21 @@
                             'expired' => 'status-pill-danger',
                             default => 'status-pill-valid',
                         };
+                        $statusIcon = match ($status) {
+                            'valid', 'no_expiry' => '✓',
+                            'expiring_soon' => '⚠',
+                            'expired' => '✗',
+                            default => '✓',
+                        };
+                        $iconClass = match ($status) {
+                            'valid', 'no_expiry' => 'icon-valid',
+                            'expiring_soon' => 'icon-warning',
+                            'expired' => 'icon-danger',
+                            default => 'icon-valid',
+                        };
                     @endphp
                     <a href="{{ route('verify.certificate', $certificate) }}" target="_blank" class="competency-item">
-                        <div class="competency-icon">&#9733;</div>
+                        <div class="competency-icon {{ $iconClass }}">{{ $statusIcon }}</div>
                         <div class="competency-content">
                             <div class="competency-name">{{ $certificate->name }}</div>
                             <div class="competency-info">
@@ -117,7 +154,9 @@
                         <div class="competency-arrow">&rsaquo;</div>
                     </a>
                 @empty
-                    <div class="empty-state">No verified certificates found for this employee yet.</div>
+                    @if ($pendingParticipations->isEmpty())
+                        <div class="empty-state">No verified certificates found for this employee yet.</div>
+                    @endif
                 @endforelse
             </div>
         </div>

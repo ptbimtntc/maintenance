@@ -181,6 +181,21 @@ class EmployeeManagementTest extends TestCase
         $this->assertDatabaseHas('employees', ['employee_number' => 'EMP-99999']);
     }
 
+    public function test_administrator_can_set_an_employees_license_number(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->post(route('employees.store'), [
+            'employee_number' => 'EMP-LIC-1',
+            'full_name' => 'Licensed Employee',
+            'license_number' => 'SIO-12345',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('employees', ['employee_number' => 'EMP-LIC-1', 'license_number' => 'SIO-12345']);
+    }
+
     public function test_administrator_can_create_an_employee_with_the_new_classification_fields(): void
     {
         $admin = User::factory()->create();

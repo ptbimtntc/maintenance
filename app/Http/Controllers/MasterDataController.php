@@ -421,6 +421,7 @@ class MasterDataController extends Controller
                 'boolean' => ['sometimes', 'boolean'],
                 'time' => ['nullable', 'date_format:H:i'],
                 'select' => [($meta['required'] ?? false) ? 'required' : 'nullable', Rule::in(array_keys($meta['options'] ?? []))],
+                'textarea' => [($meta['required'] ?? false) ? 'required' : 'nullable', 'string', 'max:2000'],
                 default => [($meta['required'] ?? false) ? 'required' : 'nullable', 'string', 'max:255'],
             };
 
