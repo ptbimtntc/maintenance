@@ -157,4 +157,65 @@ class CertificateTest extends TestCase
 
         Storage::disk('local')->assertMissing($path);
     }
+
+    public function test_guest_can_view_an_employees_verified_certificates_via_the_public_verification_page(): void
+    {
+        $employee = Employee::factory()->create(['employee_number' => 'EMP-260792']);
+        $verified = Certificate::factory()->create([
+            'employee_id' => $employee->id,
+            'name' => 'Forklift Operator',
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-001',
+        ]);
+        $pending = Certificate::factory()->create([
+            'employee_id' => $employee->id,
+            'name' => 'Welding Level 2',
+            'verification_status' => 'pending_verification',
+        ]);
+
+        $response = $this->get(route('verify.employee', $employee));
+
+        $response->assertOk();
+        $response->assertSee('Forklift Operator');
+        $response->assertDontSee('Welding Level 2');
+    }
+
+    public function test_guest_can_view_a_verified_certificates_detail_page_but_not_an_unverified_one(): void
+    {
+        $verified = Certificate::factory()->create([
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-002',
+        ]);
+        $pending = Certificate::factory()->create(['verification_status' => 'pending_verification']);
+
+        $this->get(route('verify.certificate', $verified))->assertOk();
+        $this->get(route('verify.certificate', $pending))->assertNotFound();
+    }
+
+    public function test_guest_can_view_the_printable_certificate_only_once_verified_and_numbered(): void
+    {
+        $verified = Certificate::factory()->create([
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-003',
+        ]);
+        $verifiedWithoutNumber = Certificate::factory()->create([
+            'verification_status' => 'verified',
+            'certificate_number' => null,
+        ]);
+
+        $this->get(route('verify.certificate.print', $verified))->assertOk();
+        $this->get(route('verify.certificate.print', $verifiedWithoutNumber))->assertNotFound();
+    }
+
+    public function test_certificate_detail_page_links_to_the_printable_certificate_when_numbered(): void
+    {
+        $certificate = Certificate::factory()->create([
+            'verification_status' => 'verified',
+            'certificate_number' => 'CERT-004',
+        ]);
+
+        $response = $this->get(route('verify.certificate', $certificate));
+
+        $response->assertSee(route('verify.certificate.print', $certificate));
+    }
 }

@@ -11,8 +11,37 @@
             </p>
         </div>
 
+        @can(\App\Enums\PermissionName::ManageTraining->value)
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ route('training.programs.questions.export', $program) }}"
+                   class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    </svg>
+                    Export XLSX
+                </a>
+
+                <form method="POST" action="{{ route('training.programs.questions.import', $program) }}" enctype="multipart/form-data"
+                      onsubmit="return confirm('This replaces the entire question bank for this program with the uploaded file. Continue?');">
+                    @csrf
+                    <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-4.5L12 16.5m0 0 4.5-4.5M12 16.5V3" />
+                        </svg>
+                        Import XLSX
+                        <input type="file" name="file" accept=".xlsx" class="hidden" onchange="this.form.requestSubmit()">
+                    </label>
+                </form>
+                <span class="text-xs text-neutral-400">Import replaces all questions below — export first to get the right column format.</span>
+            </div>
+        @endcan
+
         @if (session('status'))
             <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+        @endif
+
+        @if (session('import_errors'))
+            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ session('import_errors') }}</div>
         @endif
 
         <div class="space-y-3">

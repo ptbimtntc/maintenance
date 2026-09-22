@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PermissionName;
 use App\Models\Employee;
-use App\Models\EmploymentStatus;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -14,6 +14,12 @@ use Illuminate\View\View;
  * shows exactly the same people they can already see elsewhere (themselves
  * plus their direct reports), while Administrator/People Development see
  * the whole company since they hold ViewAllEmployees.
+ *
+ * For everyone else, the scoped set alone would show them as a root with no
+ * one above them, which reads as "I'm at the top of the company" - wrong,
+ * and unhelpful for placing themselves in it. So their upward supervisor
+ * chain (to the top) is added on top of the scoped set, without pulling in
+ * any of their supervisors' other reports (siblings/unrelated branches).
  */
 class OrganizationChartController extends Controller
 {
@@ -21,22 +27,26 @@ class OrganizationChartController extends Controller
     {
         $this->authorize('viewAny', Employee::class);
 
+        $user = $request->user();
+
         $employees = Employee::query()
-            ->visibleTo($request->user())
+            ->visibleTo($user)
             ->whereHas('employmentStatus', fn ($q) => $q->where('code', 'ACTIVE'))
             ->with(['skillPosition', 'position'])
             ->orderBy('full_name')
             ->get();
 
+        if (! $user->hasPermissionTo(PermissionName::ViewAllEmployees->value)) {
+            $employees = $employees->concat($this->ancestorChain($user->employee))->unique('id');
+        }
+
         $visibleIds = $employees->pluck('id')->flip();
 
         // Roots are visible employees whose supervisor isn't also in the
         // visible set - for an org-wide viewer that's the top of the
-        // company; for someone scoped to themselves + direct reports,
-        // their own record naturally has no visible supervisor, so they
-        // become the root of their own (shallow) chart. Filtering to Active
-        // employees above means a non-active supervisor's chain is excluded
-        // too - their active reports simply surface as roots instead.
+        // company; for someone scoped to themselves + direct reports (plus
+        // their ancestor chain above), the topmost ancestor has no visible
+        // supervisor and becomes the root instead.
         $roots = $employees->filter(
             fn (Employee $employee) => ! $employee->supervisor_id || ! $visibleIds->has($employee->supervisor_id)
         )->values();
@@ -47,5 +57,27 @@ class OrganizationChartController extends Controller
             'roots' => $roots,
             'childrenByParent' => $childrenByParent,
         ]);
+    }
+
+    /**
+     * Walks supervisor_id upward from the given employee (exclusive) to the
+     * top, e.g. [my supervisor, their supervisor, ...]. Not filtered by
+     * active status - a chain shouldn't break just because one ancestor's
+     * employment status happens to be inactive. Capped at 20 hops as a
+     * guard against a circular supervisor_id.
+     */
+    private function ancestorChain(?Employee $employee): \Illuminate\Support\Collection
+    {
+        $ancestors = collect();
+        $current = $employee?->supervisor;
+        $hops = 0;
+
+        while ($current !== null && $hops < 20) {
+            $ancestors->push($current);
+            $current = $current->supervisor;
+            $hops++;
+        }
+
+        return $ancestors;
     }
 }

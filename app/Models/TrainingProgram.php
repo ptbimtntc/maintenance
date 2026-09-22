@@ -12,9 +12,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
     'title', 'code', 'training_category_id', 'training_type_id', 'description', 'objectives',
-    'target_audience', 'is_internal', 'trainer_name', 'training_provider_id', 'location_id',
+    'target_audience', 'is_internal', 'trainer_name', 'trainer_signature_path', 'training_provider_id', 'location_id',
     'duration_value', 'duration_unit', 'estimated_cost', 'budget_reference', 'status', 'remarks',
-    'validity_months', 'passing_score', 'authorizer_name', 'authorizer_title', 'created_by',
+    'validity_months', 'passing_score', 'authorizer_name', 'authorizer_title', 'authorizer_signature_path', 'created_by',
+    'trainer_signatory_id', 'authorizer_signatory_id',
 ])]
 class TrainingProgram extends Model
 {
@@ -55,6 +56,16 @@ class TrainingProgram extends Model
     public function location(): BelongsTo
     {
         return $this->belongsTo(Location::class);
+    }
+
+    public function trainerSignatory(): BelongsTo
+    {
+        return $this->belongsTo(Signatory::class, 'trainer_signatory_id');
+    }
+
+    public function authorizerSignatory(): BelongsTo
+    {
+        return $this->belongsTo(Signatory::class, 'authorizer_signatory_id');
     }
 
     public function skills(): BelongsToMany

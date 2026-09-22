@@ -8,7 +8,7 @@ $selectedSkills = old('skills', $program?->skills->pluck('id')->toArray() ?? [])
     <x-slot name="header">{{ $isEdit ? 'Edit Training Program' : 'Add Training Program' }}</x-slot>
 
     <div class="max-w-3xl rounded-lg border border-neutral-200 bg-white p-6">
-        <form method="POST" action="{{ $isEdit ? route('training.programs.update', $program) : route('training.programs.store') }}">
+        <form method="POST" action="{{ $isEdit ? route('training.programs.update', $program) : route('training.programs.store') }}" enctype="multipart/form-data">
             @csrf
             @if ($isEdit) @method('PUT') @endif
 
@@ -105,6 +105,43 @@ $selectedSkills = old('skills', $program?->skills->pluck('id')->toArray() ?? [])
                         <div>
                             <x-input-label for="authorizer_title" value="Authorizer Title" />
                             <x-text-input id="authorizer_title" name="authorizer_title" class="mt-1 block w-full" value="{{ $old('authorizer_title') }}" placeholder="Maintenance Manager" />
+                        </div>
+                        <div>
+                            <x-input-label for="authorizer_signatory_id" value="Or pick a saved Signatory" />
+                            <select id="authorizer_signatory_id" name="authorizer_signatory_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
+                                <option value="">—</option>
+                                @foreach ($signatories as $signatory)
+                                    <option value="{{ $signatory->id }}" @selected($old('authorizer_signatory_id') == $signatory->id)>{{ $signatory->name }}{{ $signatory->title ? " ({$signatory->title})" : '' }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-neutral-400">Fills in the name/title/signature above from <a href="{{ route('signatories.index') }}" class="underline" target="_blank">Signatories</a> - a manual upload below still wins.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="authorizer_signature" value="Authorizer Signature Image" />
+                            @if ($program?->authorizer_signature_path)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($program->authorizer_signature_path) }}" alt="Authorizer signature" class="mt-1 h-14 border border-neutral-200 bg-white p-1">
+                            @endif
+                            <input id="authorizer_signature" type="file" name="authorizer_signature" accept="image/png,image/jpeg" class="mt-1 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm" />
+                            <x-input-error :messages="$errors->get('authorizer_signature')" class="mt-1" />
+                        </div>
+                        <div>
+                            <x-input-label for="trainer_signatory_id" value="Or pick a saved Signatory" />
+                            <select id="trainer_signatory_id" name="trainer_signatory_id" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
+                                <option value="">—</option>
+                                @foreach ($signatories as $signatory)
+                                    <option value="{{ $signatory->id }}" @selected($old('trainer_signatory_id') == $signatory->id)>{{ $signatory->name }}{{ $signatory->title ? " ({$signatory->title})" : '' }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-xs text-neutral-400">Fills in the trainer name/signature below from <a href="{{ route('signatories.index') }}" class="underline" target="_blank">Signatories</a> - a manual upload below still wins.</p>
+                        </div>
+                        <div>
+                            <x-input-label for="trainer_signature" value="Trainer Signature Image" />
+                            @if ($program?->trainer_signature_path)
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($program->trainer_signature_path) }}" alt="Trainer signature" class="mt-1 h-14 border border-neutral-200 bg-white p-1">
+                            @endif
+                            <input id="trainer_signature" type="file" name="trainer_signature" accept="image/png,image/jpeg" class="mt-1 block w-full text-sm text-neutral-600 file:mr-3 file:rounded-md file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-sm" />
+                            <p class="mt-1 text-xs text-neutral-400">PNG with a transparent background works best. Used on the printed certificate.</p>
+                            <x-input-error :messages="$errors->get('trainer_signature')" class="mt-1" />
                         </div>
                     </div>
                 </div>

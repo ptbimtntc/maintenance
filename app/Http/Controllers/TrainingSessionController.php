@@ -12,6 +12,7 @@ use App\Models\TrainingSession;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -191,5 +192,26 @@ class TrainingSessionController extends Controller
         $participant->delete();
 
         return back()->with('status', 'Participant removed.');
+    }
+
+    public function showParticipantQuiz(TrainingSession $trainingSession, TrainingParticipant $participant): View
+    {
+        abort_unless($participant->training_session_id === $trainingSession->id, 404);
+
+        $participant->load(['employee', 'certificate', 'trainingSession.trainingProgram.questions.choices']);
+
+        $selectedChoiceIds = collect();
+        if ($participant->quiz_submitted_at) {
+            $selectedChoiceIds = DB::table('training_quiz_answers')
+                ->where('training_participant_id', $participant->id)
+                ->pluck('training_question_choice_id');
+        }
+
+        return view('training.sessions.participant-quiz', [
+            'trainingSession' => $trainingSession,
+            'participant' => $participant,
+            'program' => $trainingSession->trainingProgram,
+            'selectedChoiceIds' => $selectedChoiceIds,
+        ]);
     }
 }

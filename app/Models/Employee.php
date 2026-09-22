@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Concerns\Auditable;
 use App\Enums\PermissionName;
+use App\Enums\RoleName;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -147,9 +148,40 @@ class Employee extends Model
         return $this->belongsTo(Employee::class, 'supervisor_id');
     }
 
+    /**
+     * The raw manager_id column/relation - kept in the schema but
+     * deliberately unused everywhere else in the app. "Manager" isn't
+     * meant to be filled in by hand; see inferredManager() for the field
+     * actually shown on the employee profile.
+     */
     public function manager(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'manager_id');
+    }
+
+    /**
+     * The employee's manager, inferred by walking up the supervisor chain
+     * (supervisor, supervisor's supervisor, ...) until reaching someone
+     * with the Maintenance Manager role. Returns null if the chain runs out
+     * (max 10 hops, guarding against a bad/circular supervisor_id) or no
+     * such person is found - never falls back to the unused manager_id
+     * column.
+     */
+    public function inferredManager(): ?self
+    {
+        $current = $this->supervisor;
+        $hops = 0;
+
+        while ($current !== null && $hops < 10) {
+            if ($current->user?->hasRole(RoleName::MaintenanceManager->value)) {
+                return $current;
+            }
+
+            $current = $current->supervisor;
+            $hops++;
+        }
+
+        return null;
     }
 
     public function directReports(): HasMany

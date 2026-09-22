@@ -8,6 +8,7 @@ use App\Http\Requests\StoreCertificateRequest;
 use App\Models\Certificate;
 use App\Models\CertificateType;
 use App\Models\Employee;
+use App\Models\MaintenanceTeam;
 use App\Models\Skill;
 use App\Models\TrainingProgram;
 use Illuminate\Http\RedirectResponse;
@@ -84,6 +85,80 @@ class CertificateController extends Controller
             'certificateTypes' => CertificateType::where('is_active', true)->orderBy('name')->get(),
             'statusLabels' => Certificate::statusLabels(),
             'filters' => $request->only(['employee_search', 'certificate_type_id', 'status']),
+        ]);
+    }
+
+    private const RECERTIFICATION_WINDOWS = ['30', '60', '90', 'expired', 'all'];
+
+    /**
+     * Which certificates are due (or overdue) for renewal, mirroring the
+     * legacy system's Recertification report: a "window" of how many days
+     * ahead to include (always alongside anything already overdue), plus a
+     * scope (team / certificate type / employee search) applied to both the
+     * list and the summary counters, so switching windows never changes
+     * what "scope" means.
+     */
+    public function recertification(Request $request): View|StreamedResponse
+    {
+        $window = $request->string('window')->toString();
+        $window = in_array($window, self::RECERTIFICATION_WINDOWS, true) ? $window : '60';
+
+        $scoped = fn () => Certificate::query()
+            ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
+            ->where('verification_status', 'verified')
+            ->whereNotNull('expiry_date')
+            ->when($request->filled('maintenance_team_id'), fn ($q) => $q->whereHas(
+                'employee',
+                fn ($eq) => $eq->where('maintenance_team_id', $request->integer('maintenance_team_id'))
+            ))
+            ->when($request->filled('certificate_type_id'), fn ($q) => $q->where('certificate_type_id', $request->integer('certificate_type_id')))
+            ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
+                'employee',
+                fn ($eq) => $eq->search($request->string('employee_search')->toString())
+            ));
+
+        $today = now()->startOfDay();
+
+        $query = $scoped()->with(['employee.maintenanceTeam', 'employee.department', 'certificateType']);
+
+        match ($window) {
+            'expired' => $query->whereDate('expiry_date', '<', $today),
+            '30', '60', '90' => $query->whereDate('expiry_date', '<=', $today->copy()->addDays((int) $window)),
+            default => null,
+        };
+
+        $summary = [
+            'overdue' => $scoped()->whereDate('expiry_date', '<', $today)->count(),
+            'due_30' => $scoped()->whereBetween('expiry_date', [$today, $today->copy()->addDays(30)])->count(),
+            'due_60' => $scoped()->whereBetween('expiry_date', [$today, $today->copy()->addDays(60)])->count(),
+            'due_90' => $scoped()->whereBetween('expiry_date', [$today, $today->copy()->addDays(90)])->count(),
+        ];
+
+        if ($request->string('export') == 'xlsx') {
+            $header = ['Employee', 'Employee Number', 'Team', 'Department', 'Certificate', 'Type', 'Expiry Date', 'Days Remaining'];
+            $rows = $query->orderBy('expiry_date')->get()->map(fn (Certificate $c) => [
+                $c->employee->full_name,
+                $c->employee->employee_number,
+                $c->employee->maintenanceTeam?->name,
+                $c->employee->department?->name,
+                $c->name,
+                $c->certificateType?->name,
+                $c->expiry_date?->format('Y-m-d'),
+                (int) $today->diffInDays($c->expiry_date, false),
+            ]);
+
+            return $this->streamXlsx('recertification-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
+        }
+
+        $certificates = $query->orderBy('expiry_date')->paginate(20)->withQueryString();
+
+        return view('certificates.recertification', [
+            'certificates' => $certificates,
+            'summary' => $summary,
+            'window' => $window,
+            'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
+            'certificateTypes' => CertificateType::where('is_active', true)->orderBy('name')->get(),
+            'filters' => $request->only(['maintenance_team_id', 'certificate_type_id', 'employee_search']),
         ]);
     }
 
@@ -322,7 +397,7 @@ class CertificateController extends Controller
      */
     public function show(Certificate $certificate): View
     {
-        $certificate->load(['employee', 'certificateType']);
+        $certificate->load(['employee', 'certificateType', 'relatedTrainingProgram']);
         $this->authorize('view', $certificate->employee);
 
         $available = $certificate->verification_status === 'verified' && filled($certificate->certificate_number);

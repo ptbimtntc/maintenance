@@ -61,7 +61,11 @@
 </head>
 <body>
     <div class="actions">
-        <a href="{{ route('employees.show', ['employee' => $certificate->employee, 'tab' => 'certificates']) }}" class="btn btn-outline">&larr; Back</a>
+        @if ($public ?? false)
+            <a href="{{ route('verify.certificate', $certificate) }}" class="btn btn-outline">&larr; Back</a>
+        @else
+            <a href="{{ route('employees.show', ['employee' => $certificate->employee, 'tab' => 'certificates']) }}" class="btn btn-outline">&larr; Back</a>
+        @endif
         @if ($available)
             <button onclick="window.print()" class="btn btn-primary">Print / Save PDF</button>
         @endif
@@ -97,9 +101,18 @@
 
                     <p class="authorization">and is authorized to perform basic work in accordance with company procedures and safety standards.</p>
 
+                    @php
+                        $program = $certificate->relatedTrainingProgram;
+                        $trainerSignature = $program?->trainer_signature_path;
+                        $authorizerSignature = $program?->authorizer_signature_path;
+                    @endphp
                     <div class="signature-area">
                         <div class="signature">
-                            <div class="signature-space"></div>
+                            <div class="signature-space">
+                                @if ($trainerSignature)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($trainerSignature) }}" alt="Trainer signature" style="height:100%;max-width:100%;object-fit:contain">
+                                @endif
+                            </div>
                             <div class="signature-line"></div>
                             <strong>{{ $certificate->trainer_name }}</strong>
                             <span>Trainer</span>
@@ -108,7 +121,11 @@
                         <div class="stamp">PASSED</div>
 
                         <div class="signature">
-                            <div class="signature-space"></div>
+                            <div class="signature-space">
+                                @if ($authorizerSignature)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($authorizerSignature) }}" alt="Authorizer signature" style="height:100%;max-width:100%;object-fit:contain">
+                                @endif
+                            </div>
                             <div class="signature-line"></div>
                             <strong>{{ $certificate->authorizer_name ?: ($certificate->authorizer_title ?: 'Maintenance Manager') }}</strong>
                             <span>{{ $certificate->authorizer_name ? ($certificate->authorizer_title ?: 'Maintenance Manager') : 'PT Bekaert Indonesia' }}</span>

@@ -59,13 +59,18 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                                     @endcan
                                 </td>
                                 <td class="px-3 py-2 text-right">
-                                    @can(\App\Enums\PermissionName::ManageTraining->value)
-                                        <form method="POST" action="{{ route('training.sessions.participants.destroy', [$trainingSession, $participant]) }}" onsubmit="return confirm('Remove this participant?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:underline">Remove</button>
-                                        </form>
-                                    @endcan
+                                    <div class="inline-flex items-center gap-3">
+                                        <a href="{{ route('training.sessions.participants.quiz', [$trainingSession, $participant]) }}" class="text-neutral-600 hover:underline">
+                                            {{ $participant->quiz_submitted_at ? 'View Quiz' : 'Quiz status' }}
+                                        </a>
+                                        @can(\App\Enums\PermissionName::ManageTraining->value)
+                                            <form method="POST" action="{{ route('training.sessions.participants.destroy', [$trainingSession, $participant]) }}" onsubmit="return confirm('Remove this participant?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                            </form>
+                                        @endcan
+                                    </div>
                                 </td>
                             </tr>
                         @empty

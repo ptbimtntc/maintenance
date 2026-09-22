@@ -2,7 +2,7 @@
 
 import Alpine from 'alpinejs';
 import './dashboard-charts';
-import './onboarding-qrcode';
+import './qrcode-canvas';
 
 window.Alpine = Alpine;
 

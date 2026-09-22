@@ -32,7 +32,7 @@
             <div class="rounded-lg border border-brand-200 bg-brand-50 p-4 sm:p-6" x-data="{ copied: false }">
                 @if ($employee->onboardingLinkIsActive())
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <canvas data-onboarding-qrcode="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
+                        <canvas data-qrcode="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
                                 class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
 
                         <div class="min-w-0 flex-1">
@@ -83,6 +83,36 @@
                         </form>
                     </div>
                 @endif
+            </div>
+        @endcan
+
+        @can('view', $employee)
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 sm:p-6">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <canvas data-qrcode="{{ route('verify.employee', $employee) }}"
+                            class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
+
+                    <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-semibold text-neutral-900">Certificate verification QR code</h3>
+                        <p class="mt-1 text-sm text-neutral-600">
+                            Scan this QR code, or share the link below, to view {{ $employee->full_name }}'s verified certificates - no login required. Print it on an ID badge or post it near their work station.
+                        </p>
+
+                        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <input type="text" readonly id="verify-link-{{ $employee->id }}"
+                                   value="{{ route('verify.employee', $employee) }}"
+                                   class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-white text-sm text-neutral-700"
+                                   onclick="this.select()">
+                            <button type="button"
+                                    x-data="{ copied: false }"
+                                    @click="navigator.clipboard.writeText(document.getElementById('verify-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)"
+                                    class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                                <span x-show="!copied">Copy Link</span>
+                                <span x-show="copied" x-cloak>Copied!</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         @endcan
 
@@ -162,6 +192,7 @@
                 <x-profile-field label="Shift" :value="$employee->shift?->name" />
                 <x-profile-field label="Date Joined" :value="$employee->date_joined?->format('d M Y')" />
                 <x-profile-field label="Supervisor" :value="$employee->supervisor?->full_name" />
+                <x-profile-field label="Manager" :value="$employee->inferredManager()?->full_name" />
                 <x-profile-field label="Technical Background" :value="$employee->technical_background" />
             </div>
         </div>

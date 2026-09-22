@@ -18,8 +18,10 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PublicCertificateController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\SignatoryController;
 use App\Http\Controllers\SkillMatrixController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\TrainingRecordController;
@@ -33,6 +35,13 @@ Route::post('/guest-login', [GuestSessionController::class, 'start'])->name('gue
 // the QR/link shown on their profile page - see EmployeeOnboardingController.
 Route::get('/onboarding/{token}', [EmployeeOnboardingController::class, 'edit'])->name('onboarding.edit');
 Route::post('/onboarding/{token}', [EmployeeOnboardingController::class, 'update'])->name('onboarding.update');
+
+// Public, unauthenticated: the "scan my badge QR code" certificate
+// verification pages - anyone with the link can see an employee's verified
+// certifications, no login required. See PublicCertificateController.
+Route::get('/verify/{employee:employee_number}', [PublicCertificateController::class, 'employee'])->name('verify.employee');
+Route::get('/verify/certificates/{certificate}', [PublicCertificateController::class, 'detail'])->name('verify.certificate');
+Route::get('/verify/certificates/{certificate}/certificate', [PublicCertificateController::class, 'certificate'])->name('verify.certificate.print');
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'login');
@@ -139,26 +148,36 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
         Route::get('/records', [TrainingRecordController::class, 'index'])->name('records.index');
         Route::get('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'show'])->name('quiz.show');
         Route::post('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'submit'])->name('quiz.submit');
-        Route::get('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'index'])->name('programs.questions.index');
-        Route::post('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.store');
-        Route::delete('/programs/{program}/questions/{question}', [\App\Http\Controllers\TrainingQuestionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.destroy');
         Route::post('/records-import', [TrainingRecordController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('records.import');
 
-        Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program'])
-            ->middlewareFor(['create', 'store', 'edit', 'update'], 'menu.edit:'.MenuKey::Training->value);
-        Route::delete('/programs/{program}', [TrainingProgramController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.destroy');
+        // Training Management: program/session administration, including the
+        // question bank and participant quiz review (shows correct answers),
+        // is restricted to ManageTraining holders only — not every ViewTraining
+        // role (e.g. regular staff taking their own quiz) should browse this.
+        Route::middleware('can:'.PermissionName::ManageTraining->value)->group(function () {
+            Route::get('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'index'])->name('programs.questions.index');
+            Route::get('/programs/{program}/questions/export', [\App\Http\Controllers\TrainingQuestionController::class, 'export'])->name('programs.questions.export');
+            Route::post('/programs/{program}/questions/import', [\App\Http\Controllers\TrainingQuestionController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.import');
+            Route::post('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.store');
+            Route::delete('/programs/{program}/questions/{question}', [\App\Http\Controllers\TrainingQuestionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.destroy');
 
-        Route::get('/programs/{program}/sessions/create', [TrainingSessionController::class, 'create'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.create');
-        Route::post('/programs/{program}/sessions', [TrainingSessionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.store');
+            Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program'])
+                ->middlewareFor(['create', 'store', 'edit', 'update'], 'menu.edit:'.MenuKey::Training->value);
+            Route::delete('/programs/{program}', [TrainingProgramController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.destroy');
 
-        Route::get('/sessions/{trainingSession}', [TrainingSessionController::class, 'show'])->name('sessions.show');
-        Route::get('/sessions/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.edit');
-        Route::put('/sessions/{trainingSession}', [TrainingSessionController::class, 'update'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.update');
-        Route::delete('/sessions/{trainingSession}', [TrainingSessionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.destroy');
+            Route::get('/programs/{program}/sessions/create', [TrainingSessionController::class, 'create'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.create');
+            Route::post('/programs/{program}/sessions', [TrainingSessionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.store');
 
-        Route::post('/sessions/{trainingSession}/participants', [TrainingSessionController::class, 'addParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.store');
-        Route::put('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'updateParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.update');
-        Route::delete('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'removeParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.destroy');
+            Route::get('/sessions/{trainingSession}', [TrainingSessionController::class, 'show'])->name('sessions.show');
+            Route::get('/sessions/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.edit');
+            Route::put('/sessions/{trainingSession}', [TrainingSessionController::class, 'update'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.update');
+            Route::delete('/sessions/{trainingSession}', [TrainingSessionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.destroy');
+
+            Route::post('/sessions/{trainingSession}/participants', [TrainingSessionController::class, 'addParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.store');
+            Route::put('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'updateParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.update');
+            Route::delete('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'removeParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.destroy');
+            Route::get('/sessions/{trainingSession}/participants/{participant}/quiz', [TrainingSessionController::class, 'showParticipantQuiz'])->name('sessions.participants.quiz');
+        });
     });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
@@ -168,6 +187,14 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPla
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCertificates->value])
     ->get('/certificates', [CertificateController::class, 'index'])
     ->name('certificates.index');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCertificates->value])
+    ->get('/certificates/recertification', [CertificateController::class, 'recertification'])
+    ->name('certificates.recertification');
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewCertificates->value])
+    ->resource('signatories', SignatoryController::class)
+    ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])
     ->get('/audit-logs', [AuditLogController::class, 'index'])
