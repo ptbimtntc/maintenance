@@ -181,6 +181,38 @@ class EmployeeManagementTest extends TestCase
         $this->assertDatabaseHas('employees', ['employee_number' => 'EMP-99999']);
     }
 
+    public function test_qr_codes_page_lists_visible_employees_with_their_verification_link(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $employee = Employee::factory()->create(['employee_number' => 'EMP-QR-1', 'full_name' => 'QR Test Employee']);
+
+        $response = $this->actingAs($admin)->get(route('employees.qr-codes'));
+
+        $response->assertOk();
+        $response->assertSee('QR Test Employee');
+        $response->assertSee(route('verify.employee', $employee));
+    }
+
+    public function test_maintenance_staff_only_sees_their_own_qr_code(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        $own = Employee::factory()->create(['user_id' => $staff->id, 'full_name' => 'Self Employee']);
+        $other = Employee::factory()->create(['full_name' => 'Other Employee']);
+
+        $response = $this->actingAs($staff)->get(route('employees.qr-codes'));
+
+        $response->assertOk();
+        $response->assertSee('Self Employee');
+        $response->assertDontSee('Other Employee');
+    }
+
+    public function test_guests_cannot_view_the_qr_codes_page(): void
+    {
+        $this->get(route('employees.qr-codes'))->assertRedirect('/login');
+    }
+
     public function test_administrator_can_set_an_employees_license_number(): void
     {
         $admin = User::factory()->create();

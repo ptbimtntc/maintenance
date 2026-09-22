@@ -59,6 +59,7 @@ Route::middleware(['auth', 'verified'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('employees', EmployeeController::class)
         ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'menu.edit:'.MenuKey::Employees->value);
+    Route::get('/employees-qr-codes', [EmployeeController::class, 'qrCodes'])->name('employees.qr-codes');
     Route::post('/employees-bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.bulk-destroy');
     Route::post('/employees-import', [EmployeeController::class, 'import'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.import');
     Route::post('/employees/{employee}/onboarding-link', [EmployeeController::class, 'regenerateOnboardingLink'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.onboarding-link');
@@ -178,6 +179,7 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
             Route::put('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'updateParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.update');
             Route::delete('/sessions/{trainingSession}/participants/{participant}', [TrainingSessionController::class, 'removeParticipant'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.destroy');
             Route::get('/sessions/{trainingSession}/participants/{participant}/quiz', [TrainingSessionController::class, 'showParticipantQuiz'])->name('sessions.participants.quiz');
+            Route::post('/sessions/{trainingSession}/participants/{participant}/quiz-reset', [TrainingSessionController::class, 'resetParticipantQuiz'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.participants.quiz-reset');
         });
     });
 

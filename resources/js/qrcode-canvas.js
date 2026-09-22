@@ -21,4 +21,34 @@ function initQrCodes() {
     });
 }
 
-document.addEventListener('DOMContentLoaded', initQrCodes);
+/**
+ * Wires up "Download PNG" buttons (see employees/qr-codes.blade.php): each
+ * button downloads the nearest preceding QR canvas in its own card.
+ */
+function initQrDownloadButtons() {
+    document.querySelectorAll('button[data-download-qr]').forEach((button) => {
+        if (button.dataset.downloadWired) {
+            return;
+        }
+
+        button.dataset.downloadWired = 'true';
+
+        button.addEventListener('click', () => {
+            const canvas = button.closest('div')?.querySelector('canvas[data-qrcode]');
+
+            if (!canvas) {
+                return;
+            }
+
+            const link = document.createElement('a');
+            link.download = `${button.dataset.filename || 'qrcode'}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initQrCodes();
+    initQrDownloadButtons();
+});

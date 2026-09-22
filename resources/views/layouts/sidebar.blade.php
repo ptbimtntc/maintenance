@@ -66,6 +66,9 @@ $showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings;
                         <x-nav-item :href="route('organization-chart.index')" :active="$organizationChartActive" icon="M12 3.75a1.5 1.5 0 013 0v2.25h1.5A2.25 2.25 0 0118.75 8.25v.567c.98.196 1.75.984 1.75 1.933v0M4.5 8.25A2.25 2.25 0 016.75 6h1.5V3.75a1.5 1.5 0 013 0M4.5 8.25v9A2.25 2.25 0 006.75 19.5H9m-4.5-11.25h15M9 19.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3M9 19.5h6">
                             Organization Chart
                         </x-nav-item>
+                        <x-nav-item :href="route('employees.qr-codes')" :active="request()->routeIs('employees.qr-codes')" icon="M3.75 4.5h5.25v5.25H3.75V4.5zM3.75 14.25h5.25v5.25H3.75v-5.25zM14.25 4.5h5.25v5.25h-5.25V4.5zM14.25 14.25h1.5v1.5h-1.5v-1.5zM18 14.25h1.5v1.5H18v-1.5zM14.25 18h1.5v1.5h-1.5V18zM18 18h1.5v1.5H18V18z">
+                            QR Codes
+                        </x-nav-item>
                     @endif
                     @if ($canManageMasterData)
                         <x-nav-item :href="route('organization.landing')" :active="$organizationActive" icon="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21">

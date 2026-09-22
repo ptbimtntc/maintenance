@@ -24,6 +24,14 @@
                 @else
                     <p class="mt-2 text-sm text-neutral-600">No certificate was issued.</p>
                 @endif
+
+                @can(\App\Enums\PermissionName::ManageTraining->value)
+                    <form method="POST" action="{{ route('training.sessions.participants.quiz-reset', [$trainingSession, $participant]) }}" class="mt-4"
+                          onsubmit="return confirm('Reset this quiz? The recorded answers{{ $passed ? ' and the issued certificate' : '' }} will be deleted, and the participant can take the quiz again. This cannot be undone.');">
+                        @csrf
+                        <button type="submit" class="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Reset Quiz</button>
+                    </form>
+                @endcan
             </div>
 
             <div class="space-y-4">

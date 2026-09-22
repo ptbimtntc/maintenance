@@ -6,8 +6,10 @@ use App\Enums\PermissionName;
 use App\Http\Requests\StoreTrainingSessionRequest;
 use App\Models\Employee;
 use App\Models\Location;
+use App\Models\Certificate;
 use App\Models\TrainingParticipant;
 use App\Models\TrainingProgram;
+use App\Models\TrainingRecord;
 use App\Models\TrainingSession;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
@@ -192,6 +194,43 @@ class TrainingSessionController extends Controller
         $participant->delete();
 
         return back()->with('status', 'Participant removed.');
+    }
+
+    /**
+     * Undoes a submitted quiz attempt - deletes the recorded answers, the
+     * TrainingRecord that submission logged, and any certificate it issued,
+     * then clears the participant back to "Assigned" so they can retake it
+     * (e.g. a wrong device/proxy submitted it, or a re-training was agreed).
+     * A no-op if the quiz was never submitted.
+     */
+    public function resetParticipantQuiz(TrainingSession $trainingSession, TrainingParticipant $participant): RedirectResponse
+    {
+        $this->authorize(PermissionName::ManageTraining->value);
+        abort_unless($participant->training_session_id === $trainingSession->id, 404);
+
+        if ($participant->quiz_submitted_at === null) {
+            return back()->with('status', 'This quiz has not been submitted yet - nothing to reset.');
+        }
+
+        DB::transaction(function () use ($trainingSession, $participant) {
+            DB::table('training_quiz_answers')->where('training_participant_id', $participant->id)->delete();
+
+            TrainingRecord::where('employee_id', $participant->employee_id)
+                ->where('training_session_id', $trainingSession->id)
+                ->delete();
+
+            if ($participant->certificate_id) {
+                Certificate::withTrashed()->where('id', $participant->certificate_id)->first()?->forceDelete();
+            }
+
+            $participant->forceFill([
+                'quiz_submitted_at' => null,
+                'quiz_score' => null,
+                'certificate_id' => null,
+            ])->save();
+        });
+
+        return back()->with('status', 'Quiz reset - the participant can take it again.');
     }
 
     public function showParticipantQuiz(TrainingSession $trainingSession, TrainingParticipant $participant): View

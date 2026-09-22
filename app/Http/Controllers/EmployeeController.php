@@ -123,6 +123,29 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /**
+     * A print-friendly grid of every visible employee's certificate
+     * verification QR code (see PublicCertificateController::employee()),
+     * so an admin can generate and print/download a batch of badges at
+     * once instead of opening each employee's profile one by one.
+     */
+    public function qrCodes(Request $request): View
+    {
+        $this->authorize('viewAny', Employee::class);
+
+        $employees = Employee::query()
+            ->visibleTo($request->user())
+            ->with(['department', 'position'])
+            ->search($request->string('search')->toString())
+            ->orderBy('full_name')
+            ->get();
+
+        return view('employees.qr-codes', [
+            'employees' => $employees,
+            'filters' => $request->only('search'),
+        ]);
+    }
+
     public function create(): View
     {
         $this->authorize('create', Employee::class);
