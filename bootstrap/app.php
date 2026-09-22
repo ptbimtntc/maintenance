@@ -17,6 +17,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'menu.edit' => EnsureMenuEditPermission::class,
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
+
+        // face_trusted_device is a plain random token the server hashes and
+        // compares itself (see FaceLoginController) - it's already
+        // unguessable, and framework cookie-encryption would need decrypting
+        // before that lookup could ever match, for no added protection.
+        $middleware->encryptCookies(except: ['face_trusted_device']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

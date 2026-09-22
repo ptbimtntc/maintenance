@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ConfirmablePasswordController;
 use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
+use App\Http\Controllers\Auth\FaceLoginController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -21,6 +22,12 @@ Route::middleware('guest')->group(function () {
         ->name('login');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('face-login/status', [FaceLoginController::class, 'status'])
+        ->middleware('throttle:30,1')->name('face-login.status');
+
+    Route::post('face-login/attempt', [FaceLoginController::class, 'attempt'])
+        ->middleware('throttle:10,1')->name('face-login.attempt');
 
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
@@ -56,4 +63,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
         ->name('logout');
+
+    Route::post('face-login/enroll', [FaceLoginController::class, 'enroll'])->name('face-login.enroll');
+    Route::post('face-login/disable', [FaceLoginController::class, 'disable'])->name('face-login.disable');
 });

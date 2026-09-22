@@ -16,7 +16,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'must_change_password'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'face_descriptor'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -33,6 +33,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'must_change_password' => 'boolean',
+            'face_enrolled_at' => 'datetime',
         ];
     }
 
@@ -44,6 +45,16 @@ class User extends Authenticatable
     public function menuPermissions(): HasMany
     {
         return $this->hasMany(UserMenuPermission::class);
+    }
+
+    public function trustedDevices(): HasMany
+    {
+        return $this->hasMany(TrustedDevice::class);
+    }
+
+    public function hasFaceLoginEnabled(): bool
+    {
+        return $this->face_descriptor !== null;
     }
 
     /**

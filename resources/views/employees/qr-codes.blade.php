@@ -29,6 +29,7 @@
                     </div>
                     <p class="break-all text-[10px] text-neutral-400">{{ $url }}</p>
                     <button type="button" data-download-qr data-filename="{{ $employee->employee_number }}"
+                            data-name="{{ $employee->full_name }}" data-nik="{{ $employee->employee_number }}"
                             class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 print:hidden">
                         Download PNG
                     </button>

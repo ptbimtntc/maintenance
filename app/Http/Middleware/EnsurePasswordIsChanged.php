@@ -17,7 +17,7 @@ class EnsurePasswordIsChanged
     {
         $user = $request->user();
 
-        if ($user && $user->must_change_password && ! $request->routeIs('profile.edit', 'password.update', 'logout')) {
+        if ($user && $user->must_change_password && ! $request->routeIs('profile.edit', 'password.update', 'logout', 'face-login.enroll', 'face-login.disable')) {
             return redirect()->route('profile.edit')
                 ->with('status', 'password-must-change');
         }

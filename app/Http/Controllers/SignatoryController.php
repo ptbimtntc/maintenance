@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionName;
+use App\Enums\RoleName;
 use App\Models\Signatory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,13 @@ use Illuminate\View\View;
  */
 class SignatoryController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        // Not a report Guest would browse - it's the operational list of
+        // who signs certificates, so the shared read-only Guest account is
+        // kept out entirely rather than shown a read-only copy.
+        abort_if($request->user()->hasRole(RoleName::Guest->value), 403);
+
         return view('signatories.index', [
             'signatories' => Signatory::orderBy('name')->paginate(20),
         ]);

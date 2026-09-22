@@ -2,6 +2,17 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
+    <div id="face-login-panel" class="hidden mb-6 rounded-md border border-brand-200 bg-brand-50 p-4"
+         data-status-url="{{ route('face-login.status') }}" data-attempt-url="{{ route('face-login.attempt') }}">
+        <p class="mb-2 text-sm font-medium text-neutral-800">This device is enrolled for Face Login</p>
+        <video data-face-video autoplay muted playsinline class="hidden mb-2 w-full rounded-md bg-black"></video>
+        <p data-face-status class="mb-2 text-xs text-neutral-600"></p>
+        <button type="button" data-face-start class="w-full rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            Login with Face
+        </button>
+        <p class="mt-2 text-center text-xs text-neutral-400">or use your password below</p>
+    </div>
+
     <form method="POST" action="{{ route('login') }}">
         @csrf
 

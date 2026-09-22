@@ -58,6 +58,50 @@ class GuestAccessTest extends TestCase
         $this->get(route('admin.users.index'))->assertForbidden();
     }
 
+    /**
+     * Signatories stays out of reach - it's the operational list of who
+     * signs certificates, not company data to browse.
+     */
+    public function test_guest_cannot_reach_signatories(): void
+    {
+        $this->post(route('guest-login'));
+
+        $this->get(route('signatories.index'))->assertForbidden();
+    }
+
+    public function test_guest_does_not_see_signatories_in_the_sidebar(): void
+    {
+        $this->post(route('guest-login'));
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertDontSee('Signatories');
+    }
+
+    /**
+     * QR Codes is fine for Guest - it's how a visitor without their own
+     * account can grab an employee's certificate-verification QR to try
+     * out the public /verify/... page.
+     */
+    public function test_guest_can_reach_the_qr_codes_page(): void
+    {
+        $this->post(route('guest-login'));
+
+        $this->get(route('employees.qr-codes'))->assertOk();
+        $this->get(route('dashboard'))->assertSee('QR Codes');
+    }
+
+    public function test_a_manager_still_sees_signatories_and_qr_codes(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(\App\Enums\RoleName::PeopleDevelopment->value);
+
+        $response = $this->actingAs($manager)->get(route('dashboard'));
+
+        $response->assertSee('Signatories');
+        $response->assertSee('QR Codes');
+    }
+
     public function test_guest_cannot_edit_the_shared_profile(): void
     {
         $this->post(route('guest-login'));
