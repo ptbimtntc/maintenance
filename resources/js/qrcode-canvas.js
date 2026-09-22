@@ -1,5 +1,16 @@
 import QRCode from 'qrcode';
 
+/** Draws (or redraws) one QR code canvas for the given text/URL. */
+export function renderQrCode(canvas, text) {
+    canvas.dataset.qrcodeInitialized = 'true';
+
+    return QRCode.toCanvas(canvas, text, {
+        width: 176,
+        margin: 1,
+        color: { dark: '#211F1C', light: '#FFFFFF' },
+    });
+}
+
 /**
  * Renders any QR code canvas client-side (onboarding links, certificate
  * verification links, ...) so the app doesn't need a PHP image extension
@@ -7,17 +18,11 @@ import QRCode from 'qrcode';
  */
 function initQrCodes() {
     document.querySelectorAll('canvas[data-qrcode]').forEach((canvas) => {
-        if (canvas.dataset.qrcodeInitialized) {
+        if (canvas.dataset.qrcodeInitialized || !canvas.dataset.qrcode) {
             return;
         }
 
-        canvas.dataset.qrcodeInitialized = 'true';
-
-        QRCode.toCanvas(canvas, canvas.dataset.qrcode, {
-            width: 176,
-            margin: 1,
-            color: { dark: '#211F1C', light: '#FFFFFF' },
-        });
+        renderQrCode(canvas, canvas.dataset.qrcode);
     });
 }
 

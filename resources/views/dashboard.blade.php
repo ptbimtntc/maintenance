@@ -4,198 +4,330 @@ $canViewSkillMatrix = auth()->user()->can(\App\Enums\PermissionName::ViewSkillMa
 $canViewCompetencyGap = auth()->user()->can(\App\Enums\PermissionName::ViewCompetencyGap->value);
 $canViewTraining = auth()->user()->can(\App\Enums\PermissionName::ViewTraining->value);
 $canViewCertificates = auth()->user()->can(\App\Enums\PermissionName::ViewCertificates->value);
-$canManageMasterData = auth()->user()->can(\App\Enums\PermissionName::ManageMasterData->value);
+$canViewDevelopmentPlans = auth()->user()->can(\App\Enums\PermissionName::ViewDevelopmentPlans->value);
 
 $icons = [
     'employees' => 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
     'check' => 'M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    'skills' => 'M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342',
-    'skill-matrix' => 'M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5m7.5 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M12 10.875v2.25',
-    'gap' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
-    'training' => 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5',
-    'calendar' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
-    'records' => 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z',
+    'gap' => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
+    'clock' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
     'certificate' => 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
-    'warning' => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z',
-    'organization' => 'M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21',
+    'target' => 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
 ];
+
+$priorityStyles = ['high' => 'bg-red-100 text-red-700', 'medium' => 'bg-amber-100 text-amber-700', 'low' => 'bg-neutral-100 text-neutral-600'];
+$maxAreaCount = collect($maintenanceAreaDistribution)->max('total') ?: 1;
+$maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
 @endphp
 
 <x-app-layout>
-    <x-slot name="header">Dashboard</x-slot>
+    <x-slot name="header">Maintenance People Development Dashboard</x-slot>
 
     <div class="space-y-5">
-        <div>
-            <div class="mb-2 flex items-center gap-2">
-                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Employees</h2>
-                <div class="h-px flex-1 bg-neutral-200"></div>
+        <div class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+            <div>
+                <p class="text-xs text-neutral-500">Build Competent People &middot; Improve Performance &middot; Ensure Reliability</p>
+                <p class="mt-0.5 text-xs text-neutral-400">{{ now()->format('l, d M Y') }}</p>
             </div>
 
-            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <x-dashboard-stat
-                    label="Total Maintenance Employees"
-                    :value="$employeeSummary['total']"
-                    icon="{{ $icons['employees'] }}"
-                    color="blue"
-                    :href="$canViewEmployees ? route('employees.index') : null"
-                />
-                <x-dashboard-stat
-                    label="Active Employees"
-                    :value="$employeeSummary['active']"
-                    icon="{{ $icons['check'] }}"
-                    color="green"
-                    :href="$canViewEmployees ? route('employees.index') : null"
-                    chartType="doughnut"
-                    :chartLabels="['Active', 'Inactive']"
-                    :chartValues="[$employeeSummary['active'], $employeeSummary['inactive']]"
-                    :chartColors="['#16a34a', '#EBE9E5']"
-                />
+            <form method="GET" class="flex flex-wrap items-end gap-2">
+                <div>
+                    <label class="block text-[11px] font-medium text-neutral-500">Year</label>
+                    <select name="year" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        @foreach ($filterOptions['years'] as $year)
+                            <option value="{{ $year }}" @selected($filters['year'] == $year)>{{ $year }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-neutral-500">Business Unit</label>
+                    <select name="business_unit_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        <option value="">All Units</option>
+                        @foreach ($filterOptions['businessUnits'] as $unit)
+                            <option value="{{ $unit->id }}" @selected($filters['business_unit_id'] == $unit->id)>{{ $unit->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-neutral-500">Maintenance Area</label>
+                    <select name="maintenance_area_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        <option value="">All Areas</option>
+                        @foreach ($filterOptions['maintenanceAreas'] as $area)
+                            <option value="{{ $area->id }}" @selected($filters['maintenance_area_id'] == $area->id)>{{ $area->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-neutral-500">Maintenance Team</label>
+                    <select name="maintenance_team_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        <option value="">All Teams</option>
+                        @foreach ($filterOptions['maintenanceTeams'] as $team)
+                            <option value="{{ $team->id }}" @selected($filters['maintenance_team_id'] == $team->id)>{{ $team->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @if ($filters['business_unit_id'] || $filters['maintenance_area_id'] || $filters['maintenance_team_id'])
+                    <a href="{{ route('dashboard', ['year' => $filters['year']]) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50">Clear</a>
+                @endif
+            </form>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+            <x-dashboard-stat
+                label="Total Employees"
+                :value="$kpis['total_employees']"
+                icon="{{ $icons['employees'] }}"
+                color="blue"
+                :href="$canViewEmployees ? route('employees.index') : null"
+                :chartType="array_sum($employeeTrend) > 0 ? 'sparkline' : null"
+                :chartValues="$employeeTrend"
+                :chartColors="['#01ADEF']"
+                :caption="array_sum($employeeTrend) > 0 ? $filters['year'].' cumulative by join date' : null"
+            />
+            <x-dashboard-stat
+                label="Active Employees"
+                :value="$kpis['active_employees']"
+                icon="{{ $icons['check'] }}"
+                color="green"
+                :href="$canViewEmployees ? route('employees.index') : null"
+            />
+            <x-dashboard-stat
+                label="Competency Gap"
+                :value="$kpis['competency_gap']"
+                icon="{{ $icons['gap'] }}"
+                color="amber"
+                :href="$canViewCompetencyGap ? route('competency-gap-analysis.index') : null"
+            />
+            <x-dashboard-stat
+                label="Training Hours ({{ $filters['year'] }})"
+                :value="rtrim(rtrim(number_format($kpis['training_hours'], 1), '0'), '.')"
+                icon="{{ $icons['clock'] }}"
+                color="blue"
+                :href="$canViewTraining ? route('training.records.index') : null"
+                :chartType="array_sum($trainingHoursTrend) > 0 ? 'sparkline' : null"
+                :chartValues="$trainingHoursTrend"
+                :chartColors="['#16a34a']"
+                :caption="array_sum($trainingHoursTrend) > 0 ? 'Monthly hours delivered' : null"
+            />
+            <x-dashboard-stat
+                label="Certificates Expiring"
+                :value="$kpis['certificates_expiring']"
+                icon="{{ $icons['certificate'] }}"
+                color="red"
+                :href="$canViewCertificates ? route('certificates.recertification', ['window' => '60']) : null"
+            />
+            <x-dashboard-stat
+                label="Development Plans"
+                :value="$kpis['development_plans']"
+                icon="{{ $icons['target'] }}"
+                color="brand"
+                :href="$canViewDevelopmentPlans ? route('development-plans.index') : null"
+                :chartType="array_sum($developmentPlansTrend) > 0 ? 'sparkline' : null"
+                :chartValues="$developmentPlansTrend"
+                :chartColors="['#7c3aed']"
+                :caption="array_sum($developmentPlansTrend) > 0 ? 'Plans created per month' : null"
+            />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <x-dashboard-donut
+                title="Competency Health Overview"
+                :total="array_sum($competencyBreakdown)"
+                totalLabel="Employees"
+                :segments="[
+                    ['label' => 'Meets Requirement', 'value' => $competencyBreakdown['meets'], 'color' => '#16a34a'],
+                    ['label' => 'Gap', 'value' => $competencyBreakdown['gap'], 'color' => '#dc2626'],
+                    ['label' => 'Assessment Incomplete', 'value' => $competencyBreakdown['incomplete'], 'color' => '#f59e0b'],
+                    ['label' => 'No Requirements Defined', 'value' => $competencyBreakdown['no_requirements'], 'color' => '#B8B2A8'],
+                ]"
+            />
+
+            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+                <h3 class="mb-3 text-sm font-semibold text-neutral-900">Top Skill Gaps</h3>
+                @if ($topSkillGaps->isEmpty())
+                    <p class="py-6 text-center text-sm text-neutral-400">No skill gaps found for the current filters.</p>
+                @else
+                    <div class="space-y-2.5">
+                        @foreach ($topSkillGaps as $row)
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="w-24 shrink-0 truncate text-neutral-600">{{ $row['skill'] }}</span>
+                                <div class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                                    <div class="h-full rounded-full bg-accent-500" style="width: {{ round($row['count'] / $maxSkillGap * 100) }}%"></div>
+                                </div>
+                                <span class="w-6 shrink-0 text-right font-medium text-neutral-900">{{ $row['count'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 
-        <div>
-            <div class="mb-2 flex items-center gap-2">
-                <span class="h-4 w-1 rounded-full bg-accent-500"></span>
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Skills &amp; Competency</h2>
-                <div class="h-px flex-1 bg-neutral-200"></div>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+                <h3 class="mb-3 text-sm font-semibold text-neutral-900">Training &amp; Development ({{ $filters['year'] }})</h3>
+                <div class="relative h-56 w-full">
+                    <canvas
+                        data-chart
+                        data-chart-type="combo"
+                        data-chart-labels="{{ json_encode($trainingSeries['labels']) }}"
+                        data-chart-values="{{ json_encode($trainingSeries['hours']) }}"
+                        data-chart-secondary-values="{{ json_encode($trainingSeries['participants']) }}"
+                        data-chart-bar-label="Training Hours"
+                        data-chart-line-label="Participants"
+                    ></canvas>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <x-dashboard-stat
-                    label="Total Skills Tracked"
-                    :value="$skillSummary['total_skills']"
-                    icon="{{ $icons['skills'] }}"
-                    color="brand"
-                    :href="route('skills.landing')"
-                />
-                <x-dashboard-stat
-                    label="Average Competency Score"
-                    :value="$skillSummary['average_competency_score'] ?? 'No assessments yet'"
-                    icon="{{ $icons['skill-matrix'] }}"
-                    color="blue"
-                    :href="$canViewSkillMatrix ? route('skill-matrix.index') : null"
-                />
-                <x-dashboard-stat
-                    label="Employees with Competency Gaps"
-                    :value="$skillSummary['employees_with_gaps']"
-                    icon="{{ $icons['gap'] }}"
-                    color="red"
-                    :href="$canViewCompetencyGap ? route('competency-gap-analysis.index') : null"
-                    chartType="bar"
-                    :chartLabels="['Meets', 'Gap', 'Incomplete', 'No Req.']"
-                    :chartValues="[$skillSummary['breakdown']['meets'], $skillSummary['breakdown']['gap'], $skillSummary['breakdown']['incomplete'], $skillSummary['breakdown']['no_requirements']]"
-                    :chartColors="['#16a34a', '#dc2626', '#f59e0b', '#B8B2A8']"
-                />
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-neutral-900">Upcoming Training</h3>
+                    @if ($canViewTraining)
+                        <a href="{{ route('training.calendar') }}" class="text-xs font-medium text-brand-600 hover:underline">View All &rarr;</a>
+                    @endif
+                </div>
+                @if ($upcomingSessions->isEmpty())
+                    <p class="py-6 text-center text-sm text-neutral-400">Nothing scheduled.</p>
+                @else
+                    <div class="space-y-3">
+                        @foreach ($upcomingSessions as $session)
+                            <div class="flex items-start gap-3">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-accent-50 text-accent-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $icons['clock'] }}" />
+                                    </svg>
+                                </span>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-neutral-900">{{ $session->session_title ?: $session->trainingProgram->title }}</p>
+                                    <p class="text-xs text-neutral-500">
+                                        {{ $session->start_date->format('d M') }}
+                                        @if ($session->end_date && $session->end_date->ne($session->start_date))
+                                            &ndash; {{ $session->end_date->format('d M Y') }}
+                                        @else
+                                            {{ $session->start_date->format('Y') }}
+                                        @endif
+                                        &middot; {{ $session->participants->count() }} participant(s)
+                                    </p>
+                                </div>
+                                @if ($session->trainingProgram->trainingType)
+                                    <span class="shrink-0 rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600">{{ $session->trainingProgram->trainingType->name }}</span>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
+            <x-dashboard-donut
+                title="Certificate Status"
+                :total="$certificateSummary['total']"
+                totalLabel="Certificates"
+                :segments="[
+                    ['label' => 'Valid', 'value' => $certificateSummary['valid'], 'color' => '#16a34a'],
+                    ['label' => 'Expiring Soon', 'value' => $certificateSummary['expiring_soon'], 'color' => '#f59e0b'],
+                    ['label' => 'Expired', 'value' => $certificateSummary['expired'], 'color' => '#dc2626'],
+                    ['label' => 'Pending Verification', 'value' => $certificateSummary['pending_verification'], 'color' => '#01ADEF'],
+                ]"
+            />
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-neutral-900">Development Priority</h3>
+                    @if ($canViewDevelopmentPlans)
+                        <a href="{{ route('development-plans.index') }}" class="text-xs font-medium text-brand-600 hover:underline">View All &rarr;</a>
+                    @endif
+                </div>
+                @if ($developmentPriorities->isEmpty())
+                    <p class="py-6 text-center text-sm text-neutral-400">No open development plans.</p>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-xs">
+                            <thead>
+                                <tr class="text-left text-[10px] uppercase tracking-wide text-neutral-400">
+                                    <th class="pb-2 pr-2">Employee</th>
+                                    <th class="pb-2 pr-2">Skill</th>
+                                    <th class="pb-2 pr-2">Progress</th>
+                                    <th class="pb-2">Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-neutral-100">
+                                @foreach ($developmentPriorities as $plan)
+                                    <tr>
+                                        <td class="py-1.5 pr-2 font-medium text-neutral-800">{{ $plan->employee->full_name }}</td>
+                                        <td class="py-1.5 pr-2 text-neutral-500">{{ $plan->relatedSkill?->name ?? '—' }}</td>
+                                        <td class="py-1.5 pr-2">
+                                            <div class="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-100">
+                                                <div class="h-full rounded-full bg-brand-500" style="width: {{ $plan->progress_percentage ?? 0 }}%"></div>
+                                            </div>
+                                        </td>
+                                        <td class="py-1.5">
+                                            <span @class(['rounded-full px-2 py-0.5 text-[10px] font-medium', $priorityStyles[$plan->priority] ?? 'bg-neutral-100 text-neutral-600'])>
+                                                {{ ucfirst($plan->priority) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+
+            <x-dashboard-donut
+                title="Workforce Mix"
+                :total="$workforceMix['BC'] + $workforceMix['WCM']"
+                totalLabel="Employees"
+                :segments="[
+                    ['label' => 'Blue Collar (BC)', 'value' => $workforceMix['BC'], 'color' => '#01ADEF'],
+                    ['label' => 'White Collar Mgmt (WCM)', 'value' => $workforceMix['WCM'], 'color' => '#16a34a'],
+                ]"
+            />
+
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+                <h3 class="mb-3 text-sm font-semibold text-neutral-900">Maintenance Area Distribution</h3>
+                @if ($maintenanceAreaDistribution->isEmpty())
+                    <p class="py-6 text-center text-sm text-neutral-400">No employees assigned to a maintenance area yet.</p>
+                @else
+                    <div class="flex h-40 items-end justify-around gap-2">
+                        @foreach ($maintenanceAreaDistribution as $row)
+                            <div class="flex flex-1 flex-col items-center gap-1">
+                                <span class="text-xs font-semibold text-neutral-900">{{ $row['total'] }}</span>
+                                <div class="w-full rounded-t-md bg-brand-500" style="height: {{ max(round($row['total'] / $maxAreaCount * 100), 4) }}%"></div>
+                                <span class="w-full truncate text-center text-[10px] text-neutral-500" title="{{ $row['area'] }}">{{ $row['area'] }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 
-        <div>
-            <div class="mb-2 flex items-center gap-2">
-                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Training &amp; Development</h2>
-                <div class="h-px flex-1 bg-neutral-200"></div>
+        <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-neutral-900">People Development Insights</h3>
+                <span class="text-[11px] text-neutral-400">Last updated {{ now()->format('d M Y H:i') }}</span>
             </div>
-
-            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <x-dashboard-stat
-                    label="Active Training Programs"
-                    :value="$trainingSummary['programs']"
-                    icon="{{ $icons['training'] }}"
-                    color="blue"
-                    :href="$canViewTraining ? route('training.programs.index') : null"
-                />
-                <x-dashboard-stat
-                    label="Upcoming Training Sessions"
-                    :value="$trainingSummary['upcoming_sessions']"
-                    icon="{{ $icons['calendar'] }}"
-                    color="amber"
-                    :href="$canViewTraining ? route('training.calendar') : null"
-                />
-                <x-dashboard-stat
-                    label="Completed Training Sessions"
-                    :value="$trainingSummary['completed_sessions']"
-                    icon="{{ $icons['records'] }}"
-                    color="green"
-                    :href="$canViewTraining ? route('training.records.index') : null"
-                    chartType="bar"
-                    :chartLabels="['Programs', 'Upcoming', 'Completed']"
-                    :chartValues="[$trainingSummary['programs'], $trainingSummary['upcoming_sessions'], $trainingSummary['completed_sessions']]"
-                    :chartColors="['#01ADEF', '#f59e0b', '#16a34a']"
-                />
-            </div>
-        </div>
-
-        <div>
-            <div class="mb-2 flex items-center gap-2">
-                <span class="h-4 w-1 rounded-full bg-accent-500"></span>
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Certificates</h2>
-                <div class="h-px flex-1 bg-neutral-200"></div>
-            </div>
-
-            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <x-dashboard-stat
-                    label="Certificates Expiring Soon"
-                    :value="$certificateSummary['expiring_soon']"
-                    icon="{{ $icons['warning'] }}"
-                    color="amber"
-                    :href="$canViewCertificates ? route('certificates.index', ['status' => 'expiring_soon']) : null"
-                />
-                <x-dashboard-stat
-                    label="Expired Certificates"
-                    :value="$certificateSummary['expired']"
-                    icon="{{ $icons['certificate'] }}"
-                    color="red"
-                    :href="$canViewCertificates ? route('certificates.index', ['status' => 'expired']) : null"
-                    chartType="doughnut"
-                    :chartLabels="['Valid', 'Expiring Soon', 'Expired', 'Pending']"
-                    :chartValues="[$certificateSummary['valid'], $certificateSummary['expiring_soon'], $certificateSummary['expired'], $certificateSummary['pending_verification']]"
-                    :chartColors="['#16a34a', '#f59e0b', '#dc2626', '#01ADEF']"
-                    :chartLegend="true"
-                />
-            </div>
-        </div>
-
-        <div>
-            <div class="mb-2 flex items-center gap-2">
-                <span class="h-4 w-1 rounded-full bg-brand-500"></span>
-                <h2 class="text-xs font-semibold uppercase tracking-wide text-brand-700">Organization Overview</h2>
-                <div class="h-px flex-1 bg-neutral-200"></div>
-            </div>
-
-            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <x-dashboard-stat
-                    label="Maintenance Departments"
-                    :value="$orgSummary['departments']"
-                    icon="{{ $icons['organization'] }}"
-                    color="brand"
-                    :href="$canManageMasterData ? route('organization.index', 'departments') : null"
-                />
-                <x-dashboard-stat
-                    label="Maintenance Areas"
-                    :value="$orgSummary['maintenance_areas']"
-                    icon="{{ $icons['organization'] }}"
-                    color="brand"
-                    :href="$canManageMasterData ? route('organization.index', 'maintenance-areas') : null"
-                />
-                <x-dashboard-stat
-                    label="Maintenance Teams"
-                    :value="$orgSummary['maintenance_teams']"
-                    icon="{{ $icons['organization'] }}"
-                    color="brand"
-                    :href="$canManageMasterData ? route('organization.index', 'maintenance-teams') : null"
-                />
-                <x-dashboard-stat
-                    label="Positions"
-                    :value="$orgSummary['positions']"
-                    icon="{{ $icons['organization'] }}"
-                    color="brand"
-                    :href="$canManageMasterData ? route('organization.index', 'positions') : null"
-                    chartType="bar"
-                    :chartLabels="['Depts', 'Areas', 'Teams', 'Positions']"
-                    :chartValues="[$orgSummary['departments'], $orgSummary['maintenance_areas'], $orgSummary['maintenance_teams'], $orgSummary['positions']]"
-                    :chartColors="['#FF602C', '#FF602C', '#FF602C', '#FF602C']"
-                />
+            <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div class="rounded-md border border-amber-100 bg-amber-50 p-3">
+                    <p class="text-xl font-bold text-amber-700">{{ $insights['employees_needing_development'] }}</p>
+                    <p class="text-xs text-amber-800">employees need development</p>
+                    <p class="text-[10px] text-amber-600">{{ $insights['employees_needing_development_pct'] }}% of total workforce</p>
+                </div>
+                <div class="rounded-md border border-red-100 bg-red-50 p-3">
+                    <p class="text-xl font-bold text-red-700">{{ $insights['certificates_needing_renewal'] }}</p>
+                    <p class="text-xs text-red-800">certificates need renewal</p>
+                    <p class="text-[10px] text-red-600">{{ $insights['certificates_needing_renewal_pct'] }}% of total certificates</p>
+                </div>
+                <div class="rounded-md border border-neutral-200 bg-neutral-50 p-3">
+                    <p class="text-xl font-bold text-neutral-700">{{ $insights['assessments_incomplete'] }}</p>
+                    <p class="text-xs text-neutral-800">assessments incomplete</p>
+                    <p class="text-[10px] text-neutral-500">{{ $insights['assessments_incomplete_pct'] }}% of total employees</p>
+                </div>
+                <div class="rounded-md border border-brand-100 bg-brand-50 p-3">
+                    <p class="text-xl font-bold text-brand-700">{{ $insights['critical_skill_gaps'] }}</p>
+                    <p class="text-xs text-brand-800">critical skill gaps</p>
+                    <p class="text-[10px] text-brand-600">skills with 3+ employees below requirement</p>
+                </div>
             </div>
         </div>
     </div>

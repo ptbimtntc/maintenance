@@ -191,7 +191,9 @@ class EmployeeManagementTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('QR Test Employee');
-        $response->assertSee(route('verify.employee', $employee));
+        // The full URL is composed client-side from this relative path plus
+        // the (editable) base URL - see resources/js/qr-base-url.js.
+        $response->assertSee(route('verify.employee', $employee, false), false);
     }
 
     public function test_maintenance_staff_only_sees_their_own_qr_code(): void

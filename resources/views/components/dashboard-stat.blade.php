@@ -9,6 +9,7 @@
     'chartValues' => [],
     'chartColors' => [],
     'chartLegend' => false,
+    'caption' => null,
 ])
 
 @php
@@ -34,6 +35,9 @@ $colorClasses = [
         <div class="min-w-0">
             <p class="text-xs font-medium leading-snug text-neutral-500">{{ $label }}</p>
             <p class="text-xl font-semibold text-neutral-900">{{ $value }}</p>
+            @if ($caption)
+                <p class="mt-0.5 text-[11px] text-neutral-400">{{ $caption }}</p>
+            @endif
         </div>
         @if ($icon)
             <span @class([
@@ -49,7 +53,7 @@ $colorClasses = [
     </div>
 
     @if ($chartType)
-        <div class="relative mt-2 w-full {{ $chartType === 'bar' ? 'h-20' : ($chartLegend ? 'h-24' : 'h-14') }}">
+        <div class="relative mt-2 w-full {{ $chartType === 'bar' ? 'h-20' : ($chartType === 'sparkline' ? 'h-10' : ($chartLegend ? 'h-24' : 'h-14')) }}">
             <canvas
                 data-chart
                 data-chart-type="{{ $chartType }}"

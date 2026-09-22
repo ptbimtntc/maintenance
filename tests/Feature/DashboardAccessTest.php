@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\CompetencyLevel;
-use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeSkillAssessment;
 use App\Models\Skill;
@@ -31,21 +30,35 @@ class DashboardAccessTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertSee('Maintenance Departments');
+        $response->assertSee('Competency Health Overview');
+        $response->assertSee('Workforce Mix');
     }
 
-    public function test_dashboard_shows_real_department_counts(): void
+    public function test_dashboard_shows_real_employee_counts(): void
     {
-        Department::factory()->count(3)->create(['is_active' => true]);
+        Employee::factory()->count(3)->create();
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertSee('3');
+        $response->assertViewHas('kpis', fn ($kpis) => $kpis['total_employees'] === 3);
     }
 
-    public function test_dashboard_computes_average_competency_score_from_latest_assessments(): void
+    public function test_the_business_unit_filter_narrows_every_employee_derived_figure(): void
+    {
+        $businessUnit = \App\Models\BusinessUnit::factory()->create();
+        Employee::factory()->count(2)->create(['business_unit_id' => $businessUnit->id]);
+        Employee::factory()->count(5)->create();
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard?business_unit_id='.$businessUnit->id);
+
+        $response->assertOk();
+        $response->assertViewHas('kpis', fn ($kpis) => $kpis['total_employees'] === 2);
+    }
+
+    public function test_competency_health_overview_reflects_the_same_gap_definition_as_skill_matrix(): void
     {
         $employee = Employee::factory()->create();
         $skill = Skill::factory()->create();
@@ -71,7 +84,10 @@ class DashboardAccessTest extends TestCase
         $response = $this->actingAs($user)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertSee('4');
+        // No position skill requirements exist for this employee, so it
+        // falls under "no requirements defined" - the same classification
+        // Employee::skillGapRows() would produce.
+        $response->assertViewHas('competencyBreakdown', fn ($breakdown) => $breakdown['no_requirements'] === 1);
     }
 
     public function test_stat_cards_only_link_to_modules_the_viewer_is_permitted_to_open(): void
@@ -84,13 +100,13 @@ class DashboardAccessTest extends TestCase
         $response = $this->actingAs($staff)->get('/dashboard');
 
         $response->assertOk();
-        // Staff lacks ViewCompetencyGap and ManageMasterData - those cards
-        // must render without a link rather than pointing somewhere that
-        // would 403 if clicked.
-        $response->assertDontSee('aria-label="Employees with Competency Gaps"', false);
-        $response->assertDontSee('aria-label="Maintenance Departments"', false);
-        // Staff does hold ViewCertificates, so that card should still link.
-        $response->assertSee('aria-label="Certificates Expiring Soon"', false);
+        // Staff lacks ViewCompetencyGap - that card must render without a
+        // link rather than pointing somewhere that would 403 if clicked.
+        $response->assertDontSee('aria-label="Competency Gap"', false);
+        // Staff does hold ViewCertificates and ViewDevelopmentPlans, so
+        // those cards should still link.
+        $response->assertSee('aria-label="Certificates Expiring"', false);
+        $response->assertSee('aria-label="Development Plans"', false);
     }
 
     public function test_an_administrator_sees_links_on_every_stat_card(): void
@@ -103,7 +119,7 @@ class DashboardAccessTest extends TestCase
         $response = $this->actingAs($admin)->get('/dashboard');
 
         $response->assertOk();
-        $response->assertSee('aria-label="Employees with Competency Gaps"', false);
-        $response->assertSee('aria-label="Maintenance Departments"', false);
+        $response->assertSee('aria-label="Competency Gap"', false);
+        $response->assertSee('aria-label="Development Plans"', false);
     }
 }
