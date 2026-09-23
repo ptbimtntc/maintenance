@@ -80,7 +80,8 @@ $statusLabels = [
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
-                            <th class="sticky left-0 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
+                            <th class="sticky left-0 z-10 w-28 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">NIK</th>
+                            <th class="sticky left-28 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee</th>
                             <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
                             @foreach ($skills as $skill)
                                 <th class="px-2 py-2 text-center text-xs font-semibold uppercase tracking-wide text-brand-700" title="{{ $skill->name }}">{{ $skill->name }}</th>
@@ -91,7 +92,8 @@ $statusLabels = [
                     <tbody class="divide-y divide-neutral-100">
                         @forelse ($matrix as $row)
                             <tr>
-                                <td class="sticky left-0 bg-white px-3 py-2">
+                                <td class="sticky left-0 z-10 w-28 bg-white px-3 py-2 text-neutral-600">{{ $row['employee']->employee_number ?? '—' }}</td>
+                                <td class="sticky left-28 z-10 bg-white px-3 py-2">
                                     <a href="{{ route('employees.show', $row['employee']) }}" class="font-medium text-neutral-900 hover:underline">{{ $row['employee']->full_name }}</a>
                                 </td>
                                 <td class="px-3 py-2 text-neutral-600">{{ $row['employee']->position?->title ?? '—' }}</td>
@@ -121,7 +123,7 @@ $statusLabels = [
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $skills->count() + 3 }}" class="px-4 py-10 text-center text-neutral-500">No employees match your filters.</td>
+                                <td colspan="{{ $skills->count() + 4 }}" class="px-4 py-10 text-center text-neutral-500">No employees match your filters.</td>
                             </tr>
                         @endforelse
                     </tbody>

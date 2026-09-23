@@ -56,4 +56,73 @@ enum PermissionName: string
     {
         return array_map(fn (self $case) => $case->value, self::cases());
     }
+
+    /**
+     * Human-readable label for checkbox grids (Roles & Permissions screen).
+     */
+    public function label(): string
+    {
+        return match ($this) {
+            self::ManageUsers => 'Manage users',
+            self::ManageSettings => 'Manage settings',
+            self::ManageMasterData => 'Manage master data',
+            self::ViewAllEmployees => 'View all employees',
+            self::ViewSubordinateEmployees => 'View subordinate employees',
+            self::ViewOwnEmployee => 'View own employee record',
+            self::ManageEmployees => 'Manage employees',
+            self::ViewJobDescriptions => 'View job descriptions',
+            self::ManageJobDescriptions => 'Manage job descriptions',
+            self::ManageSkills => 'Manage skills',
+            self::AssessCompetencies => 'Assess competencies',
+            self::ViewSkillMatrix => 'View skill matrix',
+            self::ViewCompetencyGap => 'View competency gap analysis',
+            self::ViewTraining => 'View training',
+            self::ManageTraining => 'Manage training',
+            self::ManageTrainingRecords => 'Manage training records',
+            self::ViewCertificates => 'View certificates',
+            self::ManageCertificates => 'Manage certificates',
+            self::ViewDevelopmentPlans => 'View development plans',
+            self::ManageDevelopmentPlans => 'Manage development plans',
+            self::ViewReports => 'View reports',
+            self::ViewSafety => 'View safety (LOTOTO)',
+            self::ManageSafety => 'Manage safety (LOTOTO)',
+        };
+    }
+
+    /**
+     * Module grouping, used to render the Roles & Permissions checkbox grid
+     * in the same sections as the doc-comment blocks above.
+     */
+    public function group(): string
+    {
+        return match ($this) {
+            self::ManageUsers, self::ManageSettings, self::ManageMasterData => 'Users & System Administration',
+            self::ViewAllEmployees, self::ViewSubordinateEmployees, self::ViewOwnEmployee, self::ManageEmployees => 'Employees',
+            self::ViewJobDescriptions, self::ManageJobDescriptions => 'Job Descriptions',
+            self::ManageSkills, self::AssessCompetencies => 'Skills & Competencies',
+            self::ViewSkillMatrix, self::ViewCompetencyGap => 'Skill Matrix & Gap Analysis',
+            self::ViewTraining, self::ManageTraining, self::ManageTrainingRecords => 'Training',
+            self::ViewCertificates, self::ManageCertificates => 'Certificates',
+            self::ViewDevelopmentPlans, self::ManageDevelopmentPlans => 'Development Plans',
+            self::ViewReports => 'Reports',
+            self::ViewSafety, self::ManageSafety => 'Safety',
+        };
+    }
+
+    /**
+     * Permissions grouped by module, in declaration order — used to render
+     * the Roles & Permissions checkbox grid one section at a time.
+     *
+     * @return array<string, self[]>
+     */
+    public static function grouped(): array
+    {
+        $groups = [];
+
+        foreach (self::cases() as $case) {
+            $groups[$case->group()][] = $case;
+        }
+
+        return $groups;
+    }
 }

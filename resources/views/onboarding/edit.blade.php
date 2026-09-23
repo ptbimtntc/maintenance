@@ -133,7 +133,7 @@
             @endif
         </div>
 
-        <p class="mt-6 text-center text-xs text-neutral-400">Development build. Not officially connected to PT Bekaert Indonesia systems.</p>
+        <p class="mt-6 text-center text-xs text-neutral-400">Officially from PTBI Maintenance Academy, developed by <a href="mailto:fajar.sodiq@bekaert.com" class="underline hover:text-neutral-600">fajar.sodiq@bekaert.com</a></p>
     </div>
 </body>
 </html>

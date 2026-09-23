@@ -20,6 +20,7 @@ use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicCertificateController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SignatoryController;
 use App\Http\Controllers\SkillMatrixController;
@@ -212,6 +213,15 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+    });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])
+    ->prefix('admin/roles')
+    ->name('admin.roles.')
+    ->group(function () {
+        Route::get('/', [RoleController::class, 'index'])->name('index');
+        Route::post('/reset-defaults', [RoleController::class, 'resetDefaults'])->name('reset-defaults');
+        Route::put('/{role}', [RoleController::class, 'update'])->name('update');
     });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageSettings->value])
