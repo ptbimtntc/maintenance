@@ -35,15 +35,15 @@ $actionStyles = ['created' => 'bg-green-100 text-green-800', 'updated' => 'bg-ac
             </form>
         </x-filter-panel>
 
-        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">When</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">User</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Action</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Record</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Changes</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">When</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">User</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Action</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Record</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Changes</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">

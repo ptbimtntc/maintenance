@@ -43,16 +43,16 @@ $statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-g
             </form>
         </x-filter-panel>
 
-        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Title</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Category</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Type</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Sessions</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
-                        <th class="px-3 py-2"></th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Title</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Category</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Type</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Sessions</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Status</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">

@@ -58,8 +58,8 @@
             </div>
         </div>
 
-        {{-- Role tabs --}}
-        <div class="flex flex-wrap gap-1.5 border-b border-neutral-200 pb-px">
+        {{-- Role tabs: sticky so they (and the actions below them) stay visible while the permission grid scrolls. --}}
+        <div class="sticky top-0 z-10 flex flex-wrap gap-1.5 border-b border-neutral-200 bg-neutral-50 pb-px pt-1">
             @foreach ($roleNames as $roleName)
                 <button type="button" @click="activeRole = '{{ $roleName->value }}'"
                         :class="activeRole === '{{ $roleName->value }}' ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-transparent text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700'"

@@ -115,12 +115,12 @@
                 @csrf
         @endcan
 
-        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
                         @can('create', \App\Models\Employee::class)
-                            <th class="w-10 px-3 py-2">
+                            <th class="sticky top-0 z-10 bg-brand-50 w-10 px-3 py-2">
                                 <input type="checkbox"
                                        class="rounded border-neutral-300"
                                        @change="
@@ -130,13 +130,13 @@
                                        ">
                             </th>
                         @endcan
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Photo</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">NIK</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee Name</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Supervisor</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill Position</th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Shift</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Photo</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">NIK</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Employee Name</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Supervisor</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Position</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Skill Position</th>
+                        <th class="sticky top-0 z-10 bg-brand-50 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-brand-700">Shift</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-100">
