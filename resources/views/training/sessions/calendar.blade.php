@@ -7,26 +7,26 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
 
     <div class="space-y-6">
         @php
-            $activeFieldClass = 'border-brand-400 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200';
-            $defaultFieldClass = 'border-neutral-300';
+            $activeFieldClass = 'border-brand-300 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200 shadow-sm';
+            $defaultFieldClass = 'border-neutral-300 hover:border-accent-400';
             $filterActiveCount = collect($filters)->except(['view', 'month'])->filter(fn ($value) => filled($value))->count();
         @endphp
 
         <div class="flex flex-wrap items-start justify-between gap-3">
             <x-filter-panel :active-count="$filterActiveCount">
-                <form method="GET" class="flex flex-wrap gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+                <form method="GET" class="flex flex-wrap gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm">
                     <input type="hidden" name="view" value="{{ $view }}">
                     @if ($view === 'grid')
                         <input type="hidden" name="month" value="{{ $month->format('Y-m') }}">
                     @endif
-                    <select name="status" class="rounded-md text-sm {{ filled($filters['status'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                    <select name="status" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['status'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                         <option value="">All Statuses</option>
                         @foreach ($statuses as $status)
                             <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('training.calendar', ['view' => $view]) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Reset</a>
+                    <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
+                    <a href="{{ route('training.calendar', ['view' => $view]) }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </form>
             </x-filter-panel>
 

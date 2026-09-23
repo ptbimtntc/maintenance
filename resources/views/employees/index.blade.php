@@ -49,52 +49,52 @@
         @endif
 
         @php
-            $activeFieldClass = 'border-brand-400 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200';
-            $defaultFieldClass = 'border-neutral-300';
+            $activeFieldClass = 'border-brand-300 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200 shadow-sm';
+            $defaultFieldClass = 'border-neutral-300 hover:border-accent-400';
             $filterActiveCount = collect($filters)->filter(fn ($value) => filled($value))->count();
         @endphp
 
         <x-filter-panel :active-count="$filterActiveCount">
-            <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-6">
+            <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK or name..."
-                       class="col-span-1 rounded-md text-sm sm:col-span-2 lg:col-span-2 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
+                       class="col-span-1 rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 sm:col-span-2 lg:col-span-2 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
 
-                <select name="business_unit_id" class="rounded-md text-sm {{ filled($filters['business_unit_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="business_unit_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['business_unit_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Business Units</option>
                     @foreach ($businessUnits as $businessUnit)
                         <option value="{{ $businessUnit->id }}" @selected(($filters['business_unit_id'] ?? null) == $businessUnit->id)>{{ $businessUnit->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="employment_type_id" class="rounded-md text-sm {{ filled($filters['employment_type_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="employment_type_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_type_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Employment Types</option>
                     @foreach ($employmentTypes as $type)
                         <option value="{{ $type->id }}" @selected(($filters['employment_type_id'] ?? null) == $type->id)>{{ $type->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="employment_source_id" class="rounded-md text-sm {{ filled($filters['employment_source_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="employment_source_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_source_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Employment Sources</option>
                     @foreach ($employmentSources as $source)
                         <option value="{{ $source->id }}" @selected(($filters['employment_source_id'] ?? null) == $source->id)>{{ $source->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="employment_status_id" class="rounded-md text-sm {{ filled($filters['employment_status_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="employment_status_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_status_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Statuses</option>
                     @foreach ($employmentStatuses as $status)
                         <option value="{{ $status->id }}" @selected(($filters['employment_status_id'] ?? null) == $status->id)>{{ $status->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="supervisor_id" class="rounded-md text-sm {{ filled($filters['supervisor_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="supervisor_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['supervisor_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Supervisors</option>
                     @foreach ($supervisors as $supervisor)
                         <option value="{{ $supervisor->id }}" @selected(($filters['supervisor_id'] ?? null) == $supervisor->id)>{{ $supervisor->full_name }} ({{ $supervisor->employee_number }})</option>
                     @endforeach
                 </select>
 
-                <select name="shift_id" class="rounded-md text-sm {{ filled($filters['shift_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="shift_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['shift_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Shifts</option>
                     @foreach ($shifts as $shift)
                         <option value="{{ $shift->id }}" @selected(($filters['shift_id'] ?? null) == $shift->id)>{{ $shift->name }}</option>
@@ -102,8 +102,8 @@
                 </select>
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-6">
-                    <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Reset</a>
+                    <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
+                    <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </div>
             </form>
         </x-filter-panel>

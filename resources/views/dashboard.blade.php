@@ -49,24 +49,24 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[11px] font-medium text-neutral-500">Maintenance Area</label>
-                    <select name="maintenance_area_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
-                        <option value="">All Areas</option>
-                        @foreach ($filterOptions['maintenanceAreas'] as $area)
-                            <option value="{{ $area->id }}" @selected($filters['maintenance_area_id'] == $area->id)>{{ $area->name }}</option>
+                    <label class="block text-[11px] font-medium text-neutral-500">Employment Type</label>
+                    <select name="employment_type_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        <option value="">All Types</option>
+                        @foreach ($filterOptions['employmentTypes'] as $type)
+                            <option value="{{ $type->id }}" @selected($filters['employment_type_id'] == $type->id)>{{ $type->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div>
-                    <label class="block text-[11px] font-medium text-neutral-500">Maintenance Team</label>
-                    <select name="maintenance_team_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
-                        <option value="">All Teams</option>
-                        @foreach ($filterOptions['maintenanceTeams'] as $team)
-                            <option value="{{ $team->id }}" @selected($filters['maintenance_team_id'] == $team->id)>{{ $team->name }}</option>
+                    <label class="block text-[11px] font-medium text-neutral-500">Employment Source</label>
+                    <select name="employment_source_id" onchange="this.form.submit()" class="mt-0.5 rounded-md border-neutral-300 text-sm">
+                        <option value="">All Sources</option>
+                        @foreach ($filterOptions['employmentSources'] as $source)
+                            <option value="{{ $source->id }}" @selected($filters['employment_source_id'] == $source->id)>{{ $source->name }}</option>
                         @endforeach
                     </select>
                 </div>
-                @if ($filters['business_unit_id'] || $filters['maintenance_area_id'] || $filters['maintenance_team_id'])
+                @if ($filters['business_unit_id'] || $filters['employment_type_id'] || $filters['employment_source_id'])
                     <a href="{{ route('dashboard', ['year' => $filters['year']]) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50">Clear</a>
                 @endif
             </form>

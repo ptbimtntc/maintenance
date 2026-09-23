@@ -149,4 +149,52 @@ class MasterDataManagementTest extends TestCase
 
         $response->assertNotFound();
     }
+
+    /**
+     * The "skills", "skill-categories", and "competency-levels" master
+     * data types are linked to from two different landing pages
+     * (Organization & Master Data, and Skills & Competencies) - the "Back"
+     * link must reflect whichever one the visitor actually came from,
+     * carried via ?from=skills, rather than always assuming Organization.
+     */
+    public function test_back_link_defaults_to_organization_when_no_origin_is_given(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->get(route('organization.index', 'skills'));
+
+        $response->assertOk();
+        $response->assertSee('Back to Organization');
+        $response->assertSee(route('organization.landing'), false);
+    }
+
+    public function test_back_link_points_to_skills_and_competencies_when_that_is_the_origin(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->get(route('organization.index', ['skills', 'from' => 'skills']));
+
+        $response->assertOk();
+        $response->assertSee('Back to Skills &amp; Competencies', false);
+        $response->assertSee(route('skills.landing'), false);
+    }
+
+    public function test_the_skills_origin_survives_through_create_and_save(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $createResponse = $this->actingAs($admin)->get(route('organization.create', ['skills', 'from' => 'skills']));
+        $createResponse->assertOk();
+        $createResponse->assertSee(route('organization.index', ['skills', 'from' => 'skills']), false);
+
+        $storeResponse = $this->actingAs($admin)->post(route('organization.store', ['skills', 'from' => 'skills']), [
+            'name' => 'Origin Test Skill',
+            'is_active' => true,
+        ]);
+
+        $storeResponse->assertRedirect(route('organization.index', ['skills', 'from' => 'skills']));
+    }
 }

@@ -20,38 +20,38 @@ $statusLabels = [
         </div>
 
         @php
-            $activeFieldClass = 'border-brand-400 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200';
-            $defaultFieldClass = 'border-neutral-300';
+            $activeFieldClass = 'border-brand-300 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200 shadow-sm';
+            $defaultFieldClass = 'border-neutral-300 hover:border-accent-400';
             $filterActiveCount = collect($filters)->filter(fn ($value) => filled($value))->count();
         @endphp
 
         <x-filter-panel :active-count="$filterActiveCount">
-            <form method="GET" action="{{ route('skill-matrix.index') }}" class="grid grid-cols-1 gap-3 rounded-lg border border-neutral-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-5">
+            <form method="GET" action="{{ route('skill-matrix.index') }}" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-5">
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search employee..."
-                       class="rounded-md text-sm {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
+                       class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
 
-                <select name="maintenance_area_id" class="rounded-md text-sm {{ filled($filters['maintenance_area_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="maintenance_area_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['maintenance_area_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Areas</option>
                     @foreach ($maintenanceAreas as $area)
                         <option value="{{ $area->id }}" @selected(($filters['maintenance_area_id'] ?? null) == $area->id)>{{ $area->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="maintenance_team_id" class="rounded-md text-sm {{ filled($filters['maintenance_team_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="maintenance_team_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['maintenance_team_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Teams</option>
                     @foreach ($maintenanceTeams as $team)
                         <option value="{{ $team->id }}" @selected(($filters['maintenance_team_id'] ?? null) == $team->id)>{{ $team->name }}</option>
                     @endforeach
                 </select>
 
-                <select name="position_id" class="rounded-md text-sm {{ filled($filters['position_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="position_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['position_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Positions</option>
                     @foreach ($positions as $position)
                         <option value="{{ $position->id }}" @selected(($filters['position_id'] ?? null) == $position->id)>{{ $position->title }}</option>
                     @endforeach
                 </select>
 
-                <select name="skill_category_id" class="rounded-md text-sm {{ filled($filters['skill_category_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
+                <select name="skill_category_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['skill_category_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
                     <option value="">All Skill Categories</option>
                     @foreach ($skillCategories as $category)
                         <option value="{{ $category->id }}" @selected(($filters['skill_category_id'] ?? null) == $category->id)>{{ $category->name }}</option>
@@ -59,8 +59,8 @@ $statusLabels = [
                 </select>
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-5">
-                    <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('skill-matrix.index') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Reset</a>
+                    <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
+                    <a href="{{ route('skill-matrix.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </div>
             </form>
         </x-filter-panel>

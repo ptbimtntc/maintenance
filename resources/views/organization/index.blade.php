@@ -1,5 +1,13 @@
 @php
 $parentRelation = isset($config['parent']) ? \Illuminate\Support\Str::camel(class_basename($config['parent']['model'])) : null;
+
+// This screen is linked to from more than one landing page (Organization &
+// Master Data, and Skills & Competencies for skills/skill-categories/
+// competency-levels) - ?from=... says which one so "Back" returns there
+// instead of always assuming Organization. See MasterDataController::originFor().
+$backRoute = $from === 'skills' ? route('skills.landing') : route('organization.landing');
+$backLabel = $from === 'skills' ? 'Back to Skills & Competencies' : 'Back to Organization';
+$originQuery = array_filter(['from' => $from]);
 @endphp
 
 <x-app-layout>
@@ -7,7 +15,7 @@ $parentRelation = isset($config['parent']) ? \Illuminate\Support\Str::camel(clas
 
     <div class="space-y-4">
         <div class="flex items-center justify-between">
-            <a href="{{ route('organization.landing') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Organization</a>
+            <a href="{{ $backRoute }}" class="text-sm text-neutral-600 hover:underline">&larr; {{ $backLabel }}</a>
             <div class="flex items-center gap-2">
                 <a href="{{ route('organization.export', $type) }}"
                    class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
@@ -32,7 +40,7 @@ $parentRelation = isset($config['parent']) ? \Illuminate\Support\Str::camel(clas
                     <div class="h-6 w-px bg-neutral-200"></div>
                 @endif
 
-                <a href="{{ route('organization.create', $type) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+                <a href="{{ route('organization.create', [$type, ...$originQuery]) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
                     Add {{ $config['singular'] }}
                 </a>
             </div>
@@ -77,8 +85,8 @@ $parentRelation = isset($config['parent']) ? \Illuminate\Support\Str::camel(clas
                                 </span>
                             </td>
                             <td class="px-3 py-2 text-right">
-                                <a href="{{ route('organization.edit', [$type, $record->id]) }}" class="font-medium text-accent-600 hover:underline">Edit</a>
-                                <form method="POST" action="{{ route('organization.destroy', [$type, $record->id]) }}" class="inline"
+                                <a href="{{ route('organization.edit', [$type, $record->id, ...$originQuery]) }}" class="font-medium text-accent-600 hover:underline">Edit</a>
+                                <form method="POST" action="{{ route('organization.destroy', [$type, $record->id, ...$originQuery]) }}" class="inline"
                                       onsubmit="return confirm('Delete this {{ strtolower($config['singular']) }}? This cannot be undone.');">
                                     @csrf
                                     @method('DELETE')

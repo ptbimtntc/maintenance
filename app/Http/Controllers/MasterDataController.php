@@ -57,7 +57,7 @@ class MasterDataController extends Controller
         return view('organization.landing', ['groups' => $groups]);
     }
 
-    public function index(string $type): View
+    public function index(string $type, Request $request): View
     {
         $config = $this->configFor($type);
         $model = $config['model'];
@@ -71,10 +71,11 @@ class MasterDataController extends Controller
             'type' => $type,
             'config' => $config,
             'records' => $records,
+            'from' => $this->originFor($request),
         ]);
     }
 
-    public function create(string $type): View
+    public function create(string $type, Request $request): View
     {
         $config = $this->configFor($type);
 
@@ -83,6 +84,7 @@ class MasterDataController extends Controller
             'config' => $config,
             'record' => null,
             'parentOptions' => $this->parentOptions($config),
+            'from' => $this->originFor($request),
         ]);
     }
 
@@ -95,10 +97,10 @@ class MasterDataController extends Controller
 
         $model::create($data);
 
-        return redirect()->route('organization.index', $type)->with('status', "{$config['singular']} created.");
+        return $this->redirectToIndex($type, $request)->with('status', "{$config['singular']} created.");
     }
 
-    public function edit(string $type, int $id): View
+    public function edit(string $type, int $id, Request $request): View
     {
         $config = $this->configFor($type);
         $record = $config['model']::findOrFail($id);
@@ -108,6 +110,7 @@ class MasterDataController extends Controller
             'config' => $config,
             'record' => $record,
             'parentOptions' => $this->parentOptions($config),
+            'from' => $this->originFor($request),
         ]);
     }
 
@@ -120,17 +123,39 @@ class MasterDataController extends Controller
 
         $record->update($data);
 
-        return redirect()->route('organization.index', $type)->with('status', "{$config['singular']} updated.");
+        return $this->redirectToIndex($type, $request)->with('status', "{$config['singular']} updated.");
     }
 
-    public function destroy(string $type, int $id): RedirectResponse
+    public function destroy(string $type, int $id, Request $request): RedirectResponse
     {
         $config = $this->configFor($type);
         $record = $config['model']::findOrFail($id);
 
         $record->delete();
 
-        return redirect()->route('organization.index', $type)->with('status', "{$config['singular']} removed.");
+        return $this->redirectToIndex($type, $request)->with('status', "{$config['singular']} removed.");
+    }
+
+    /**
+     * Which hub page ("Back to ...") a master-data screen should return to.
+     * Several types (skills, skill-categories, competency-levels, ...) are
+     * linked to from more than one landing page (Organization &amp; Master
+     * Data, and Skills &amp; Competencies) - a bare route name can't tell
+     * those apart, so the originating page passes ?from=... and every link/
+     * redirect on this screen threads it through so "Back" stays correct
+     * no matter how many create/edit hops the user takes in between.
+     */
+    private function originFor(Request $request): ?string
+    {
+        return $request->query('from') ?: null;
+    }
+
+    private function redirectToIndex(string $type, Request $request): RedirectResponse
+    {
+        return redirect()->route('organization.index', array_filter([
+            'type' => $type,
+            'from' => $this->originFor($request),
+        ]));
     }
 
     /**

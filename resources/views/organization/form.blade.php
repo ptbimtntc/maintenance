@@ -2,13 +2,17 @@
 $isEdit = $record !== null;
 $old = fn ($field, $default = null) => old($field, $record?->$field ?? $default);
 $parentField = $config['parent']['field'] ?? null;
+
+// Carries the ?from=... origin through to the controller's redirect after
+// save, and to the Cancel link - see MasterDataController::originFor().
+$originQuery = array_filter(['from' => $from]);
 @endphp
 
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit' : 'Add' }} {{ $config['singular'] }}</x-slot>
 
     <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
-        <form method="POST" action="{{ $isEdit ? route('organization.update', [$type, $record->id]) : route('organization.store', $type) }}">
+        <form method="POST" action="{{ $isEdit ? route('organization.update', [$type, $record->id, ...$originQuery]) : route('organization.store', [$type, ...$originQuery]) }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif
 
@@ -76,7 +80,7 @@ $parentField = $config['parent']['field'] ?? null;
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-                <a href="{{ route('organization.index', $type) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</a>
+                <a href="{{ route('organization.index', [$type, ...$originQuery]) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Cancel</a>
                 <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Save</button>
             </div>
         </form>

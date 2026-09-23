@@ -6,9 +6,8 @@ use App\Models\BusinessUnit;
 use App\Models\Certificate;
 use App\Models\Employee;
 use App\Models\EmployeeDevelopmentPlan;
-use App\Models\EmployeeSkillAssessment;
-use App\Models\MaintenanceArea;
-use App\Models\MaintenanceTeam;
+use App\Models\EmploymentSource;
+use App\Models\EmploymentType;
 use App\Models\TrainingRecord;
 use App\Models\TrainingSession;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,13 +30,13 @@ class DashboardController extends Controller
     {
         $year = $request->integer('year') ?: (int) now()->year;
         $businessUnitId = $request->integer('business_unit_id') ?: null;
-        $maintenanceAreaId = $request->integer('maintenance_area_id') ?: null;
-        $maintenanceTeamId = $request->integer('maintenance_team_id') ?: null;
+        $employmentTypeId = $request->integer('employment_type_id') ?: null;
+        $employmentSourceId = $request->integer('employment_source_id') ?: null;
 
         $employeeScope = fn () => Employee::query()
             ->when($businessUnitId, fn (Builder $q) => $q->where('business_unit_id', $businessUnitId))
-            ->when($maintenanceAreaId, fn (Builder $q) => $q->where('maintenance_area_id', $maintenanceAreaId))
-            ->when($maintenanceTeamId, fn (Builder $q) => $q->where('maintenance_team_id', $maintenanceTeamId));
+            ->when($employmentTypeId, fn (Builder $q) => $q->where('employment_type_id', $employmentTypeId))
+            ->when($employmentSourceId, fn (Builder $q) => $q->where('employment_source_id', $employmentSourceId));
 
         $employeeIds = $employeeScope()->pluck('id');
 
@@ -53,14 +52,14 @@ class DashboardController extends Controller
             'filters' => [
                 'year' => $year,
                 'business_unit_id' => $businessUnitId,
-                'maintenance_area_id' => $maintenanceAreaId,
-                'maintenance_team_id' => $maintenanceTeamId,
+                'employment_type_id' => $employmentTypeId,
+                'employment_source_id' => $employmentSourceId,
             ],
             'filterOptions' => [
                 'years' => $this->availableYears(),
                 'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
-                'maintenanceAreas' => MaintenanceArea::where('is_active', true)->orderBy('name')->get(),
-                'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
+                'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
+                'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
             ],
             'kpis' => [
                 'total_employees' => $employeeTotal,
