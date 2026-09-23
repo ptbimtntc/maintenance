@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\MenuKey;
 use App\Enums\RoleName;
+use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Position;
 use App\Models\User;
@@ -50,6 +51,40 @@ class UserManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('Toni Technician');
         $response->assertSee('Mechanical Technician');
+    }
+
+    public function test_the_user_list_can_be_filtered_by_search_role_department_and_position(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $mechanicalPosition = Position::factory()->create(['title' => 'Mechanical Technician']);
+        $electricalPosition = Position::factory()->create(['title' => 'Electrical Technician']);
+        $department = Department::factory()->create(['name' => 'Maintenance']);
+
+        $toni = User::factory()->create(['name' => 'Toni Technician', 'email' => 'toni@example.com']);
+        $toni->assignRole(RoleName::MaintenanceStaff->value);
+        Employee::factory()->create(['user_id' => $toni->id, 'position_id' => $mechanicalPosition->id, 'department_id' => $department->id]);
+
+        $sam = User::factory()->create(['name' => 'Sam Supervisor', 'email' => 'sam@example.com']);
+        $sam->assignRole(RoleName::MaintenanceSupervisor->value);
+        Employee::factory()->create(['user_id' => $sam->id, 'position_id' => $electricalPosition->id]);
+
+        // search matches name or email
+        $response = $this->actingAs($admin)->get(route('admin.users.index', ['search' => 'toni']));
+        $response->assertSee('Toni Technician')->assertDontSee('Sam Supervisor');
+
+        // role filter
+        $response = $this->actingAs($admin)->get(route('admin.users.index', ['role' => RoleName::MaintenanceSupervisor->value]));
+        $response->assertSee('Sam Supervisor')->assertDontSee('Toni Technician');
+
+        // department filter
+        $response = $this->actingAs($admin)->get(route('admin.users.index', ['department_id' => $department->id]));
+        $response->assertSee('Toni Technician')->assertDontSee('Sam Supervisor');
+
+        // position filter
+        $response = $this->actingAs($admin)->get(route('admin.users.index', ['position_id' => $electricalPosition->id]));
+        $response->assertSee('Sam Supervisor')->assertDontSee('Toni Technician');
     }
 
     public function test_an_administrator_can_change_a_users_role_and_menu_grants(): void

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\MenuKey;
 use App\Enums\RoleName;
+use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Position;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,14 +26,26 @@ class UserManagementController extends Controller
 {
     public function index(Request $request): View
     {
+        $filters = $request->only(['search', 'role', 'department_id', 'position_id']);
+
         $users = User::query()
             ->with(['roles', 'employee.position', 'employee.department'])
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
+                fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
+            ))
+            ->when($filters['role'] ?? null, fn ($q, $role) => $q->role($role))
+            ->when($filters['department_id'] ?? null, fn ($q, $id) => $q->whereHas('employee', fn ($q) => $q->where('department_id', $id)))
+            ->when($filters['position_id'] ?? null, fn ($q, $id) => $q->whereHas('employee', fn ($q) => $q->where('position_id', $id)))
             ->orderBy('name')
             ->paginate(20)
-            ->withQueryString();
+            ->appends($filters);
 
         return view('admin.users.index', [
             'users' => $users,
+            'roles' => RoleName::cases(),
+            'departments' => Department::orderBy('name')->get(),
+            'positions' => Position::orderBy('title')->get(),
+            'filters' => $filters,
         ]);
     }
 
