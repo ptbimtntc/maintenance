@@ -3,10 +3,11 @@
 {{--
     A collapsible sidebar section: closed by default so the sidebar doesn't
     grow tall with every menu's items always visible, opened by hovering OR
-    clicking its header (closes again on mouse-leave), and auto-open on load
-    when the current page lives inside it so users always see where they are.
+    clicking its header (closes again on mouse-leave), and auto-open when the
+    current page lives inside it - staying open the whole time you're on that
+    page, so users always see where they are.
 --}}
-<div x-data="{ open: {{ $active ? 'true' : 'false' }} }" @mouseleave="open = false" class="rounded-md">
+<div x-data="{ open: {{ $active ? 'true' : 'false' }} }" @mouseleave="open = {{ $active ? 'true' : 'false' }}" class="rounded-md">
     <button type="button"
             @click="open = true"
             @mouseenter="open = true"
