@@ -94,7 +94,7 @@ $statusLabels = [
                             <tr>
                                 <td class="sticky left-0 z-10 w-28 min-w-[7rem] max-w-[7rem] truncate bg-white px-3 py-2 text-neutral-600 whitespace-nowrap">{{ $row['employee']->employee_number ?? '—' }}</td>
                                 <td class="sticky left-28 z-10 bg-white px-3 py-2">
-                                    <a href="{{ route('employees.show', $row['employee']) }}" class="font-medium text-neutral-900 hover:underline">{{ $row['employee']->full_name }}</a>
+                                    <a href="{{ route('employees.show', ['employee' => $row['employee'], 'from' => 'skill-matrix']) }}" class="font-medium text-neutral-900 hover:underline">{{ $row['employee']->full_name }}</a>
                                 </td>
                                 <td class="px-3 py-2 text-neutral-600">{{ $row['employee']->position?->title ?? '—' }}</td>
                                 @foreach ($skills as $skill)

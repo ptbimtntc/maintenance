@@ -28,7 +28,7 @@ class EmployeeSkillAssessmentController extends Controller
             'assessed_by' => $request->user()->id,
         ]);
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Skill assessment recorded.')
             ->with('activeTab', 'skills');
     }
@@ -41,7 +41,7 @@ class EmployeeSkillAssessmentController extends Controller
 
         $assessment->delete();
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Assessment removed.')
             ->with('activeTab', 'skills');
     }

@@ -10,7 +10,7 @@ $stackChildren = $children->isNotEmpty() && $children->every(fn ($child) => $chi
 
 <li x-data="{ open: {{ $isSupervisor ? 'false' : 'true' }} }"
     @org-expand-all.window="open = true" @org-collapse-all.window="open = {{ $isSupervisor ? 'false' : 'true' }}">
-    <a href="{{ route('employees.show', $employee) }}"
+    <a href="{{ route('employees.show', ['employee' => $employee, 'from' => 'org-chart']) }}"
        class="org-chart-node inline-flex w-48 flex-col items-center gap-1 rounded-lg border p-3 text-center shadow-sm transition hover:shadow-md
               {{ $isBlueCollar ? 'border-accent-700 bg-accent-600 text-white' : 'border-neutral-200 bg-white text-neutral-900' }}">
         @if ($employee->photo_path)

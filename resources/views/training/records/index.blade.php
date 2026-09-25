@@ -84,7 +84,7 @@ $completionStyles = ['completed' => 'bg-success-100 text-success-800', 'incomple
                             <td class="px-3 py-2 text-neutral-600">{{ $record->training_date->format('d M Y') }}</td>
                             <td class="px-3 py-2 text-neutral-600">{{ $record->duration_hours ?? '—' }}</td>
                             <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $completionStyles[$record->completion_status] }}">{{ ucfirst($record->completion_status) }}</span></td>
-                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', $record->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', ['employee' => $record->employee, 'from' => 'training-records']) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No training records yet.</td></tr>

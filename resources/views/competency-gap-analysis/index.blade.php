@@ -156,7 +156,7 @@
                                     {{ $summary['rows']->where('status', 'gap')->pluck('skill.name')->implode(', ') }}
                                 </td>
                                 <td class="px-3 py-2 text-right">
-                                    <a href="{{ route('employees.show', $summary['employee']) }}" class="text-neutral-600 hover:underline">View Profile</a>
+                                    <a href="{{ route('employees.show', ['employee' => $summary['employee'], 'from' => 'competency-gap']) }}" class="text-neutral-600 hover:underline">View Profile</a>
                                 </td>
                             </tr>
                         @empty

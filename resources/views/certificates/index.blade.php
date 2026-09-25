@@ -96,7 +96,7 @@ $statusStyles = [
                             <td class="px-3 py-2 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
                             <td class="px-3 py-2 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
                             <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$certificate->status()] }}">{{ $statusLabels[$certificate->status()] }}</span></td>
-                            <td class="px-3 py-2 text-right whitespace-nowrap"><a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a> <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap"><a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a> <a href="{{ route('employees.show', ['employee' => $certificate->employee, 'from' => 'certificates']) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No certificates recorded yet.</td></tr>

@@ -55,7 +55,7 @@ class EmployeeDevelopmentPlanController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Development plan created.')
             ->with('activeTab', 'development');
     }
@@ -80,12 +80,12 @@ class EmployeeDevelopmentPlanController extends Controller
 
         $plan->update($request->validated());
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Development plan updated.')
             ->with('activeTab', 'development');
     }
 
-    public function destroy(Employee $employee, EmployeeDevelopmentPlan $plan): RedirectResponse
+    public function destroy(Request $request, Employee $employee, EmployeeDevelopmentPlan $plan): RedirectResponse
     {
         $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageDevelopmentPlans->value);
@@ -93,7 +93,7 @@ class EmployeeDevelopmentPlanController extends Controller
 
         $plan->delete();
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Development plan removed.')
             ->with('activeTab', 'development');
     }

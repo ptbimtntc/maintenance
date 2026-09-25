@@ -55,7 +55,7 @@ $statusStyles = ['not_started' => 'bg-neutral-100 text-neutral-600', 'in_progres
                             <td class="px-3 py-2 text-neutral-600">{{ ucfirst($plan->priority) }}</td>
                             <td class="px-3 py-2 text-neutral-600">{{ $plan->progress_percentage }}%</td>
                             <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span></td>
-                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', $plan->employee) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 text-right"><a href="{{ route('employees.show', ['employee' => $plan->employee, 'from' => 'development-plans']) }}" class="text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No development plans yet.</td></tr>

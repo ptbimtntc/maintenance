@@ -121,7 +121,7 @@ $windowLabels = [
                             </td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">
                                 <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a>
-                                <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a>
+                                <a href="{{ route('employees.show', ['employee' => $certificate->employee, 'from' => 'recertification']) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a>
                             </td>
                         </tr>
                     @empty

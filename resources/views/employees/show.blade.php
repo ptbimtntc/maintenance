@@ -1,6 +1,27 @@
 <x-app-layout>
     <x-slot name="header">Employee Profile</x-slot>
 
+    @php
+        // This page is linked to from many places (employees list, org
+        // chart, skill matrix, competency gap analysis, training records,
+        // development plans, certificates, recertification) - a bare route
+        // name can't tell those apart, so the originating page passes
+        // ?from=... and "Back" uses it instead of always assuming the
+        // employees list. See organization/index.blade.php for the same
+        // pattern used elsewhere in this app.
+        $backDestinations = [
+            'org-chart' => ['route' => route('organization-chart.index'), 'label' => 'Back to Organization Chart'],
+            'skill-matrix' => ['route' => route('skill-matrix.index'), 'label' => 'Back to Skill Matrix'],
+            'competency-gap' => ['route' => route('competency-gap-analysis.index'), 'label' => 'Back to Competency Gap Analysis'],
+            'training-records' => ['route' => route('training.records.index'), 'label' => 'Back to Training Records'],
+            'development-plans' => ['route' => route('development-plans.index'), 'label' => 'Back to Development Plans'],
+            'certificates' => ['route' => route('certificates.index'), 'label' => 'Back to Certificates'],
+            'recertification' => ['route' => route('certificates.recertification'), 'label' => 'Back to Recertification'],
+        ];
+        $from = request('from');
+        $back = $backDestinations[$from] ?? ['route' => route('employees.index'), 'label' => 'Back to List'];
+    @endphp
+
     <div x-data="{ tab: '{{ request('tab', session('activeTab', 'overview')) }}' }" class="space-y-6">
         @if (session('status'))
             <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
@@ -22,9 +43,9 @@
 
             <div class="flex gap-2">
                 @can('update', $employee)
-                    <a href="{{ route('employees.edit', $employee) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
+                    <a href="{{ route('employees.edit', array_filter(['employee' => $employee, 'from' => $from])) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
                 @endcan
-                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Back to List</a>
+                <a href="{{ $back['route'] }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">{{ $back['label'] }}</a>
             </div>
         </div>
 
@@ -233,6 +254,9 @@
                                             <form method="POST" action="{{ route('employees.skill-assessments.destroy', [$employee, $assessment]) }}" onsubmit="return confirm('Remove this assessment record?');">
                                                 @csrf
                                                 @method('DELETE')
+                                                @if ($from)
+                                                    <input type="hidden" name="from" value="{{ $from }}">
+                                                @endif
                                                 <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
@@ -251,6 +275,9 @@
                     <div class="max-w-lg rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                         <h3 class="text-sm font-semibold text-neutral-900">Record a Skill Assessment</h3>
                         <form method="POST" action="{{ route('employees.skill-assessments.store', $employee) }}" class="mt-4 space-y-4">
+                            @if ($from)
+                                <input type="hidden" name="from" value="{{ $from }}">
+                            @endif
                             @csrf
                             <div>
                                 <x-input-label for="skill_id" value="Skill" />
@@ -352,7 +379,7 @@
                 <div class="flex items-center justify-between">
                     <p class="text-sm text-neutral-500">Total training hours recorded: {{ $employee->trainingRecords->sum('duration_hours') ?: 0 }}</p>
                     @can(\App\Enums\PermissionName::ManageTrainingRecords->value)
-                        <a href="{{ route('employees.training-records.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Training Record</a>
+                        <a href="{{ route('employees.training-records.create', array_filter(['employee' => $employee, 'from' => $from])) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Training Record</a>
                     @endcan
                 </div>
 
@@ -381,6 +408,9 @@
                                             <form method="POST" action="{{ route('employees.training-records.destroy', [$employee, $record]) }}" onsubmit="return confirm('Remove this training record?');">
                                                 @csrf
                                                 @method('DELETE')
+                                                @if ($from)
+                                                    <input type="hidden" name="from" value="{{ $from }}">
+                                                @endif
                                                 <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
@@ -399,7 +429,7 @@
             <div class="space-y-4">
                 @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
                     <div class="flex justify-end">
-                        <a href="{{ route('employees.development-plans.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Development Plan</a>
+                        <a href="{{ route('employees.development-plans.create', array_filter(['employee' => $employee, 'from' => $from])) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Development Plan</a>
                     </div>
                 @endcan
 
@@ -417,7 +447,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $planStatusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span>
                                 @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
-                                    <a href="{{ route('employees.development-plans.edit', [$employee, $plan]) }}" class="text-sm text-neutral-600 hover:underline">Edit</a>
+                                    <a href="{{ route('employees.development-plans.edit', array_filter(['employee' => $employee, 'development_plan' => $plan, 'from' => $from])) }}" class="text-sm text-neutral-600 hover:underline">Edit</a>
                                 @endcan
                             </div>
                         </div>
@@ -457,7 +487,7 @@
             <div class="space-y-4">
                 @can(\App\Enums\PermissionName::ManageCertificates->value)
                     <div class="flex justify-end">
-                        <a href="{{ route('employees.certificates.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Certificate</a>
+                        <a href="{{ route('employees.certificates.create', array_filter(['employee' => $employee, 'from' => $from])) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Certificate</a>
                     </div>
                 @endcan
 
@@ -485,10 +515,13 @@
                                             <a href="{{ route('certificates.download', $certificate) }}" class="ml-3 text-neutral-600 hover:underline">Download</a>
                                         @endif
                                         @can(\App\Enums\PermissionName::ManageCertificates->value)
-                                            <a href="{{ route('employees.certificates.edit', [$employee, $certificate]) }}" class="text-neutral-600 hover:underline">Edit</a>
+                                            <a href="{{ route('employees.certificates.edit', array_filter(['employee' => $employee, 'certificate' => $certificate, 'from' => $from])) }}" class="text-neutral-600 hover:underline">Edit</a>
                                             <form method="POST" action="{{ route('employees.certificates.destroy', [$employee, $certificate]) }}" class="inline" onsubmit="return confirm('Remove this certificate?');">
                                                 @csrf
                                                 @method('DELETE')
+                                                @if ($from)
+                                                    <input type="hidden" name="from" value="{{ $from }}">
+                                                @endif
                                                 <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan

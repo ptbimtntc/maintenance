@@ -207,12 +207,12 @@ class TrainingRecordController extends Controller
             'record_date' => now(),
         ]);
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Training record added.')
             ->with('activeTab', 'training');
     }
 
-    public function destroy(Employee $employee, TrainingRecord $record): RedirectResponse
+    public function destroy(Request $request, Employee $employee, TrainingRecord $record): RedirectResponse
     {
         $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageTrainingRecords->value);
@@ -220,7 +220,7 @@ class TrainingRecordController extends Controller
 
         $record->delete();
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Training record removed.')
             ->with('activeTab', 'training');
     }

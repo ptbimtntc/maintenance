@@ -325,7 +325,7 @@ class CertificateController extends Controller
 
         $this->storeUploadedFile($request, $certificate);
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Certificate added.')
             ->with('activeTab', 'certificates');
     }
@@ -355,12 +355,12 @@ class CertificateController extends Controller
 
         $this->storeUploadedFile($request, $certificate);
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Certificate updated.')
             ->with('activeTab', 'certificates');
     }
 
-    public function destroy(Employee $employee, Certificate $certificate): RedirectResponse
+    public function destroy(Request $request, Employee $employee, Certificate $certificate): RedirectResponse
     {
         $this->authorize('view', $employee);
         $this->authorize(PermissionName::ManageCertificates->value);
@@ -372,7 +372,7 @@ class CertificateController extends Controller
 
         $certificate->delete();
 
-        return redirect()->route('employees.show', $employee)
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
             ->with('status', 'Certificate removed.')
             ->with('activeTab', 'certificates');
     }

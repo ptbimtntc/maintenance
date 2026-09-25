@@ -224,7 +224,8 @@ class EmployeeController extends Controller
 
         $this->storeUploadedPhoto($request, $employee);
 
-        return redirect()->route('employees.show', $employee)->with('status', 'Employee updated.');
+        return redirect()->route('employees.show', array_filter(['employee' => $employee, 'from' => $request->input('from')]))
+            ->with('status', 'Employee updated.');
     }
 
     /**

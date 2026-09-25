@@ -10,6 +10,9 @@ $old = fn ($field, $default = null) => old($field, $certificate?->$field ?? $def
         <form method="POST" action="{{ $isEdit ? route('employees.certificates.update', [$employee, $certificate]) : route('employees.certificates.store', $employee) }}" enctype="multipart/form-data">
             @csrf
             @if ($isEdit) @method('PUT') @endif
+            @if (request('from'))
+                <input type="hidden" name="from" value="{{ request('from') }}">
+            @endif
 
             <div class="space-y-4">
                 <div>
@@ -121,7 +124,7 @@ $old = fn ($field, $default = null) => old($field, $certificate?->$field ?? $def
             </div>
 
             <div class="mt-6 flex justify-end gap-2">
-                <a href="{{ route('employees.show', $employee) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Cancel</a>
+                <a href="{{ route('employees.show', array_filter(['employee' => $employee, 'from' => request('from')])) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Cancel</a>
                 <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Save Certificate</button>
             </div>
         </form>
