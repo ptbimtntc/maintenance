@@ -13,10 +13,19 @@ use App\Models\TrainingSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    /** SQL expression for a 2-digit month number, portable across the sqlite (dev) and mysql (production) drivers. */
+    private function monthExpr(string $column): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%m', {$column})"
+            : "DATE_FORMAT({$column}, '%m')";
+    }
+
     /**
      * Show the Maintenance Department dashboard. Every number here comes
      * from a real query against current data - there is no historical
@@ -96,8 +105,8 @@ class DashboardController extends Controller
     private function availableYears(): array
     {
         $years = collect([now()->year])
-            ->merge(TrainingRecord::query()->selectRaw('DISTINCT strftime("%Y", training_date) as y')->pluck('y'))
-            ->merge(Certificate::query()->selectRaw('DISTINCT strftime("%Y", issue_date) as y')->pluck('y'))
+            ->merge(TrainingRecord::query()->pluck('training_date')->map(fn ($date) => $date->year))
+            ->merge(Certificate::query()->pluck('issue_date')->map(fn ($date) => $date->year))
             ->filter()
             ->map(fn ($y) => (int) $y)
             ->unique()
@@ -132,7 +141,7 @@ class DashboardController extends Controller
         $rows = TrainingRecord::query()
             ->whereIn('employee_id', $employeeIds)
             ->whereYear('training_date', $year)
-            ->selectRaw('strftime("%m", training_date) as m, SUM(duration_hours) as hours')
+            ->selectRaw($this->monthExpr('training_date').' as m, SUM(duration_hours) as hours')
             ->groupBy('m')
             ->pluck('hours', 'm');
 
@@ -144,7 +153,7 @@ class DashboardController extends Controller
         $rows = EmployeeDevelopmentPlan::query()
             ->whereIn('employee_id', $employeeIds)
             ->whereYear('created_at', $year)
-            ->selectRaw('strftime("%m", created_at) as m, COUNT(*) as total')
+            ->selectRaw($this->monthExpr('created_at').' as m, COUNT(*) as total')
             ->groupBy('m')
             ->pluck('total', 'm');
 
@@ -223,7 +232,7 @@ class DashboardController extends Controller
         $rows = TrainingRecord::query()
             ->whereIn('employee_id', $employeeIds)
             ->whereYear('training_date', $year)
-            ->selectRaw('strftime("%m", training_date) as m, SUM(duration_hours) as hours, COUNT(DISTINCT employee_id) as participants')
+            ->selectRaw($this->monthExpr('training_date').' as m, SUM(duration_hours) as hours, COUNT(DISTINCT employee_id) as participants')
             ->groupBy('m')
             ->get()
             ->keyBy('m');
