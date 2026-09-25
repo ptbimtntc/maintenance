@@ -24,7 +24,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
     <x-slot name="header">Maintenance People Development Dashboard</x-slot>
 
     <div class="space-y-5">
-        <div class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
+        <div class="sticky top-0 z-20 flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
             <div>
                 <p class="text-xs text-neutral-500">Build Competent People &middot; Improve Performance &middot; Ensure Reliability</p>
                 <p class="mt-0.5 text-xs text-neutral-400">{{ now()->format('l, d M Y') }}</p>
