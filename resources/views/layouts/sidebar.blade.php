@@ -67,7 +67,7 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
         </div>
     </div>
 
-    <nav class="flex-1 space-y-2 overflow-y-auto px-3 py-4">
+    <nav class="flex-1 divide-y divide-neutral-800/70 overflow-y-auto px-3 py-4 [&>*]:py-2 [&>*:first-child]:pt-0 [&>*:last-child]:pb-0">
         <div class="space-y-1">
             <x-nav-item :href="route('dashboard')" :active="$dashboardActive" icon="M3.75 12l1.5-1.5m0 0l6-6 6 6m-6-6v18m6-9l1.5 1.5M4.5 19.5h15">
                 Dashboard

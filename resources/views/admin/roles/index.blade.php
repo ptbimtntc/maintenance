@@ -48,8 +48,8 @@
                     </div>
 
                     <div class="flex justify-end gap-2 pt-2">
-                        <button type="button" @click="resetOpen = false" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-50">Cancel</button>
-                        <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-brand-700"
+                        <button type="button" @click="resetOpen = false" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 shadow-sm transition hover:bg-neutral-50">Cancel</button>
+                        <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700"
                                 onclick="return confirm('Reset the selected roles\' permissions to default? Custom changes will be lost.')">
                             Reset to default
                         </button>
@@ -105,7 +105,7 @@
 
                         <div class="flex items-center justify-between">
                             <button type="submit" form="reset-role-{{ $role->id }}"
-                                    class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">
+                                    class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition shadow-sm hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">
                                 Reset this role to default
                             </button>
                             <button type="submit" class="rounded-md bg-brand-600 px-4 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">

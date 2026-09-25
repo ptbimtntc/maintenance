@@ -24,7 +24,7 @@ $statusLabels = [
             </div>
 
             @can(\App\Enums\PermissionName::ManageJobDescriptions->value)
-                <a href="{{ route('job-descriptions.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+                <a href="{{ route('job-descriptions.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
                     Add Job Description
                 </a>
             @endcan
@@ -54,7 +54,7 @@ $statusLabels = [
 
                 <div class="flex gap-2">
                     <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('job-descriptions.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
+                    <a href="{{ route('job-descriptions.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition shadow-sm hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </div>
             </form>
         </x-filter-panel>

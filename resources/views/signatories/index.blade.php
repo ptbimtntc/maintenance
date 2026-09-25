@@ -5,7 +5,7 @@
         <div class="flex items-center justify-between">
             <p class="text-sm text-neutral-500">Reusable trainer / authorizer names and signature images, used when setting up a Training Program's certificate.</p>
             @can(\App\Enums\PermissionName::ManageCertificates->value)
-                <a href="{{ route('signatories.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add Signatory</a>
+                <a href="{{ route('signatories.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Signatory</a>
             @endcan
         </div>
 

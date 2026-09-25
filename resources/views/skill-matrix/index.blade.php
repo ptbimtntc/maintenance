@@ -13,7 +13,7 @@ $statusLabels = [
     <div class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <a href="{{ route('skills.landing') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Skills &amp; Competencies</a>
-            <a href="{{ route('skill-matrix.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+            <a href="{{ route('skill-matrix.index', array_merge(request()->query(), ['export' => 'xlsx'])) }}" class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" /></svg>
                 Export XLSX
             </a>
@@ -60,7 +60,7 @@ $statusLabels = [
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-5">
                     <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('skill-matrix.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
+                    <a href="{{ route('skill-matrix.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition shadow-sm hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </div>
             </form>
         </x-filter-panel>

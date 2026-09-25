@@ -66,13 +66,13 @@ $statusLabels = [
             @can(\App\Enums\PermissionName::ManageJobDescriptions->value)
                 <div class="flex flex-wrap gap-2">
                     @if ($jobDescription->status !== 'archived')
-                        <a href="{{ route('job-descriptions.edit', $jobDescription) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Edit</a>
+                        <a href="{{ route('job-descriptions.edit', $jobDescription) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
                     @endif
 
                     @if ($jobDescription->status === 'draft')
                         <form method="POST" action="{{ route('job-descriptions.submit-for-review', $jobDescription) }}">
                             @csrf
-                            <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Submit for Review</button>
+                            <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Submit for Review</button>
                         </form>
                     @endif
 
@@ -86,13 +86,13 @@ $statusLabels = [
                     @if ($jobDescription->status === 'active')
                         <form method="POST" action="{{ route('job-descriptions.archive', $jobDescription) }}" onsubmit="return confirm('Archive this job description?');">
                             @csrf
-                            <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Archive</button>
+                            <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Archive</button>
                         </form>
                     @endif
 
                     <form method="POST" action="{{ route('job-descriptions.new-revision', $jobDescription) }}">
                         @csrf
-                        <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Create New Revision</button>
+                        <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Create New Revision</button>
                     </form>
                 </div>
             @endcan

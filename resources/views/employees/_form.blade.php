@@ -40,7 +40,7 @@ $old = fn ($field, $default = null) => old($field, $employee?->$field ?? $defaul
         @if ($employee?->photo_path)
             <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}" alt="Current photo" class="mt-1 mb-2 h-16 w-16 rounded-full object-cover">
         @endif
-        <input id="photo" type="file" name="photo" accept="image/*" class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-brand-700" />
+        <input id="photo" type="file" name="photo" accept="image/*" class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white shadow-sm transition hover:file:bg-brand-700" />
         <x-input-error :messages="$errors->get('photo')" class="mt-1" />
     </div>
 

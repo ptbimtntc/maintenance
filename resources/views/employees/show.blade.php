@@ -22,9 +22,9 @@
 
             <div class="flex gap-2">
                 @can('update', $employee)
-                    <a href="{{ route('employees.edit', $employee) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Edit</a>
+                    <a href="{{ route('employees.edit', $employee) }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
                 @endcan
-                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Back to List</a>
+                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Back to List</a>
             </div>
         </div>
 
@@ -48,7 +48,7 @@
                                        onclick="this.select()">
                                 <button type="button"
                                         @click="navigator.clipboard.writeText(document.getElementById('onboarding-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)"
-                                        class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                                        class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">
                                     <span x-show="!copied">Copy Link</span>
                                     <span x-show="copied" x-cloak>Copied!</span>
                                 </button>
@@ -77,7 +77,7 @@
                         </div>
                         <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}">
                             @csrf
-                            <button type="submit" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+                            <button type="submit" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
                                 Generate {{ $employee->profile_completed_at ? 'New' : '' }} Onboarding Link
                             </button>
                         </form>
@@ -106,7 +106,7 @@
                             <button type="button"
                                     x-data="{ copied: false }"
                                     @click="navigator.clipboard.writeText(document.getElementById('verify-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)"
-                                    class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                                    class="shrink-0 rounded-md border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">
                                 <span x-show="!copied">Copy Link</span>
                                 <span x-show="copied" x-cloak>Copied!</span>
                             </button>
@@ -137,7 +137,7 @@
                             </div>
                             @if ($isOwnProfile)
                                 @if ($canQuiz)
-                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">Take Quiz</a>
+                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-brand-700">Take Quiz</a>
                                 @elseif ($assignment->quiz_submitted_at)
                                     <a href="{{ route('training.quiz.show', $assignment) }}" class="text-xs font-medium text-accent-700 hover:underline">{{ $assignment->certificate_id ? 'View result & certificate' : 'View result' }}</a>
                                 @else
@@ -280,7 +280,7 @@
                                 <x-input-label for="remarks" value="Remarks (optional)" />
                                 <textarea id="remarks" name="remarks" rows="2" class="mt-1 block w-full rounded-md border-neutral-300 text-sm"></textarea>
                             </div>
-                            <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Save Assessment</button>
+                            <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Save Assessment</button>
                         </form>
                     </div>
                 @endcan
@@ -352,7 +352,7 @@
                 <div class="flex items-center justify-between">
                     <p class="text-sm text-neutral-500">Total training hours recorded: {{ $employee->trainingRecords->sum('duration_hours') ?: 0 }}</p>
                     @can(\App\Enums\PermissionName::ManageTrainingRecords->value)
-                        <a href="{{ route('employees.training-records.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add Training Record</a>
+                        <a href="{{ route('employees.training-records.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Training Record</a>
                     @endcan
                 </div>
 
@@ -399,7 +399,7 @@
             <div class="space-y-4">
                 @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
                     <div class="flex justify-end">
-                        <a href="{{ route('employees.development-plans.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add Development Plan</a>
+                        <a href="{{ route('employees.development-plans.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Development Plan</a>
                     </div>
                 @endcan
 
@@ -457,7 +457,7 @@
             <div class="space-y-4">
                 @can(\App\Enums\PermissionName::ManageCertificates->value)
                     <div class="flex justify-end">
-                        <a href="{{ route('employees.certificates.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add Certificate</a>
+                        <a href="{{ route('employees.certificates.create', $employee) }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Certificate</a>
                     </div>
                 @endcan
 

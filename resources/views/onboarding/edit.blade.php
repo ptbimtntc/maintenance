@@ -75,7 +75,7 @@
 
                     <div>
                         <x-input-label for="photo" value="Photo (optional)" />
-                        <input id="photo" type="file" name="photo" accept="image/*" class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-brand-700" />
+                        <input id="photo" type="file" name="photo" accept="image/*" class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white shadow-sm transition hover:file:bg-brand-700" />
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -125,7 +125,7 @@
                     </div>
 
                     <div class="flex justify-end pt-2">
-                        <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+                        <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
                             Save My Profile
                         </button>
                     </div>

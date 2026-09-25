@@ -20,7 +20,7 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
                 <div class="flex items-center gap-2">
                     <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$program->status] }}">{{ ucfirst($program->status) }}</span>
                     @can(\App\Enums\PermissionName::ManageTraining->value)
-                        <a href="{{ route('training.programs.edit', $program) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Edit</a>
+                        <a href="{{ route('training.programs.edit', $program) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
                     @endcan
                 </div>
             </div>

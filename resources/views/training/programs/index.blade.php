@@ -12,7 +12,7 @@ $statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-s
                 <x-read-only-badge menu="training" />
             </div>
             @can(\App\Enums\PermissionName::ManageTraining->value)
-                <a href="{{ route('training.programs.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add Program</a>
+                <a href="{{ route('training.programs.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add Program</a>
             @endcan
         </div>
 
@@ -38,7 +38,7 @@ $statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-s
                 </select>
                 <div class="flex gap-2">
                     <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('training.programs.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
+                    <a href="{{ route('training.programs.index') }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition shadow-sm hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </div>
             </form>
         </x-filter-panel>

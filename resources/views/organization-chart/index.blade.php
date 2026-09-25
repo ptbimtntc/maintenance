@@ -73,8 +73,8 @@
                 White Collar Management (WCM)
             </span>
             <span class="ml-auto inline-flex gap-2">
-                <button type="button" @click="$dispatch('org-expand-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">Expand all</button>
-                <button type="button" @click="$dispatch('org-collapse-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 hover:bg-neutral-50">Collapse all</button>
+                <button type="button" @click="$dispatch('org-expand-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Expand all</button>
+                <button type="button" @click="$dispatch('org-collapse-all')" class="rounded-md border border-neutral-300 bg-white px-3 py-1 text-xs font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Collapse all</button>
             </span>
         </div>
 

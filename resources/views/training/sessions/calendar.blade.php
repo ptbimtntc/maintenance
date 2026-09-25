@@ -26,15 +26,15 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
                         @endforeach
                     </select>
                     <button type="submit" class="rounded-md bg-brand-600 px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Filter</button>
-                    <a href="{{ route('training.calendar', ['view' => $view]) }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
+                    <a href="{{ route('training.calendar', ['view' => $view]) }}" class="rounded-md border border-neutral-300 px-3.5 py-1.5 text-sm font-medium text-neutral-600 transition shadow-sm hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">Reset</a>
                 </form>
             </x-filter-panel>
 
             <div class="flex overflow-hidden rounded-md border border-neutral-300">
                 <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'list'])) }}"
-                   class="px-4 py-2 text-sm font-medium {{ $view === 'list' ? 'bg-brand-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50' }}">List</a>
+                   class="px-4 py-2 text-sm font-medium {{ $view === 'list' ? 'bg-brand-600 text-white' : 'bg-white text-neutral-700 shadow-sm transition hover:bg-neutral-50' }}">List</a>
                 <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid'])) }}"
-                   class="px-4 py-2 text-sm font-medium {{ $view === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-neutral-700 hover:bg-neutral-50' }}">Grid</a>
+                   class="px-4 py-2 text-sm font-medium {{ $view === 'grid' ? 'bg-brand-600 text-white' : 'bg-white text-neutral-700 shadow-sm transition hover:bg-neutral-50' }}">Grid</a>
             </div>
         </div>
 
@@ -42,10 +42,10 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
             <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <div class="mb-4 flex items-center justify-between">
                     <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid', 'month' => $month->copy()->subMonth()->format('Y-m')])) }}"
-                       class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">&larr; Prev</a>
+                       class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">&larr; Prev</a>
                     <h2 class="text-lg font-semibold text-neutral-900">{{ $month->format('F Y') }}</h2>
                     <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid', 'month' => $month->copy()->addMonth()->format('Y-m')])) }}"
-                       class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Next &rarr;</a>
+                       class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Next &rarr;</a>
                 </div>
 
                 <div class="grid grid-cols-7 gap-px overflow-hidden rounded-md border border-neutral-200 bg-neutral-200 text-xs">

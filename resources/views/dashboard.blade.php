@@ -67,7 +67,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                     </select>
                 </div>
                 @if ($filters['business_unit_id'] || $filters['employment_type_id'] || $filters['employment_source_id'])
-                    <a href="{{ route('dashboard', ['year' => $filters['year']]) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-50">Clear</a>
+                    <a href="{{ route('dashboard', ['year' => $filters['year']]) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-600 shadow-sm transition hover:bg-neutral-50">Clear</a>
                 @endif
             </form>
         </div>

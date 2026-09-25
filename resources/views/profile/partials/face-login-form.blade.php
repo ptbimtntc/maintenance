@@ -28,7 +28,7 @@
             <video data-face-video autoplay muted playsinline class="hidden mb-2 w-full max-w-sm rounded-md bg-black"></video>
             <p data-face-status class="mb-2 text-sm text-neutral-600"></p>
 
-            <button type="button" data-face-start class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">
+            <button type="button" data-face-start class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
                 Start Camera
             </button>
 
@@ -43,7 +43,7 @@
                 </label>
 
                 <button type="button" data-face-save disabled
-                        class="hidden rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        class="hidden rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50">
                     Capture Face
                 </button>
             </div>

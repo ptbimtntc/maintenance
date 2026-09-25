@@ -5,16 +5,16 @@
         <div class="flex flex-wrap items-center justify-between gap-3 print:hidden">
             <p class="text-sm text-neutral-500">Certificate verification QR code for each employee - scan or print for a badge. Links to the same public page as the one on an employee's profile.</p>
             <div class="flex items-center gap-2">
-                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">&larr; Back</a>
-                <button type="button" onclick="window.print()" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Print All</button>
+                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">&larr; Back</a>
+                <button type="button" onclick="window.print()" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Print All</button>
             </div>
         </div>
 
         <form method="GET" class="flex gap-2 print:hidden">
             <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK, name, department..." class="w-full max-w-sm rounded-md border-neutral-300 text-sm">
-            <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Search</button>
+            <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Search</button>
             @if (filled($filters['search'] ?? null))
-                <a href="{{ route('employees.qr-codes') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Reset</a>
+                <a href="{{ route('employees.qr-codes') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset</a>
             @endif
         </form>
 
@@ -28,8 +28,8 @@
             <div class="mt-2 flex flex-col gap-2 sm:flex-row">
                 <input type="text" id="qr-base-url" placeholder="https://your-domain.example.com"
                        class="w-full min-w-0 flex-1 rounded-md border-neutral-300 text-sm">
-                <button type="button" id="qr-base-url-apply" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Apply</button>
-                <button type="button" id="qr-base-url-reset" class="shrink-0 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Reset to default</button>
+                <button type="button" id="qr-base-url-apply" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Apply</button>
+                <button type="button" id="qr-base-url-reset" class="shrink-0 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset to default</button>
             </div>
         </div>
 
@@ -45,7 +45,7 @@
                     <p class="break-all text-[10px] text-neutral-400" data-qr-url-text></p>
                     <button type="button" data-download-qr data-filename="{{ $employee->employee_number }}"
                             data-name="{{ $employee->full_name }}" data-nik="{{ $employee->employee_number }}"
-                            class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 print:hidden">
+                            class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50 print:hidden">
                         Download PNG
                     </button>
                 </div>

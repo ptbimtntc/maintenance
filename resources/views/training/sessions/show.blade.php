@@ -20,7 +20,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                     <p class="text-sm text-neutral-500">{{ $trainingSession->start_date->format('d M Y') }} &ndash; {{ $trainingSession->end_date->format('d M Y') }} &middot; {{ $trainingSession->location?->name ?? 'No location set' }}</p>
                 </div>
                 @can(\App\Enums\PermissionName::ManageTraining->value)
-                    <a href="{{ route('training.sessions.edit', $trainingSession) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Edit</a>
+                    <a href="{{ route('training.sessions.edit', $trainingSession) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
                 @endcan
             </div>
         </div>
@@ -91,7 +91,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                             <option value="{{ $employee->id }}">{{ $employee->full_name }} ({{ $employee->employee_number }})</option>
                         @endforeach
                     </select>
-                    <button type="submit" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700">Add</button>
+                    <button type="submit" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Add</button>
                 </form>
             </div>
         @endcan
