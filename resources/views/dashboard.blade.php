@@ -276,11 +276,12 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
 
             <x-dashboard-donut
                 title="Workforce Mix"
-                :total="$workforceMix['BC'] + $workforceMix['WCM']"
+                :total="$workforceMix['BC'] + $workforceMix['WCM'] + $workforceMix['INTERN']"
                 totalLabel="Employees"
                 :segments="[
                     ['label' => 'Blue Collar (BC)', 'value' => $workforceMix['BC'], 'color' => '#01ADEF'],
                     ['label' => 'White Collar Mgmt (WCM)', 'value' => $workforceMix['WCM'], 'color' => '#2F7532'],
+                    ['label' => 'Internship', 'value' => $workforceMix['INTERN'], 'color' => '#ec4899'],
                 ]"
             />
 

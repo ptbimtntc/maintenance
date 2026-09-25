@@ -436,13 +436,14 @@ class EmployeeController extends Controller
                 $code = match (true) {
                     $managementValue === 'BC' || str_starts_with($managementValue, 'BLUE') => 'BC',
                     $managementValue === 'WCM' || str_starts_with($managementValue, 'WHITE') => 'WCM',
+                    $managementValue === 'INTERN' || str_starts_with($managementValue, 'INTERN') => 'INTERN',
                     default => null,
                 };
 
                 if ($code) {
                     $changes['workforce_category'] = $code;
                 } else {
-                    $errors[] = "Row {$rowNumber}: Management value \"{$data['Management']}\" not recognized (expected BC or WCM) - left unchanged.";
+                    $errors[] = "Row {$rowNumber}: Management value \"{$data['Management']}\" not recognized (expected BC, WCM, or INTERN) - left unchanged.";
                 }
             }
 

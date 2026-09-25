@@ -268,6 +268,7 @@ class DashboardController extends Controller
         return [
             'BC' => (int) ($counts['BC'] ?? 0),
             'WCM' => (int) ($counts['WCM'] ?? 0),
+            'INTERN' => (int) ($counts['INTERN'] ?? 0),
         ];
     }
 

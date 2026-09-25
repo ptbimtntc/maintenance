@@ -1,5 +1,6 @@
 @php
 $isBlueCollar = $employee->workforce_category === 'BC';
+$isIntern = $employee->workforce_category === 'INTERN';
 $children = $childrenByParent->get($employee->id, collect());
 // Supervisors' teams start collapsed; everyone above them starts expanded.
 // A group whose members are all Blue Collar lays out in two columns
@@ -12,31 +13,47 @@ $forceExpand ??= false;
 $highlightIds ??= collect();
 $startOpen = $forceExpand || ! $isSupervisor;
 $isMatch = $highlightIds->contains($employee->id);
+
+// Blue Collar, White Collar Management and Interns each get their own
+// card color so the workforce_category is readable at a glance in the
+// tree, matching the Workforce Mix legend/chart elsewhere in the app.
+$cardClass = match (true) {
+    $isBlueCollar => 'border-accent-700 bg-accent-600 text-white',
+    $isIntern => 'border-pink-700 bg-pink-500 text-white',
+    default => 'border-neutral-200 bg-white text-neutral-900',
+};
+$avatarClass = match (true) {
+    $isBlueCollar => 'bg-accent-800 text-white',
+    $isIntern => 'bg-pink-700 text-white',
+    default => 'bg-neutral-100 text-neutral-500',
+};
+$mutedTextClass = match (true) {
+    $isBlueCollar => 'text-accent-100',
+    $isIntern => 'text-pink-100',
+    default => 'text-neutral-500',
+};
+$photoRingClass = $isBlueCollar || $isIntern ? 'ring-2 ring-white/70' : 'ring-2 ring-neutral-100';
 @endphp
 
 <li x-data="{ open: {{ $startOpen ? 'true' : 'false' }} }"
     @org-expand-all.window="open = true" @org-collapse-all.window="open = {{ $isSupervisor ? 'false' : 'true' }}">
     <a href="{{ route('employees.show', ['employee' => $employee, 'from' => 'org-chart']) }}"
        class="org-chart-node inline-flex w-48 flex-col items-center gap-1 rounded-lg border p-3 text-center shadow-sm transition hover:shadow-md
-              {{ $isBlueCollar ? 'border-accent-700 bg-accent-600 text-white' : 'border-neutral-200 bg-white text-neutral-900' }}
+              {{ $cardClass }}
               {{ $isMatch ? 'ring-4 ring-brand-400 ring-offset-2 ring-offset-neutral-100' : '' }}">
         @if ($employee->photo_path)
             <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
                  alt="{{ $employee->full_name }}"
-                 class="h-14 w-14 rounded-full object-cover {{ $isBlueCollar ? 'ring-2 ring-white/70' : 'ring-2 ring-neutral-100' }}">
+                 class="h-14 w-14 rounded-full object-cover {{ $photoRingClass }}">
         @else
-            <span @class([
-                'flex h-14 w-14 items-center justify-center rounded-full text-base font-semibold',
-                'bg-accent-800 text-white' => $isBlueCollar,
-                'bg-neutral-100 text-neutral-500' => ! $isBlueCollar,
-            ])>
+            <span class="flex h-14 w-14 items-center justify-center rounded-full text-base font-semibold {{ $avatarClass }}">
                 {{ \Illuminate\Support\Str::of($employee->full_name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
             </span>
         @endif
 
         <span class="text-sm font-semibold leading-tight">{{ $employee->full_name }}</span>
-        <span @class(['text-xs', 'text-accent-100' => $isBlueCollar, 'text-neutral-500' => ! $isBlueCollar])>{{ $employee->employee_number }}</span>
-        <span @class(['text-xs', 'text-accent-100' => $isBlueCollar, 'text-neutral-500' => ! $isBlueCollar])>{{ $employee->skillPosition?->name ?? '—' }}</span>
+        <span class="text-xs {{ $mutedTextClass }}">{{ $employee->employee_number }}</span>
+        <span class="text-xs {{ $mutedTextClass }}">{{ $employee->skillPosition?->name ?? '—' }}</span>
     </a>
 
     @if ($children->isNotEmpty())

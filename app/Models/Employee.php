@@ -28,12 +28,14 @@ class Employee extends Model
     use HasFactory, SoftDeletes, Auditable;
 
     /**
-     * Workforce classification: BC (Blue Collar - operator/technician level)
-     * vs WCM (White Collar Management - staff and above).
+     * Workforce classification: BC (Blue Collar - operator/technician level),
+     * WCM (White Collar Management - staff and above), or INTERN (SMK/PKL
+     * students and university interns - neither BC nor WCM).
      */
     public const WORKFORCE_CATEGORIES = [
         'BC' => 'Blue Collar (BC)',
         'WCM' => 'White Collar Management (WCM)',
+        'INTERN' => 'Internship (Non BC/WCM)',
     ];
 
     /**

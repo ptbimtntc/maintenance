@@ -87,7 +87,7 @@
             </form>
         </x-filter-panel>
 
-        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-sm shadow-md">
+        <div class="sticky top-0 z-20 flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-sm shadow-md">
             <span class="font-medium text-neutral-700">Legend:</span>
             <span class="inline-flex items-center gap-2">
                 <span class="h-4 w-4 rounded border border-accent-700 bg-accent-600"></span>
@@ -96,6 +96,10 @@
             <span class="inline-flex items-center gap-2">
                 <span class="h-4 w-4 rounded border border-neutral-300 bg-white"></span>
                 White Collar Management (WCM)
+            </span>
+            <span class="inline-flex items-center gap-2">
+                <span class="h-4 w-4 rounded border border-pink-700 bg-pink-500"></span>
+                Internship (Non BC/WCM)
             </span>
             @if ($filtered)
                 <span class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
