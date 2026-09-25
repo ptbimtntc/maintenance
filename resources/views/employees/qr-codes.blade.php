@@ -2,34 +2,36 @@
     <x-slot name="header">Generate QR Codes</x-slot>
 
     <div class="space-y-4 print:space-y-2">
-        <div class="flex flex-wrap items-center justify-between gap-3 print:hidden">
-            <p class="text-sm text-neutral-500">Certificate verification QR code for each employee - scan or print for a badge. Links to the same public page as the one on an employee's profile.</p>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">&larr; Back</a>
-                <button type="button" onclick="window.print()" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Print All</button>
+        <div class="sticky top-0 z-10 -mx-4 space-y-4 bg-neutral-100 px-4 pb-4 pt-1 print:static print:mx-0 print:space-y-2 print:bg-transparent print:px-0 print:pb-0 print:pt-0">
+            <div class="flex flex-wrap items-center justify-between gap-3 print:hidden">
+                <p class="text-sm text-neutral-500">Certificate verification QR code for each employee - scan or print for a badge. Links to the same public page as the one on an employee's profile.</p>
+                <div class="flex items-center gap-2">
+                    <a href="{{ route('employees.index') }}" class="rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">&larr; Back</a>
+                    <button type="button" onclick="window.print()" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Print This Page</button>
+                </div>
             </div>
-        </div>
 
-        <form method="GET" class="flex gap-2 print:hidden">
-            <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK, name, department..." class="w-full max-w-sm rounded-md border-neutral-300 text-sm">
-            <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Search</button>
-            @if (filled($filters['search'] ?? null))
-                <a href="{{ route('employees.qr-codes') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset</a>
-            @endif
-        </form>
+            <form method="GET" class="flex gap-2 print:hidden">
+                <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK, name, department..." class="w-full max-w-sm rounded-md border-neutral-300 text-sm">
+                <button type="submit" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Search</button>
+                @if (filled($filters['search'] ?? null))
+                    <a href="{{ route('employees.qr-codes') }}" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset</a>
+                @endif
+            </form>
 
-        <div id="qr-base-url-panel" data-default-base-url="{{ url('/') }}" class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md print:hidden">
-            <label for="qr-base-url" class="block text-sm font-medium text-neutral-700">Base URL used in the QR codes</label>
-            <p class="mt-1 text-xs text-neutral-500">
-                Defaults to this site's current address. Type a different domain here (e.g. the production domain
-                this will eventually run on) if you want the QR codes to point there instead - saved in this browser
-                only, nothing on the server changes.
-            </p>
-            <div class="mt-2 flex flex-col gap-2 sm:flex-row">
-                <input type="text" id="qr-base-url" placeholder="https://your-domain.example.com"
-                       class="w-full min-w-0 flex-1 rounded-md border-neutral-300 text-sm">
-                <button type="button" id="qr-base-url-apply" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Apply</button>
-                <button type="button" id="qr-base-url-reset" class="shrink-0 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset to default</button>
+            <div id="qr-base-url-panel" data-default-base-url="{{ url('/') }}" class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md print:hidden">
+                <label for="qr-base-url" class="block text-sm font-medium text-neutral-700">Base URL used in the QR codes</label>
+                <p class="mt-1 text-xs text-neutral-500">
+                    Defaults to this site's current address. Type a different domain here (e.g. the production domain
+                    this will eventually run on) if you want the QR codes to point there instead - saved in this browser
+                    only, nothing on the server changes.
+                </p>
+                <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input type="text" id="qr-base-url" placeholder="https://your-domain.example.com"
+                           class="w-full min-w-0 flex-1 rounded-md border-neutral-300 text-sm">
+                    <button type="button" id="qr-base-url-apply" class="shrink-0 rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">Apply</button>
+                    <button type="button" id="qr-base-url-reset" class="shrink-0 rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Reset to default</button>
+                </div>
             </div>
         </div>
 
@@ -52,6 +54,10 @@
             @empty
                 <div class="col-span-full rounded-lg border border-neutral-200 bg-white p-10 text-center text-neutral-500 shadow-md">No employees found.</div>
             @endforelse
+        </div>
+
+        <div class="print:hidden">
+            {{ $employees->links() }}
         </div>
     </div>
 </x-app-layout>

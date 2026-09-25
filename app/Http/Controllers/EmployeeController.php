@@ -133,16 +133,19 @@ class EmployeeController extends Controller
     {
         $this->authorize('viewAny', Employee::class);
 
+        $filters = $request->only('search');
+
         $employees = Employee::query()
             ->visibleTo($request->user())
             ->with(['department', 'position'])
             ->search($request->string('search')->toString())
             ->orderBy('full_name')
-            ->get();
+            ->paginate(24)
+            ->appends($filters);
 
         return view('employees.qr-codes', [
             'employees' => $employees,
-            'filters' => $request->only('search'),
+            'filters' => $filters,
         ]);
     }
 
