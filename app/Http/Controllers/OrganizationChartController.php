@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionName;
+use App\Models\BusinessUnit;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
@@ -40,6 +42,32 @@ class OrganizationChartController extends Controller
             $employees = $employees->concat($this->ancestorChain($user->employee))->unique('id');
         }
 
+        $filters = $request->only(['search', 'business_unit_id']);
+        $search = trim((string) ($filters['search'] ?? ''));
+        $businessUnitId = $filters['business_unit_id'] ?? null;
+        $filtered = filled($search) || filled($businessUnitId);
+        $highlightIds = collect();
+
+        if ($filtered) {
+            $matches = $employees
+                ->when(filled($search), fn (Collection $collection) => $collection->filter(
+                    fn (Employee $employee) => str_contains(strtolower($employee->full_name), strtolower($search))
+                        || str_contains(strtolower((string) $employee->employee_number), strtolower($search))
+                ))
+                ->when(filled($businessUnitId), fn (Collection $collection) => $collection->where('business_unit_id', $businessUnitId));
+
+            $highlightIds = $matches->pluck('id');
+
+            // Narrow the tree down to just the matched employee(s) plus
+            // their reporting line up to the top, instead of the whole
+            // company - "where does this person sit" rather than "show
+            // everyone".
+            $employees = $matches
+                ->concat($matches->flatMap(fn (Employee $employee) => $this->ancestorChain($employee)))
+                ->unique('id')
+                ->values();
+        }
+
         $visibleIds = $employees->pluck('id')->flip();
 
         // Roots are visible employees whose supervisor isn't also in the
@@ -56,6 +84,11 @@ class OrganizationChartController extends Controller
         return view('organization-chart.index', [
             'roots' => $roots,
             'childrenByParent' => $childrenByParent,
+            'filters' => $filters,
+            'filtered' => $filtered,
+            'highlightIds' => $highlightIds,
+            'matchCount' => $filtered ? $highlightIds->count() : null,
+            'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 

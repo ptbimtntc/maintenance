@@ -3,16 +3,23 @@ $isBlueCollar = $employee->workforce_category === 'BC';
 $children = $childrenByParent->get($employee->id, collect());
 // Supervisors' teams start collapsed; everyone above them starts expanded.
 // A group whose members are all Blue Collar lays out in two columns
-// instead of one long row.
+// instead of one long row. While a search/filter is active, every node
+// starts expanded so the reporting line up to the top is visible without
+// the user having to click through each collapsed supervisor.
 $isSupervisor = str_contains(strtolower((string) $employee->position?->title), 'supervisor');
 $stackChildren = $children->isNotEmpty() && $children->every(fn ($child) => $child->workforce_category === 'BC');
+$forceExpand ??= false;
+$highlightIds ??= collect();
+$startOpen = $forceExpand || ! $isSupervisor;
+$isMatch = $highlightIds->contains($employee->id);
 @endphp
 
-<li x-data="{ open: {{ $isSupervisor ? 'false' : 'true' }} }"
+<li x-data="{ open: {{ $startOpen ? 'true' : 'false' }} }"
     @org-expand-all.window="open = true" @org-collapse-all.window="open = {{ $isSupervisor ? 'false' : 'true' }}">
     <a href="{{ route('employees.show', ['employee' => $employee, 'from' => 'org-chart']) }}"
        class="org-chart-node inline-flex w-48 flex-col items-center gap-1 rounded-lg border p-3 text-center shadow-sm transition hover:shadow-md
-              {{ $isBlueCollar ? 'border-accent-700 bg-accent-600 text-white' : 'border-neutral-200 bg-white text-neutral-900' }}">
+              {{ $isBlueCollar ? 'border-accent-700 bg-accent-600 text-white' : 'border-neutral-200 bg-white text-neutral-900' }}
+              {{ $isMatch ? 'ring-4 ring-brand-400 ring-offset-2 ring-offset-neutral-100' : '' }}">
         @if ($employee->photo_path)
             <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
                  alt="{{ $employee->full_name }}"
@@ -45,7 +52,7 @@ $stackChildren = $children->isNotEmpty() && $children->every(fn ($child) => $chi
 
         <ul x-show="open" x-cloak @class(['org-chart-stack' => $stackChildren])>
             @foreach ($children as $child)
-                @include('organization-chart._node', ['employee' => $child, 'childrenByParent' => $childrenByParent])
+                @include('organization-chart._node', ['employee' => $child, 'childrenByParent' => $childrenByParent, 'highlightIds' => $highlightIds, 'forceExpand' => $forceExpand])
             @endforeach
         </ul>
     @endif
