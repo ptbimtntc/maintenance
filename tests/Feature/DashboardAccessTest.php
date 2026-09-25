@@ -20,7 +20,7 @@ class DashboardAccessTest extends TestCase
     {
         $response = $this->get('/dashboard');
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_authenticated_users_can_view_the_dashboard(): void

@@ -29,7 +29,7 @@ class SkillMatrixTest extends TestCase
     {
         $response = $this->get(route('skill-matrix.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_authorized_users_see_a_gap_when_current_level_is_below_required(): void

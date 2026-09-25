@@ -23,7 +23,7 @@ class RecertificationTest extends TestCase
 
     public function test_guests_cannot_view_the_recertification_report(): void
     {
-        $this->get(route('certificates.recertification'))->assertRedirect('/login');
+        $this->get(route('certificates.recertification'))->assertRedirect('/guest-login');
     }
 
     public function test_default_window_shows_certificates_due_within_60_days_including_overdue(): void

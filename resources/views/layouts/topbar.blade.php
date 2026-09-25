@@ -12,6 +12,23 @@
         </h1>
 
         <div class="flex items-center gap-4">
+            @if (Auth::guest())
+                <a href="{{ route('login') }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                    {{ __('Login') }}
+                </a>
+            @elseif (Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
+                {{-- The visitor is signed into the shared read-only Guest
+                     account, which the "guest" middleware still counts as
+                     authenticated - log it out first so /login is reachable. --}}
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
+                        {{ __('Login') }}
+                    </button>
+                </form>
+            @endif
+
+            @auth
             @php
                 $unreadNotifications = Auth::user()->unreadNotifications()->latest()->take(10)->get();
                 $unreadCount = Auth::user()->unreadNotifications()->count();
@@ -92,6 +109,7 @@
                     </form>
                 </x-slot>
             </x-dropdown>
+            @endauth
         </div>
     </div>
 </div>

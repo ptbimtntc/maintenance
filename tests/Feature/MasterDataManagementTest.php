@@ -25,7 +25,7 @@ class MasterDataManagementTest extends TestCase
     {
         $response = $this->get(route('organization.landing'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_non_administrator_cannot_manage_master_data(): void

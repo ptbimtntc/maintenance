@@ -16,9 +16,17 @@ class GuestSessionController extends Controller
      * holds only View* permissions, and User::canEditMenu() additionally
      * hard-blocks the role regardless of any menu override, so this can
      * never become a write session no matter what.
+     *
+     * This is now the default entry point for unauthenticated visitors
+     * (see the "/" route and the auth middleware's guest redirect), not
+     * just an opt-in button - anyone who hasn't logged in lands here.
      */
     public function start(Request $request): RedirectResponse
     {
+        if (Auth::check()) {
+            return redirect()->intended(route('dashboard'));
+        }
+
         $guest = User::whereHas('roles', fn ($q) => $q->where('name', RoleName::Guest->value))->first();
 
         abort_unless($guest, 404, 'No guest account has been configured.');
@@ -26,6 +34,6 @@ class GuestSessionController extends Controller
         Auth::login($guest);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->intended(route('dashboard'));
     }
 }

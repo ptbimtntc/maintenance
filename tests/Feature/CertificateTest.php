@@ -31,7 +31,7 @@ class CertificateTest extends TestCase
     {
         $response = $this->get(route('certificates.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_maintenance_staff_cannot_add_a_certificate(): void

@@ -30,7 +30,7 @@ use App\Http\Controllers\TrainingSessionController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/guest-login', [GuestSessionController::class, 'start'])->name('guest-login');
+Route::match(['get', 'post'], '/guest-login', [GuestSessionController::class, 'start'])->name('guest-login');
 
 // Public, unauthenticated: a new employee completes their own profile via
 // the QR/link shown on their profile page - see EmployeeOnboardingController.
@@ -46,7 +46,7 @@ Route::get('/verify/certificates/{certificate}/certificate', [PublicCertificateC
 Route::get('/verify/participants/{participant}', [PublicCertificateController::class, 'participant'])->name('verify.participant');
 
 Route::get('/', function () {
-    return redirect()->route(auth()->check() ? 'dashboard' : 'login');
+    return redirect()->route(auth()->check() ? 'dashboard' : 'guest-login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])

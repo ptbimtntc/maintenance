@@ -25,7 +25,7 @@ class EmployeeDevelopmentPlanTest extends TestCase
     {
         $response = $this->get(route('development-plans.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_manager_can_create_a_development_plan(): void

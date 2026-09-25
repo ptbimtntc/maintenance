@@ -24,7 +24,7 @@ class EmployeeManagementTest extends TestCase
     {
         $response = $this->get(route('employees.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_user_without_any_employee_permission_is_forbidden(): void
@@ -212,7 +212,7 @@ class EmployeeManagementTest extends TestCase
 
     public function test_guests_cannot_view_the_qr_codes_page(): void
     {
-        $this->get(route('employees.qr-codes'))->assertRedirect('/login');
+        $this->get(route('employees.qr-codes'))->assertRedirect('/guest-login');
     }
 
     public function test_administrator_can_set_an_employees_license_number(): void

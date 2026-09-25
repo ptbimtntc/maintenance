@@ -25,7 +25,7 @@ class JobDescriptionTest extends TestCase
     {
         $response = $this->get(route('job-descriptions.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_maintenance_staff_can_view_and_create_job_descriptions_by_default(): void

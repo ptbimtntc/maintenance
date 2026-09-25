@@ -29,7 +29,7 @@ class CompetencyGapAnalysisTest extends TestCase
     {
         $response = $this->get(route('competency-gap-analysis.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_maintenance_staff_cannot_view_the_gap_analysis(): void

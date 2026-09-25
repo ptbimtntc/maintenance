@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
 
+        // Anyone hitting a protected page without a session lands as the
+        // read-only Guest account instead of a login wall - see
+        // GuestSessionController and the "Login" button in the topbar.
+        $middleware->redirectGuestsTo(fn () => route('guest-login'));
+
         // face_trusted_device is a plain random token the server hashes and
         // compares itself (see FaceLoginController) - it's already
         // unguessable, and framework cookie-encryption would need decrypting

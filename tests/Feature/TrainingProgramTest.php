@@ -25,7 +25,7 @@ class TrainingProgramTest extends TestCase
     {
         $response = $this->get(route('training.programs.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_maintenance_staff_can_view_but_not_create_programs(): void

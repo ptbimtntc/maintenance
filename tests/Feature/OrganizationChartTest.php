@@ -24,7 +24,7 @@ class OrganizationChartTest extends TestCase
     {
         $response = $this->get(route('organization-chart.index'));
 
-        $response->assertRedirect('/login');
+        $response->assertRedirect('/guest-login');
     }
 
     public function test_a_user_without_any_employee_permission_is_forbidden(): void

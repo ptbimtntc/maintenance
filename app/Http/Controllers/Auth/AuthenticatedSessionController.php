@@ -42,6 +42,10 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        // Not redirect('/') - since guests are now auto-logged into the
+        // read-only Guest account (see bootstrap/app.php's
+        // redirectGuestsTo), landing on "/" here would immediately log
+        // the visitor straight back in instead of showing the login form.
+        return redirect()->route('login');
     }
 }

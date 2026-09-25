@@ -57,12 +57,8 @@
     </form>
 
     <div class="mt-6 border-t border-neutral-200 pt-6 text-center">
-        <p class="mb-2 text-sm text-neutral-500">Just want to look around?</p>
-        <form method="POST" action="{{ route('guest-login') }}">
-            @csrf
-            <button type="submit" class="rounded-md border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">
-                View as Guest (read-only)
-            </button>
-        </form>
+        <p class="text-sm text-neutral-500">
+            <a href="{{ route('guest-login') }}" class="underline hover:text-neutral-700">Continue browsing as guest (read-only)</a>
+        </p>
     </div>
 </x-guest-layout>
