@@ -84,6 +84,7 @@
             "php-http/discovery": true
         },
         "platform": {
+            "php": "8.3.33",
             "ext-gd": "1.0"
         }
     },
