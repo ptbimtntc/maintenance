@@ -6,7 +6,7 @@ $old = fn ($field, $default = null) => old($field, $certificate?->$field ?? $def
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit' : 'Add' }} Certificate — {{ $employee->full_name }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('employees.certificates.update', [$employee, $certificate]) : route('employees.certificates.store', $employee) }}" enctype="multipart/form-data">
             @csrf
             @if ($isEdit) @method('PUT') @endif

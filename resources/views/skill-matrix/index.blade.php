@@ -1,8 +1,8 @@
 @php
 $statusLabels = [
-    'meets' => ['label' => 'Meets Requirement', 'class' => 'bg-green-100 text-green-800'],
-    'gap' => ['label' => 'Development Required', 'class' => 'bg-red-100 text-red-800'],
-    'incomplete' => ['label' => 'Assessment Incomplete', 'class' => 'bg-amber-100 text-amber-800'],
+    'meets' => ['label' => 'Meets Requirement', 'class' => 'bg-success-100 text-success-800'],
+    'gap' => ['label' => 'Development Required', 'class' => 'bg-danger-100 text-danger-800'],
+    'incomplete' => ['label' => 'Assessment Incomplete', 'class' => 'bg-warning-100 text-warning-800'],
     'no-requirements' => ['label' => 'No Requirements Defined', 'class' => 'bg-neutral-100 text-neutral-600'],
 ];
 @endphp
@@ -76,7 +76,7 @@ $statusLabels = [
                 No skills defined yet. Add skills under Skills &amp; Competencies &rarr; Skill Catalog.
             </div>
         @else
-            <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -103,12 +103,12 @@ $statusLabels = [
                                         @if ($cell['required'] === null)
                                             <span class="text-neutral-300">—</span>
                                         @elseif ($cell['current'] === null)
-                                            <span class="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800" title="Required: {{ $cell['required']->name }}, not yet assessed">N/A</span>
+                                            <span class="inline-flex rounded-full bg-warning-100 px-2 py-0.5 text-xs font-medium text-warning-800" title="Required: {{ $cell['required']->name }}, not yet assessed">N/A</span>
                                         @else
                                             <span @class([
                                                 'inline-flex rounded-full px-2 py-0.5 text-xs font-medium',
-                                                'bg-green-100 text-green-800' => $cell['gap'] <= 0,
-                                                'bg-red-100 text-red-800' => $cell['gap'] > 0,
+                                                'bg-success-100 text-success-800' => $cell['gap'] <= 0,
+                                                'bg-danger-100 text-danger-800' => $cell['gap'] > 0,
                                             ])" title="Current: {{ $cell['current']->name }} / Required: {{ $cell['required']->name }}">
                                                 {{ $cell['current']->level_number }}/{{ $cell['required']->level_number }}
                                             </span>

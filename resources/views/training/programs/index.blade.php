@@ -1,5 +1,5 @@
 @php
-$statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-green-100 text-green-800', 'inactive' => 'bg-neutral-100 text-neutral-500'];
+$statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-success-100 text-success-800', 'inactive' => 'bg-neutral-100 text-neutral-500'];
 @endphp
 
 <x-app-layout>
@@ -43,7 +43,7 @@ $statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-g
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>

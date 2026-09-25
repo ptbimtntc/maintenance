@@ -13,19 +13,19 @@ $windowLabels = [
 
     <div class="space-y-4">
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-red-700">Overdue</p>
-                <p class="mt-1 text-2xl font-semibold text-red-800">{{ $summary['overdue'] }}</p>
+            <div class="rounded-lg border border-danger-200 bg-danger-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-danger-700">Overdue</p>
+                <p class="mt-1 text-2xl font-semibold text-danger-800">{{ $summary['overdue'] }}</p>
             </div>
-            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-amber-700">Due ≤ 30 days</p>
-                <p class="mt-1 text-2xl font-semibold text-amber-800">{{ $summary['due_30'] }}</p>
+            <div class="rounded-lg border border-warning-200 bg-warning-50 p-4">
+                <p class="text-xs font-medium uppercase tracking-wide text-warning-700">Due ≤ 30 days</p>
+                <p class="mt-1 text-2xl font-semibold text-warning-800">{{ $summary['due_30'] }}</p>
             </div>
-            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <p class="text-xs font-medium uppercase tracking-wide text-neutral-500">Due ≤ 60 days</p>
                 <p class="mt-1 text-2xl font-semibold text-neutral-800">{{ $summary['due_60'] }}</p>
             </div>
-            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <p class="text-xs font-medium uppercase tracking-wide text-neutral-500">Due ≤ 90 days</p>
                 <p class="mt-1 text-2xl font-semibold text-neutral-800">{{ $summary['due_90'] }}</p>
             </div>
@@ -83,7 +83,7 @@ $windowLabels = [
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
@@ -112,15 +112,15 @@ $windowLabels = [
                             <td class="px-3 py-2">
                                 <span @class([
                                     'inline-flex rounded-full px-2 py-1 text-xs font-medium',
-                                    'bg-red-100 text-red-800' => $daysRemaining < 0,
-                                    'bg-amber-100 text-amber-800' => $daysRemaining >= 0 && $daysRemaining <= 30,
+                                    'bg-danger-100 text-danger-800' => $daysRemaining < 0,
+                                    'bg-warning-100 text-warning-800' => $daysRemaining >= 0 && $daysRemaining <= 30,
                                     'bg-neutral-100 text-neutral-600' => $daysRemaining > 30,
                                 ])>
                                     {{ $daysRemaining < 0 ? abs($daysRemaining).' days overdue' : $daysRemaining.' days left' }}
                                 </span>
                             </td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">
-                                <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-brand-700 hover:underline">View Certificate</a>
+                                <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a>
                                 <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a>
                             </td>
                         </tr>

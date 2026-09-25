@@ -51,7 +51,7 @@
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>

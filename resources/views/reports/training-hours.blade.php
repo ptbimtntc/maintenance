@@ -9,7 +9,7 @@
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Employee</h2>
                 <a href="{{ route('reports.training-hours', ['export' => 'xlsx']) }}" class="text-sm text-neutral-600 hover:underline">Export XLSX</a>
             </div>
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -35,7 +35,7 @@
 
         <div>
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Department</h2>
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>

@@ -47,14 +47,14 @@ $originQuery = array_filter(['from' => $from]);
         </div>
 
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
         @if (session('import_errors'))
-            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ session('import_errors') }}</div>
+            <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">{{ session('import_errors') }}</div>
         @endif
 
-        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
@@ -78,7 +78,7 @@ $originQuery = array_filter(['from' => $from]);
                             <td class="px-3 py-2">
                                 <span @class([
                                     'inline-flex rounded-full px-2 py-1 text-xs font-medium',
-                                    'bg-green-100 text-green-800' => $record->is_active,
+                                    'bg-success-100 text-success-800' => $record->is_active,
                                     'bg-neutral-100 text-neutral-600' => ! $record->is_active,
                                 ])>
                                     {{ $record->is_active ? 'Active' : 'Inactive' }}
@@ -90,7 +90,7 @@ $originQuery = array_filter(['from' => $from]);
                                       onsubmit="return confirm('Delete this {{ strtolower($config['singular']) }}? This cannot be undone.');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="ml-3 text-red-600 hover:underline">Delete</button>
+                                    <button type="submit" class="ml-3 text-danger-600 hover:underline">Delete</button>
                                 </form>
                             </td>
                         </tr>

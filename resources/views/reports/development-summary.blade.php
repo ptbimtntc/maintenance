@@ -12,7 +12,7 @@
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Status</h2>
-                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byStatus as $status => $count)
@@ -27,7 +27,7 @@
 
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Development Action</h2>
-                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byAction as $action => $count)
@@ -42,7 +42,7 @@
 
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Priority</h2>
-                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-100 text-sm">
                         <tbody class="divide-y divide-neutral-100">
                             @forelse ($byPriority as $priority => $count)

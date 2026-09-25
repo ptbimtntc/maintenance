@@ -3,10 +3,10 @@
 
     <div class="max-w-2xl space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
-        <div class="rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
             <h3 class="text-sm font-semibold text-neutral-500">{{ $user->name }}</h3>
             <p class="text-sm text-neutral-600">{{ $user->email }}</p>
             @if ($user->employee)
@@ -23,7 +23,7 @@
             @csrf
             @method('PUT')
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-6">
+            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                 <x-input-label for="role" value="Role" />
                 <select id="role" name="role" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                     @foreach ($roles as $role)
@@ -33,7 +33,7 @@
                 <x-input-error :messages="$errors->get('role')" class="mt-1" />
             </div>
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-6">
+            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                 <h3 class="text-sm font-semibold text-neutral-900">Menu Edit Permissions</h3>
 
                 @if ($user->hasRole(\App\Enums\RoleName::Administrator->value))

@@ -1,5 +1,5 @@
 @php
-$completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' => 'bg-amber-100 text-amber-800', 'failed' => 'bg-red-100 text-red-800'];
+$completionStyles = ['completed' => 'bg-success-100 text-success-800', 'incomplete' => 'bg-warning-100 text-warning-800', 'failed' => 'bg-danger-100 text-danger-800'];
 @endphp
 
 <x-app-layout>
@@ -37,7 +37,7 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
         </div>
 
         @if (session('import_errors'))
-            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
                 {{ session('import_errors') }}
             </div>
         @endif
@@ -64,7 +64,7 @@ $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' 
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>

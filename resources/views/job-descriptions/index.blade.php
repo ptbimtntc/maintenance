@@ -1,8 +1,8 @@
 @php
 $statusStyles = [
     'draft' => 'bg-neutral-100 text-neutral-700',
-    'pending_review' => 'bg-amber-100 text-amber-800',
-    'active' => 'bg-green-100 text-green-800',
+    'pending_review' => 'bg-warning-100 text-warning-800',
+    'active' => 'bg-success-100 text-success-800',
     'archived' => 'bg-neutral-100 text-neutral-500',
 ];
 $statusLabels = [
@@ -59,7 +59,7 @@ $statusLabels = [
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>

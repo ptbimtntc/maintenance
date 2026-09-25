@@ -47,7 +47,7 @@
 
         <div>
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Skills with the Largest Gaps</h2>
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -65,7 +65,7 @@
                                 <td class="px-3 py-2 text-neutral-600">{{ $row['employees_required'] }}</td>
                                 <td class="px-3 py-2">
                                     @if ($row['employees_with_gap'] > 0)
-                                        <span class="inline-flex rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800">{{ $row['employees_with_gap'] }}</span>
+                                        <span class="inline-flex rounded-full bg-danger-100 px-2 py-1 text-xs font-medium text-danger-800">{{ $row['employees_with_gap'] }}</span>
                                     @else
                                         <span class="text-neutral-400">0</span>
                                     @endif
@@ -84,7 +84,7 @@
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Positions with the Largest Gaps</h2>
-                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
@@ -110,7 +110,7 @@
 
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Areas Requiring Development</h2>
-                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
@@ -137,7 +137,7 @@
 
         <div>
             <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">Employees with Competency Gaps</h2>
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -175,8 +175,8 @@
 
             <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @forelse ($trainingRecommendations as $row)
-                    <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Suggested</p>
+                    <div class="rounded-lg border border-warning-200 bg-warning-50 p-4">
+                        <p class="text-xs font-semibold uppercase tracking-wide text-warning-700">Suggested</p>
                         <p class="mt-1 font-medium text-neutral-900">{{ $row['skill']->name }}</p>
                         <p class="mt-1 text-sm text-neutral-600">{{ $row['employees_with_gap'] }} employee(s) currently below the required level.</p>
                     </div>

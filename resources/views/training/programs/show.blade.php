@@ -1,6 +1,6 @@
 @php
-$statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-green-100 text-green-800', 'inactive' => 'bg-neutral-100 text-neutral-500'];
-$sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing' => 'bg-amber-100 text-amber-800', 'completed' => 'bg-green-100 text-green-800', 'cancelled' => 'bg-neutral-100 text-neutral-500'];
+$statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-success-100 text-success-800', 'inactive' => 'bg-neutral-100 text-neutral-500'];
+$sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing' => 'bg-warning-100 text-warning-800', 'completed' => 'bg-success-100 text-success-800', 'cancelled' => 'bg-neutral-100 text-neutral-500'];
 @endphp
 
 <x-app-layout>
@@ -8,10 +8,10 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
 
     <div class="space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
-        <div class="rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
             <div class="flex items-start justify-between">
                 <div>
                     <h2 class="text-xl font-semibold text-neutral-900">{{ $program->title }}</h2>
@@ -50,7 +50,7 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
                 @endcan
             </div>
 
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>

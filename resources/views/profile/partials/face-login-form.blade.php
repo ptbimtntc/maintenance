@@ -11,7 +11,7 @@
     </header>
 
     @if ($enrolled)
-        <div class="mt-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+        <div class="mt-4 rounded-md border border-success-200 bg-success-50 px-4 py-3 text-sm text-success-800">
             Face Login is enabled, enrolled {{ auth()->user()->face_enrolled_at->format('d M Y') }}.
             Disabling it removes access from <strong>every</strong> device this was enrolled on, not just this one.
         </div>
@@ -19,7 +19,7 @@
         <form method="POST" action="{{ route('face-login.disable') }}" class="mt-4"
               onsubmit="return confirm('Disable Face Login on all devices?');">
             @csrf
-            <button type="submit" class="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+            <button type="submit" class="rounded-md border border-danger-300 px-4 py-2 text-sm font-medium text-danger-700 hover:bg-danger-50">
                 Disable Face Login
             </button>
         </form>

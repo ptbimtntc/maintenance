@@ -12,7 +12,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-neutral-50" x-data="{ sidebarOpen: false }">
+    <body class="font-sans antialiased bg-neutral-100" x-data="{ sidebarOpen: false }">
         <div class="flex h-screen overflow-hidden">
             <!-- Desktop sidebar -->
             <div class="hidden lg:flex lg:w-64 lg:shrink-0">

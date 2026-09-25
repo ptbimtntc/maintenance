@@ -1,5 +1,5 @@
 @php
-$sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing' => 'bg-amber-100 text-amber-800', 'completed' => 'bg-green-100 text-green-800', 'cancelled' => 'bg-neutral-100 text-neutral-500'];
+$sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing' => 'bg-warning-100 text-warning-800', 'completed' => 'bg-success-100 text-success-800', 'cancelled' => 'bg-neutral-100 text-neutral-500'];
 @endphp
 
 <x-app-layout>
@@ -39,7 +39,7 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
         </div>
 
         @if ($view === 'grid')
-            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <div class="mb-4 flex items-center justify-between">
                     <a href="{{ route('training.calendar', array_merge($filters, ['view' => 'grid', 'month' => $month->copy()->subMonth()->format('Y-m')])) }}"
                        class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-50">&larr; Prev</a>
@@ -77,7 +77,7 @@ $sessionStatusStyles = ['scheduled' => 'bg-accent-100 text-accent-800', 'ongoing
         @forelse ($sessionsByMonth as $month => $sessions)
             <div>
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">{{ $month }}</h2>
-                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>

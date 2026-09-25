@@ -1,5 +1,5 @@
 @php
-$actionStyles = ['created' => 'bg-green-100 text-green-800', 'updated' => 'bg-accent-100 text-accent-800', 'deleted' => 'bg-red-100 text-red-800'];
+$actionStyles = ['created' => 'bg-success-100 text-success-800', 'updated' => 'bg-accent-100 text-accent-800', 'deleted' => 'bg-danger-100 text-danger-800'];
 @endphp
 
 <x-app-layout>
@@ -35,7 +35,7 @@ $actionStyles = ['created' => 'bg-green-100 text-green-800', 'updated' => 'bg-ac
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>

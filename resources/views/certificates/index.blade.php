@@ -1,8 +1,8 @@
 @php
 $statusStyles = [
-    'valid' => 'bg-green-100 text-green-800',
-    'expiring_soon' => 'bg-amber-100 text-amber-800',
-    'expired' => 'bg-red-100 text-red-800',
+    'valid' => 'bg-success-100 text-success-800',
+    'expiring_soon' => 'bg-warning-100 text-warning-800',
+    'expired' => 'bg-danger-100 text-danger-800',
     'no_expiry' => 'bg-neutral-100 text-neutral-600',
     'pending_verification' => 'bg-accent-100 text-accent-800',
 ];
@@ -43,7 +43,7 @@ $statusStyles = [
         </div>
 
         @if (session('import_errors'))
-            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
                 {{ session('import_errors') }}
             </div>
         @endif
@@ -76,7 +76,7 @@ $statusStyles = [
             </form>
         </x-filter-panel>
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
@@ -96,7 +96,7 @@ $statusStyles = [
                             <td class="px-3 py-2 text-neutral-600">{{ $certificate->certificateType?->name ?? '—' }}</td>
                             <td class="px-3 py-2 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
                             <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $statusStyles[$certificate->status()] }}">{{ $statusLabels[$certificate->status()] }}</span></td>
-                            <td class="px-3 py-2 text-right whitespace-nowrap"><a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-brand-700 hover:underline">View Certificate</a> <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a></td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap"><a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a> <a href="{{ route('employees.show', $certificate->employee) }}" class="ml-3 text-neutral-600 hover:underline">View Employee</a></td>
                         </tr>
                     @empty
                         <tr><td colspan="6" class="px-4 py-10 text-center text-neutral-500">No certificates recorded yet.</td></tr>

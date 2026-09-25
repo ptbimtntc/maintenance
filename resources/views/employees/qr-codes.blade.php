@@ -18,7 +18,7 @@
             @endif
         </form>
 
-        <div id="qr-base-url-panel" data-default-base-url="{{ url('/') }}" class="rounded-lg border border-neutral-200 bg-white p-4 print:hidden">
+        <div id="qr-base-url-panel" data-default-base-url="{{ url('/') }}" class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md print:hidden">
             <label for="qr-base-url" class="block text-sm font-medium text-neutral-700">Base URL used in the QR codes</label>
             <p class="mt-1 text-xs text-neutral-500">
                 Defaults to this site's current address. Type a different domain here (e.g. the production domain
@@ -36,7 +36,7 @@
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 print:grid-cols-3">
             @forelse ($employees as $employee)
                 @php $path = route('verify.employee', $employee, false); @endphp
-                <div class="rounded-lg border border-neutral-200 bg-white p-4 text-center print:break-inside-avoid">
+                <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md text-center print:break-inside-avoid">
                     <h3 class="truncate text-sm font-semibold text-neutral-900">{{ $employee->full_name }}</h3>
                     <p class="text-xs text-neutral-500">NIK: {{ $employee->employee_number }}</p>
                     <div class="my-3 flex justify-center">
@@ -50,7 +50,7 @@
                     </button>
                 </div>
             @empty
-                <div class="col-span-full rounded-lg border border-neutral-200 bg-white p-10 text-center text-neutral-500">No employees found.</div>
+                <div class="col-span-full rounded-lg border border-neutral-200 bg-white p-10 text-center text-neutral-500 shadow-md">No employees found.</div>
             @endforelse
         </div>
     </div>

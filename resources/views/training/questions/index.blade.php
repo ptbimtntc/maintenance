@@ -37,16 +37,16 @@
         @endcan
 
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
         @if (session('import_errors'))
-            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ session('import_errors') }}</div>
+            <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">{{ session('import_errors') }}</div>
         @endif
 
         <div class="space-y-3">
             @forelse ($questions as $question)
-                <div class="rounded-lg border border-neutral-200 bg-white p-4">
+                <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                     <div class="flex items-start justify-between gap-3">
                         <p class="text-sm font-medium text-neutral-900">{{ $loop->iteration }}. {{ $question->question_text }}
                             @if ($question->allow_multiple_answers)
@@ -56,13 +56,13 @@
                         @can(\App\Enums\PermissionName::ManageTraining->value)
                             <form method="POST" action="{{ route('training.programs.questions.destroy', [$program, $question]) }}" onsubmit="return confirm('Remove this question?');">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
+                                <button type="submit" class="text-sm text-danger-600 hover:underline">Delete</button>
                             </form>
                         @endcan
                     </div>
                     <ul class="mt-2 grid grid-cols-1 gap-1 text-sm sm:grid-cols-2">
                         @foreach ($question->choices as $choice)
-                            <li @class(['rounded px-2 py-1', 'bg-green-50 font-medium text-green-800' => $choice->is_correct, 'text-neutral-600' => ! $choice->is_correct])>
+                            <li @class(['rounded px-2 py-1', 'bg-success-50 font-medium text-success-800' => $choice->is_correct, 'text-neutral-600' => ! $choice->is_correct])>
                                 <strong>{{ $choice->option_label }}.</strong> {{ $choice->choice_text }}
                                 @if ($choice->is_correct) <span class="text-xs">(correct, {{ $choice->points }} pt)</span> @endif
                             </li>

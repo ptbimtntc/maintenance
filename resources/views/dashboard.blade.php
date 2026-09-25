@@ -15,7 +15,7 @@ $icons = [
     'target' => 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
 ];
 
-$priorityStyles = ['high' => 'bg-red-100 text-red-700', 'medium' => 'bg-amber-100 text-amber-700', 'low' => 'bg-neutral-100 text-neutral-600'];
+$priorityStyles = ['high' => 'bg-danger-100 text-danger-700', 'medium' => 'bg-warning-100 text-warning-700', 'low' => 'bg-neutral-100 text-neutral-600'];
 $maxAreaCount = collect($maintenanceAreaDistribution)->max('total') ?: 1;
 $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
 @endphp
@@ -24,7 +24,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
     <x-slot name="header">Maintenance People Development Dashboard</x-slot>
 
     <div class="space-y-5">
-        <div class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+        <div class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
             <div>
                 <p class="text-xs text-neutral-500">Build Competent People &middot; Improve Performance &middot; Ensure Reliability</p>
                 <p class="mt-0.5 text-xs text-neutral-400">{{ now()->format('l, d M Y') }}</p>
@@ -106,7 +106,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 :href="$canViewTraining ? route('training.records.index') : null"
                 :chartType="array_sum($trainingHoursTrend) > 0 ? 'sparkline' : null"
                 :chartValues="$trainingHoursTrend"
-                :chartColors="['#16a34a']"
+                :chartColors="['#2F7532']"
                 :caption="array_sum($trainingHoursTrend) > 0 ? 'Monthly hours delivered' : null"
             />
             <x-dashboard-stat
@@ -135,14 +135,14 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 :total="array_sum($competencyBreakdown)"
                 totalLabel="Employees"
                 :segments="[
-                    ['label' => 'Meets Requirement', 'value' => $competencyBreakdown['meets'], 'color' => '#16a34a'],
-                    ['label' => 'Gap', 'value' => $competencyBreakdown['gap'], 'color' => '#dc2626'],
-                    ['label' => 'Assessment Incomplete', 'value' => $competencyBreakdown['incomplete'], 'color' => '#f59e0b'],
+                    ['label' => 'Meets Requirement', 'value' => $competencyBreakdown['meets'], 'color' => '#2F7532'],
+                    ['label' => 'Gap', 'value' => $competencyBreakdown['gap'], 'color' => '#A93624'],
+                    ['label' => 'Assessment Incomplete', 'value' => $competencyBreakdown['incomplete'], 'color' => '#F0900A'],
                     ['label' => 'No Requirements Defined', 'value' => $competencyBreakdown['no_requirements'], 'color' => '#B8B2A8'],
                 ]"
             />
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <h3 class="mb-3 text-sm font-semibold text-neutral-900">Top Skill Gaps</h3>
                 @if ($topSkillGaps->isEmpty())
                     <p class="py-6 text-center text-sm text-neutral-400">No skill gaps found for the current filters.</p>
@@ -163,7 +163,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md lg:col-span-1">
                 <h3 class="mb-3 text-sm font-semibold text-neutral-900">Training &amp; Development ({{ $filters['year'] }})</h3>
                 <div class="relative h-56 w-full">
                     <canvas
@@ -178,11 +178,11 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 </div>
             </div>
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md lg:col-span-1">
                 <div class="mb-3 flex items-center justify-between">
                     <h3 class="text-sm font-semibold text-neutral-900">Upcoming Training</h3>
                     @if ($canViewTraining)
-                        <a href="{{ route('training.calendar') }}" class="text-xs font-medium text-brand-600 hover:underline">View All &rarr;</a>
+                        <a href="{{ route('training.calendar') }}" class="text-xs font-medium text-accent-600 hover:underline">View All &rarr;</a>
                     @endif
                 </div>
                 @if ($upcomingSessions->isEmpty())
@@ -222,20 +222,20 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 :total="$certificateSummary['total']"
                 totalLabel="Certificates"
                 :segments="[
-                    ['label' => 'Valid', 'value' => $certificateSummary['valid'], 'color' => '#16a34a'],
-                    ['label' => 'Expiring Soon', 'value' => $certificateSummary['expiring_soon'], 'color' => '#f59e0b'],
-                    ['label' => 'Expired', 'value' => $certificateSummary['expired'], 'color' => '#dc2626'],
+                    ['label' => 'Valid', 'value' => $certificateSummary['valid'], 'color' => '#2F7532'],
+                    ['label' => 'Expiring Soon', 'value' => $certificateSummary['expiring_soon'], 'color' => '#F0900A'],
+                    ['label' => 'Expired', 'value' => $certificateSummary['expired'], 'color' => '#A93624'],
                     ['label' => 'Pending Verification', 'value' => $certificateSummary['pending_verification'], 'color' => '#01ADEF'],
                 ]"
             />
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md lg:col-span-1">
                 <div class="mb-3 flex items-center justify-between">
                     <h3 class="text-sm font-semibold text-neutral-900">Development Priority</h3>
                     @if ($canViewDevelopmentPlans)
-                        <a href="{{ route('development-plans.index') }}" class="text-xs font-medium text-brand-600 hover:underline">View All &rarr;</a>
+                        <a href="{{ route('development-plans.index') }}" class="text-xs font-medium text-accent-600 hover:underline">View All &rarr;</a>
                     @endif
                 </div>
                 @if ($developmentPriorities->isEmpty())
@@ -280,11 +280,11 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 totalLabel="Employees"
                 :segments="[
                     ['label' => 'Blue Collar (BC)', 'value' => $workforceMix['BC'], 'color' => '#01ADEF'],
-                    ['label' => 'White Collar Mgmt (WCM)', 'value' => $workforceMix['WCM'], 'color' => '#16a34a'],
+                    ['label' => 'White Collar Mgmt (WCM)', 'value' => $workforceMix['WCM'], 'color' => '#2F7532'],
                 ]"
             />
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 lg:col-span-1">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md lg:col-span-1">
                 <h3 class="mb-3 text-sm font-semibold text-neutral-900">Maintenance Area Distribution</h3>
                 @if ($maintenanceAreaDistribution->isEmpty())
                     <p class="py-6 text-center text-sm text-neutral-400">No employees assigned to a maintenance area yet.</p>
@@ -302,21 +302,21 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
             </div>
         </div>
 
-        <div class="rounded-lg border border-neutral-200 bg-white p-4">
+        <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
             <div class="mb-3 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-neutral-900">People Development Insights</h3>
                 <span class="text-[11px] text-neutral-400">Last updated {{ now()->format('d M Y H:i') }}</span>
             </div>
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div class="rounded-md border border-amber-100 bg-amber-50 p-3">
-                    <p class="text-xl font-bold text-amber-700">{{ $insights['employees_needing_development'] }}</p>
-                    <p class="text-xs text-amber-800">employees need development</p>
-                    <p class="text-[10px] text-amber-600">{{ $insights['employees_needing_development_pct'] }}% of total workforce</p>
+                <div class="rounded-md border border-warning-100 bg-warning-50 p-3">
+                    <p class="text-xl font-bold text-warning-700">{{ $insights['employees_needing_development'] }}</p>
+                    <p class="text-xs text-warning-800">employees need development</p>
+                    <p class="text-[10px] text-warning-600">{{ $insights['employees_needing_development_pct'] }}% of total workforce</p>
                 </div>
-                <div class="rounded-md border border-red-100 bg-red-50 p-3">
-                    <p class="text-xl font-bold text-red-700">{{ $insights['certificates_needing_renewal'] }}</p>
-                    <p class="text-xs text-red-800">certificates need renewal</p>
-                    <p class="text-[10px] text-red-600">{{ $insights['certificates_needing_renewal_pct'] }}% of total certificates</p>
+                <div class="rounded-md border border-danger-100 bg-danger-50 p-3">
+                    <p class="text-xl font-bold text-danger-700">{{ $insights['certificates_needing_renewal'] }}</p>
+                    <p class="text-xs text-danger-800">certificates need renewal</p>
+                    <p class="text-[10px] text-danger-600">{{ $insights['certificates_needing_renewal_pct'] }}% of total certificates</p>
                 </div>
                 <div class="rounded-md border border-neutral-200 bg-neutral-50 p-3">
                     <p class="text-xl font-bold text-neutral-700">{{ $insights['assessments_incomplete'] }}</p>

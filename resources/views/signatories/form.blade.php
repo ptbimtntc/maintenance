@@ -6,7 +6,7 @@ $old = fn ($field, $default = null) => old($field, $signatory?->$field ?? $defau
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit Signatory' : 'Add Signatory' }}</x-slot>
 
-    <div class="max-w-xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('signatories.update', $signatory) : route('signatories.store') }}" enctype="multipart/form-data">
             @csrf
             @if ($isEdit) @method('PUT') @endif

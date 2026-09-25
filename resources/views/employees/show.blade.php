@@ -3,9 +3,9 @@
 
     <div x-data="{ tab: '{{ request('tab', session('activeTab', 'overview')) }}' }" class="space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
-        <div class="flex flex-col justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-6 sm:flex-row sm:items-center">
+        <div class="flex flex-col justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-md sm:flex-row sm:items-center">
             <div class="flex items-center gap-4">
                 @if ($employee->photo_path)
                     <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}" alt="{{ $employee->full_name }}" class="h-16 w-16 rounded-full object-cover">
@@ -58,7 +58,7 @@
                                 Expires {{ $employee->profile_completion_expires_at->format('d M Y') }}.
                                 <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}" class="inline" onsubmit="return confirm('Generate a new link? The current QR code and link will stop working.');">
                                     @csrf
-                                    <button type="submit" class="font-medium text-brand-700 hover:underline">Generate new link</button>
+                                    <button type="submit" class="font-medium text-accent-700 hover:underline">Generate new link</button>
                                 </form>
                             </p>
                         </div>
@@ -87,7 +87,7 @@
         @endcan
 
         @can('view', $employee)
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 sm:p-6">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md sm:p-6">
                 <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
                     <canvas data-qrcode="{{ route('verify.employee', $employee) }}"
                             class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
@@ -139,7 +139,7 @@
                                 @if ($canQuiz)
                                     <a href="{{ route('training.quiz.show', $assignment) }}" class="rounded-md bg-brand-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-700">Take Quiz</a>
                                 @elseif ($assignment->quiz_submitted_at)
-                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="text-xs font-medium text-brand-700 hover:underline">{{ $assignment->certificate_id ? 'View result & certificate' : 'View result' }}</a>
+                                    <a href="{{ route('training.quiz.show', $assignment) }}" class="text-xs font-medium text-accent-700 hover:underline">{{ $assignment->certificate_id ? 'View result & certificate' : 'View result' }}</a>
                                 @else
                                     <span class="text-xs text-neutral-500">{{ \App\Models\TrainingParticipant::quizMessage($why, $assignment->trainingSession) }}</span>
                                 @endif
@@ -199,7 +199,7 @@
         </div>
 
         <div x-show="tab === 'notes'">
-            <div class="rounded-lg border border-neutral-200 bg-white p-6">
+            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                 @if ($employee->notes)
                     <p class="whitespace-pre-line text-sm text-neutral-700">{{ $employee->notes }}</p>
                 @else
@@ -210,7 +210,7 @@
 
         <div x-show="tab === 'skills'">
             <div class="space-y-6">
-                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
@@ -233,7 +233,7 @@
                                             <form method="POST" action="{{ route('employees.skill-assessments.destroy', [$employee, $assessment]) }}" onsubmit="return confirm('Remove this assessment record?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                                <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
                                     </td>
@@ -248,7 +248,7 @@
                 </div>
 
                 @can(\App\Enums\PermissionName::AssessCompetencies->value)
-                    <div class="max-w-lg rounded-lg border border-neutral-200 bg-white p-6">
+                    <div class="max-w-lg rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                         <h3 class="text-sm font-semibold text-neutral-900">Record a Skill Assessment</h3>
                         <form method="POST" action="{{ route('employees.skill-assessments.store', $employee) }}" class="mt-4 space-y-4">
                             @csrf
@@ -289,7 +289,7 @@
 
         <div x-show="tab === 'skill-matrix'">
             @php $gapRows = $employee->skillGapRows(); @endphp
-            <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -322,7 +322,7 @@
         <div x-show="tab === 'job-description'">
             @php $currentJd = $employee->position?->currentJobDescription(); @endphp
             @if ($currentJd)
-                <div class="rounded-lg border border-neutral-200 bg-white p-6">
+                <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                     <div class="flex items-start justify-between">
                         <div>
                             <h3 class="text-lg font-semibold text-neutral-900">{{ $currentJd->job_title }}</h3>
@@ -343,8 +343,8 @@
         </div>
 
         @php
-        $completionStyles = ['completed' => 'bg-green-100 text-green-800', 'incomplete' => 'bg-amber-100 text-amber-800', 'failed' => 'bg-red-100 text-red-800'];
-        $planStatusStyles = ['not_started' => 'bg-neutral-100 text-neutral-600', 'in_progress' => 'bg-accent-100 text-accent-800', 'completed' => 'bg-green-100 text-green-800', 'on_hold' => 'bg-amber-100 text-amber-800'];
+        $completionStyles = ['completed' => 'bg-success-100 text-success-800', 'incomplete' => 'bg-warning-100 text-warning-800', 'failed' => 'bg-danger-100 text-danger-800'];
+        $planStatusStyles = ['not_started' => 'bg-neutral-100 text-neutral-600', 'in_progress' => 'bg-accent-100 text-accent-800', 'completed' => 'bg-success-100 text-success-800', 'on_hold' => 'bg-warning-100 text-warning-800'];
         @endphp
 
         <div x-show="tab === 'training'">
@@ -356,7 +356,7 @@
                     @endcan
                 </div>
 
-                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
@@ -381,7 +381,7 @@
                                             <form method="POST" action="{{ route('employees.training-records.destroy', [$employee, $record]) }}" onsubmit="return confirm('Remove this training record?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                                <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
                                     </td>
@@ -404,7 +404,7 @@
                 @endcan
 
                 @forelse ($employee->developmentPlans as $plan)
-                    <div class="rounded-lg border border-neutral-200 bg-white p-4">
+                    <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                         <div class="flex items-start justify-between">
                             <div>
                                 <p class="font-medium text-neutral-900">{{ $plan->development_objective }}</p>
@@ -444,9 +444,9 @@
 
         @php
         $certStatusStyles = [
-            'valid' => 'bg-green-100 text-green-800',
-            'expiring_soon' => 'bg-amber-100 text-amber-800',
-            'expired' => 'bg-red-100 text-red-800',
+            'valid' => 'bg-success-100 text-success-800',
+            'expiring_soon' => 'bg-warning-100 text-warning-800',
+            'expired' => 'bg-danger-100 text-danger-800',
             'no_expiry' => 'bg-neutral-100 text-neutral-600',
             'pending_verification' => 'bg-accent-100 text-accent-800',
         ];
@@ -461,7 +461,7 @@
                     </div>
                 @endcan
 
-                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+                <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="border-b-2 border-brand-500 bg-brand-50">
                             <tr>
@@ -480,7 +480,7 @@
                                     <td class="px-3 py-2 text-neutral-600">{{ $certificate->expiry_date?->format('d M Y') ?? '—' }}</td>
                                     <td class="px-3 py-2"><span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $certStatusStyles[$certificate->status()] }}">{{ $certStatusLabels[$certificate->status()] }}</span></td>
                                     <td class="px-3 py-2 text-right space-x-3">
-                                        <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-brand-700 hover:underline">View Certificate</a>
+                                        <a href="{{ route('certificates.show', $certificate) }}" target="_blank" class="font-medium text-accent-700 hover:underline">View Certificate</a>
                                         @if ($certificate->file_path)
                                             <a href="{{ route('certificates.download', $certificate) }}" class="ml-3 text-neutral-600 hover:underline">Download</a>
                                         @endif
@@ -489,7 +489,7 @@
                                             <form method="POST" action="{{ route('employees.certificates.destroy', [$employee, $certificate]) }}" class="inline" onsubmit="return confirm('Remove this certificate?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                                <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
                                     </td>

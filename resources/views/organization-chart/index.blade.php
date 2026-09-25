@@ -62,7 +62,7 @@
     </style>
 
     <div class="space-y-4">
-        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-sm">
+        <div class="flex flex-wrap items-center gap-4 rounded-lg border border-neutral-200 bg-white p-4 text-sm shadow-md">
             <span class="font-medium text-neutral-700">Legend:</span>
             <span class="inline-flex items-center gap-2">
                 <span class="h-4 w-4 rounded border border-accent-700 bg-accent-600"></span>
@@ -83,7 +83,7 @@
                 No employees to show yet.
             </div>
         @else
-            <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white p-8">
+            <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md p-8 shadow-md">
                 <ul class="org-chart-tree">
                     @foreach ($roots as $root)
                         @include('organization-chart._node', ['employee' => $root, 'childrenByParent' => $childrenByParent])

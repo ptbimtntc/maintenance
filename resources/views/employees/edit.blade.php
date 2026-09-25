@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">Edit Employee</x-slot>
 
-    <div class="max-w-4xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-4xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ route('employees.update', $employee) }}" enctype="multipart/form-data">
             @csrf
             @method('PUT')

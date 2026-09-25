@@ -16,9 +16,9 @@
 $colorClasses = [
     'slate' => 'bg-neutral-100 text-neutral-600',
     'blue' => 'bg-accent-50 text-accent-600',
-    'green' => 'bg-green-100 text-green-600',
-    'amber' => 'bg-amber-100 text-amber-600',
-    'red' => 'bg-red-100 text-red-600',
+    'green' => 'bg-success-100 text-success-600',
+    'amber' => 'bg-warning-100 text-warning-600',
+    'red' => 'bg-danger-100 text-danger-600',
     'brand' => 'bg-brand-50 text-brand-600',
 ][$color] ?? 'bg-neutral-100 text-neutral-600';
 @endphp
@@ -66,7 +66,7 @@ $colorClasses = [
     @endif
 
     @if ($href)
-        <span class="relative mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-600 transition-colors group-hover:text-brand-700">
+        <span class="relative mt-2 inline-flex items-center gap-1 text-xs font-medium text-accent-600 transition-colors group-hover:text-accent-700">
             View details
             <svg class="h-3 w-3 transition-transform group-hover:translate-x-0.5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H4a1 1 0 110-2h10.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />

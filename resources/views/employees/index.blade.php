@@ -43,7 +43,7 @@
         </div>
 
         @if (session('import_errors'))
-            <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
                 {{ session('import_errors') }}
             </div>
         @endif
@@ -115,7 +115,7 @@
                 @csrf
         @endcan
 
-        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="max-h-[70vh] overflow-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
@@ -182,7 +182,7 @@
         @can('create', \App\Models\Employee::class)
                 <div class="flex justify-end">
                     <button type="submit"
-                            class="mt-3 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="mt-3 rounded-md bg-danger-600 px-4 py-2 text-sm font-medium text-white hover:bg-danger-700 disabled:cursor-not-allowed disabled:opacity-50"
                             :disabled="checkedCount === 0">
                         Delete Selected (<span x-text="checkedCount"></span>)
                     </button>

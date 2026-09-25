@@ -3,10 +3,10 @@
 
     <div x-data="{ activeRole: '{{ old('_active_role', $roleNames[0]->value) }}', resetOpen: false }" class="max-w-5xl space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
-        <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4">
+        <div class="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
             <p class="max-w-2xl text-sm text-neutral-600">
                 Edit which permissions each role grants, then save. If a role has drifted from the app's baseline, use
                 <span class="font-medium text-neutral-800">Reset to default</span> to restore its original permission set.
@@ -80,14 +80,14 @@
                         @method('PUT')
 
                         @if ($roleName === \App\Enums\RoleName::Administrator)
-                            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                            <div class="rounded-lg border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">
                                 Administrator is meant to keep every permission. Unchecking items here removes that access immediately for all administrators.
                             </div>
                         @endif
 
                         <div class="grid gap-4 sm:grid-cols-2">
                             @foreach ($permissionGroups as $group => $permissions)
-                                <div class="rounded-lg border border-neutral-200 bg-white p-4">
+                                <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                                     <h3 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">{{ $group }}</h3>
                                     <div class="mt-3 space-y-2.5">
                                         @foreach ($permissions as $permission)

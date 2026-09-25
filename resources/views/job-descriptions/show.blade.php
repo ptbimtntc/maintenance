@@ -1,8 +1,8 @@
 @php
 $statusStyles = [
     'draft' => 'bg-neutral-100 text-neutral-700',
-    'pending_review' => 'bg-amber-100 text-amber-800',
-    'active' => 'bg-green-100 text-green-800',
+    'pending_review' => 'bg-warning-100 text-warning-800',
+    'active' => 'bg-success-100 text-success-800',
     'archived' => 'bg-neutral-100 text-neutral-500',
 ];
 $statusLabels = [
@@ -19,10 +19,10 @@ $statusLabels = [
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div class="space-y-6 lg:col-span-2">
             @if (session('status'))
-                <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+                <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
             @endif
 
-            <div class="rounded-lg border border-neutral-200 bg-white p-6">
+            <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                 <div class="flex items-start justify-between">
                     <div>
                         <h2 class="text-xl font-semibold text-neutral-900">{{ $jobDescription->job_title }}</h2>
@@ -79,7 +79,7 @@ $statusLabels = [
                     @if (in_array($jobDescription->status, ['draft', 'pending_review']))
                         <form method="POST" action="{{ route('job-descriptions.approve', $jobDescription) }}">
                             @csrf
-                            <button type="submit" class="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700">Approve &amp; Activate</button>
+                            <button type="submit" class="rounded-md bg-success-600 px-4 py-2 text-sm font-medium text-white hover:bg-success-700">Approve &amp; Activate</button>
                         </form>
                     @endif
 
@@ -99,7 +99,7 @@ $statusLabels = [
         </div>
 
         <div class="space-y-4">
-            <div class="rounded-lg border border-neutral-200 bg-white p-4">
+            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
                 <h3 class="text-sm font-semibold text-neutral-900">Version History</h3>
                 <ul class="mt-3 space-y-2 text-sm">
                     @foreach ($versions as $version)

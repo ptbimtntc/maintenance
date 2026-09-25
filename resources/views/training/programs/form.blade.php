@@ -7,7 +7,7 @@ $selectedSkills = old('skills', $program?->skills->pluck('id')->toArray() ?? [])
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit Training Program' : 'Add Training Program' }}</x-slot>
 
-    <div class="max-w-3xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-3xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('training.programs.update', $program) : route('training.programs.store') }}" enctype="multipart/form-data">
             @csrf
             @if ($isEdit) @method('PUT') @endif

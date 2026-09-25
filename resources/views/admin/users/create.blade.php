@@ -2,7 +2,7 @@
     <x-slot name="header">Add User</x-slot>
 
     <div class="max-w-xl space-y-6">
-        <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-6 rounded-lg border border-neutral-200 bg-white p-6">
+        <form method="POST" action="{{ route('admin.users.store') }}" class="space-y-6 rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
             @csrf
 
             <div>

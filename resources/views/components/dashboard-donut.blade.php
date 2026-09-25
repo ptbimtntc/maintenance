@@ -5,7 +5,7 @@
 $sum = collect($segments)->sum('value');
 @endphp
 
-<div class="rounded-lg border border-neutral-200 bg-white p-4">
+<div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
     <h3 class="mb-3 text-sm font-semibold text-neutral-900">{{ $title }}</h3>
 
     <div class="flex items-center gap-4">

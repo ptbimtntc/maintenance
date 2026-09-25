@@ -19,10 +19,10 @@
         <h1 class="text-center text-lg font-semibold text-neutral-900">Maintenance People Development System</h1>
         <p class="text-center text-sm text-neutral-500">PT Bekaert Indonesia</p>
 
-        <div class="mt-8 w-full rounded-lg border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
+        <div class="mt-8 w-full rounded-lg border border-neutral-200 bg-white p-6 shadow-md sm:p-8">
             @if (! $employee)
                 <div class="text-center">
-                    <svg class="mx-auto h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <svg class="mx-auto h-10 w-10 text-danger-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008v.008H12v-.008zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <h2 class="mt-3 text-base font-semibold text-neutral-900">Link not found</h2>
@@ -30,7 +30,7 @@
                 </div>
             @elseif ($justCompleted ?? false)
                 <div class="text-center">
-                    <svg class="mx-auto h-10 w-10 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <svg class="mx-auto h-10 w-10 text-success-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <h2 class="mt-3 text-base font-semibold text-neutral-900">Thank you, {{ $employee->full_name }}!</h2>
@@ -38,7 +38,7 @@
                 </div>
             @elseif (! $valid)
                 <div class="text-center">
-                    <svg class="mx-auto h-10 w-10 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <svg class="mx-auto h-10 w-10 text-warning-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
                     </svg>
                     <h2 class="mt-3 text-base font-semibold text-neutral-900">
@@ -61,7 +61,7 @@
                 </div>
 
                 @if ($errors->any())
-                    <div class="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    <div class="mb-4 rounded-md border border-danger-200 bg-danger-50 px-4 py-3 text-sm text-danger-800">
                         <ul class="list-disc space-y-1 pl-4">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>

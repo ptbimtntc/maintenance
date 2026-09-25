@@ -6,7 +6,7 @@ $old = fn ($field, $default = null) => old($field, $plan?->$field ?? $default);
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit' : 'Add' }} Development Plan — {{ $employee->full_name }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('employees.development-plans.update', [$employee, $plan]) : route('employees.development-plans.store', $employee) }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif

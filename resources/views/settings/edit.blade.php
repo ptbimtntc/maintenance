@@ -1,9 +1,9 @@
 <x-app-layout>
     <x-slot name="header">Settings</x-slot>
 
-    <div class="max-w-xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         @if (session('status'))
-            <div class="mb-4 rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="mb-4 rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
         <form method="POST" action="{{ route('settings.update') }}">

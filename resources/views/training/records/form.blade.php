@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">Add Training Record — {{ $employee->full_name }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ route('employees.training-records.store', $employee) }}">
             @csrf
 

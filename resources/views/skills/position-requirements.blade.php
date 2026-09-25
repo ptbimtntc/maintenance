@@ -5,10 +5,10 @@
         <a href="{{ route('skills.positions.index') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Positions</a>
 
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
-        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+        <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">
                     <tr>
@@ -32,7 +32,7 @@
                                 <form method="POST" action="{{ route('skills.positions.requirements.destroy', [$position, $requirement]) }}" onsubmit="return confirm('Remove this requirement?');">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                    <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                 </form>
                             </td>
                         </tr>
@@ -45,7 +45,7 @@
             </table>
         </div>
 
-        <div class="max-w-lg rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="max-w-lg rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
             <h3 class="text-sm font-semibold text-neutral-900">Add a Skill Requirement</h3>
 
             <form method="POST" action="{{ route('skills.positions.requirements.store', $position) }}" class="mt-4 space-y-4">

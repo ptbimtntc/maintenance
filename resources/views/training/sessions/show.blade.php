@@ -1,5 +1,5 @@
 @php
-$attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed' => 'bg-accent-100 text-accent-800', 'attended' => 'bg-green-100 text-green-800', 'absent' => 'bg-red-100 text-red-800'];
+$attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed' => 'bg-accent-100 text-accent-800', 'attended' => 'bg-success-100 text-success-800', 'absent' => 'bg-danger-100 text-danger-800'];
 @endphp
 
 <x-app-layout>
@@ -7,13 +7,13 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
 
     <div class="space-y-6">
         @if (session('status'))
-            <div class="rounded-md bg-green-50 px-4 py-3 text-sm text-green-800">{{ session('status') }}</div>
+            <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
         @if ($errors->any())
-            <div class="rounded-md bg-red-50 px-4 py-3 text-sm text-red-800">{{ $errors->first() }}</div>
+            <div class="rounded-md bg-danger-50 px-4 py-3 text-sm text-danger-800">{{ $errors->first() }}</div>
         @endif
 
-        <div class="rounded-lg border border-neutral-200 bg-white p-6">
+        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
             <div class="flex items-start justify-between">
                 <div>
                     <h2 class="text-lg font-semibold text-neutral-900">{{ $trainingSession->session_title ?? $trainingSession->trainingProgram->title }}</h2>
@@ -30,7 +30,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                 Participants ({{ $trainingSession->participants->count() }}{{ $trainingSession->max_participants ? ' / '.$trainingSession->max_participants : '' }})
             </h3>
 
-            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
                     <thead class="border-b-2 border-brand-500 bg-brand-50">
                         <tr>
@@ -67,7 +67,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                                             <form method="POST" action="{{ route('training.sessions.participants.destroy', [$trainingSession, $participant]) }}" onsubmit="return confirm('Remove this participant?');">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:underline">Remove</button>
+                                                <button type="submit" class="text-danger-600 hover:underline">Remove</button>
                                             </form>
                                         @endcan
                                     </div>
@@ -82,7 +82,7 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
         </div>
 
         @can(\App\Enums\PermissionName::ManageTraining->value)
-            <div class="max-w-md rounded-lg border border-neutral-200 bg-white p-6">
+            <div class="max-w-md rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
                 <h3 class="text-sm font-semibold text-neutral-900">Add Participant</h3>
                 <form method="POST" action="{{ route('training.sessions.participants.store', $trainingSession) }}" class="mt-4 flex gap-2">
                     @csrf

@@ -6,7 +6,7 @@ $old = fn ($field, $default = null) => old($field, $jobDescription?->$field ?? $
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit Job Description (v'.$jobDescription->version.')' : 'Add Job Description' }}</x-slot>
 
-    <div class="max-w-3xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-3xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('job-descriptions.update', $jobDescription) : route('job-descriptions.store') }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif

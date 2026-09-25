@@ -11,7 +11,7 @@ $originQuery = array_filter(['from' => $from]);
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit' : 'Add' }} {{ $config['singular'] }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6">
+    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('organization.update', [$type, $record->id, ...$originQuery]) : route('organization.store', [$type, ...$originQuery]) }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif
