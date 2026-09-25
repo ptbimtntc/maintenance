@@ -57,8 +57,12 @@
     </form>
 
     <div class="mt-6 border-t border-neutral-200 pt-6 text-center">
-        <p class="text-sm text-neutral-500">
-            <a href="{{ route('guest-login') }}" class="underline hover:text-neutral-700">Continue browsing as guest (read-only)</a>
-        </p>
+        <a href="{{ route('guest-login') }}" class="inline-flex items-center gap-1.5 rounded-md border border-neutral-300 px-3.5 py-2 text-sm font-medium text-neutral-600 shadow-sm transition hover:border-accent-400 hover:bg-accent-50 hover:text-accent-700">
+            Continue browsing as guest
+            <svg class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H4a1 1 0 110-2h10.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+        </a>
+        <p class="mt-1.5 text-xs text-neutral-400">Read-only access, no account needed</p>
     </div>
 </x-guest-layout>
