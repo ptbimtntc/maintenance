@@ -20,7 +20,8 @@ $old = fn ($field, $default = null) => old($field, $news?->$field ?? $default);
 
                 <div>
                     <x-input-label for="body" value="Content" />
-                    <textarea id="body" name="body" rows="6" class="mt-1 block w-full rounded-md border-neutral-300 text-sm" required>{{ $old('body') }}</textarea>
+                    <input id="body" type="hidden" name="body" value="{{ $old('body') }}">
+                    <trix-editor input="body" class="mt-1 block w-full rounded-md border border-neutral-300 text-sm" style="min-height: 10rem;"></trix-editor>
                     <x-input-error :messages="$errors->get('body')" class="mt-1" />
                 </div>
 

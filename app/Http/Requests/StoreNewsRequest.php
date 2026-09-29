@@ -18,7 +18,7 @@ class StoreNewsRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:10000'],
+            'body' => ['required', 'string', 'max:20000'],
             'template' => ['required', Rule::in(News::TEMPLATES)],
             'image' => ['nullable', 'image', 'max:4096'],
             'is_published' => ['nullable', 'boolean'],

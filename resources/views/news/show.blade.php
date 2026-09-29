@@ -17,7 +17,7 @@
                         &middot; {{ $news->createdBy->name }}
                     @endif
                 </p>
-                <div class="mt-4 whitespace-pre-line text-sm leading-relaxed text-neutral-700">{{ $news->body }}</div>
+                <div class="prose prose-sm mt-4 max-w-none leading-relaxed text-neutral-700">{!! $news->body !!}</div>
             </div>
         </div>
     </div>

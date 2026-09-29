@@ -12,6 +12,10 @@ if (document.getElementById('face-login-panel') || document.getElementById('face
     import('./face-login');
 }
 
+if (document.querySelector('trix-editor')) {
+    import('./news-editor');
+}
+
 window.Alpine = Alpine;
 
 Alpine.start();

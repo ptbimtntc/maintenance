@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\HtmlSanitizer;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +29,20 @@ class News extends Model
         return [
             'is_published' => 'boolean',
             'expires_at' => 'date',
+            'notified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * The Trix editor stores rich text as HTML; sanitize on the way in so
+     * only a small known-safe tag set (see HtmlSanitizer) ever reaches the
+     * dashboard carousel other users' browsers render.
+     */
+    protected function body(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => HtmlSanitizer::clean($value),
+        );
     }
 
     public function createdBy(): BelongsTo

@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreNewsRequest;
 use App\Models\News;
+use App\Models\User;
+use App\Notifications\NewsPublished;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -41,6 +43,8 @@ class NewsController extends Controller
         if ($request->hasFile('image')) {
             $news->update(['image_path' => $request->file('image')->store('news-images', 'public')]);
         }
+
+        $this->notifyIfNewlyPublished($news, $request->user());
 
         return redirect()->route('news.index')->with('status', 'News created.');
     }
@@ -82,7 +86,25 @@ class NewsController extends Controller
 
         $news->save();
 
+        $this->notifyIfNewlyPublished($news, $request->user());
+
         return redirect()->route('news.index')->with('status', 'News updated.');
+    }
+
+    /**
+     * Notify every user once, the moment a news item first becomes visible
+     * on the dashboard - not on every save, so fixing a typo on an
+     * already-published item doesn't spam everyone again.
+     */
+    private function notifyIfNewlyPublished(News $news, User $author): void
+    {
+        if (! $news->is_published || $news->notified_at !== null) {
+            return;
+        }
+
+        User::where('id', '!=', $author->id)->get()->each->notify(new NewsPublished($news));
+
+        $news->forceFill(['notified_at' => now()])->save();
     }
 
     public function destroy(News $news): RedirectResponse

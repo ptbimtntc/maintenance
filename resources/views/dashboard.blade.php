@@ -95,7 +95,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                                 <div class="absolute bottom-0 left-0 right-0 p-5">
                                     <h3 class="text-lg font-semibold text-white">{{ $item->title }}</h3>
-                                    <p class="mt-1 line-clamp-2 text-sm text-neutral-100">{{ $item->body }}</p>
+                                    <p class="mt-1 line-clamp-2 text-sm text-neutral-100">{{ \Illuminate\Support\Str::limit(strip_tags($item->body), 160) }}</p>
                                     <p class="mt-1 text-xs text-neutral-300">{{ $item->created_at->format('d M Y') }}</p>
                                 </div>
                             </div>
@@ -109,7 +109,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                             </div>
                             <div class="p-5 sm:col-span-2">
                                 <h3 class="text-base font-semibold text-neutral-900">{{ $item->title }}</h3>
-                                <p class="mt-1 line-clamp-3 text-sm text-neutral-600">{{ $item->body }}</p>
+                                <p class="mt-1 line-clamp-3 text-sm text-neutral-600">{{ \Illuminate\Support\Str::limit(strip_tags($item->body), 200) }}</p>
                                 <p class="mt-2 text-xs text-neutral-400">{{ $item->created_at->format('d M Y') }}</p>
                             </div>
                         @endif
