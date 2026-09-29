@@ -266,6 +266,12 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageNews->value]
         Route::delete('/{news}', [NewsController::class, 'destroy'])->name('destroy');
     });
 
+// News detail is viewable by anyone logged in (not just news managers) -
+// it's what the dashboard carousel links to when a user clicks a headline.
+Route::middleware(['auth', 'verified'])
+    ->get('/news/{news}', [NewsController::class, 'show'])
+    ->name('news.show');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

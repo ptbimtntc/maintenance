@@ -22,6 +22,7 @@ class StoreNewsRequest extends FormRequest
             'template' => ['required', Rule::in(News::TEMPLATES)],
             'image' => ['nullable', 'image', 'max:4096'],
             'is_published' => ['nullable', 'boolean'],
+            'expires_at' => ['nullable', 'date', 'after_or_equal:today'],
         ];
     }
 }

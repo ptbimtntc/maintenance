@@ -42,6 +42,13 @@ $old = fn ($field, $default = null) => old($field, $news?->$field ?? $default);
                     <x-input-error :messages="$errors->get('image')" class="mt-1" />
                 </div>
 
+                <div>
+                    <x-input-label for="expires_at" value="Show Until (optional)" />
+                    <input id="expires_at" type="date" name="expires_at" class="mt-1 block w-full rounded-md border-neutral-300 text-sm" value="{{ $old('expires_at') ? \Illuminate\Support\Carbon::parse($old('expires_at'))->format('Y-m-d') : '' }}">
+                    <p class="mt-1 text-xs text-neutral-400">After this date, the news is automatically hidden from the dashboard (it stays here and can still be edited). Leave blank to show indefinitely.</p>
+                    <x-input-error :messages="$errors->get('expires_at')" class="mt-1" />
+                </div>
+
                 <div class="flex items-center gap-2">
                     <input id="is_published" type="checkbox" name="is_published" value="1" class="rounded border-neutral-300" @checked($old('is_published', true))>
                     <x-input-label for="is_published" value="Published (visible on dashboard)" />

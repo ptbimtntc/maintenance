@@ -45,6 +45,19 @@ class NewsController extends Controller
         return redirect()->route('news.index')->with('status', 'News created.');
     }
 
+    public function show(News $news): View
+    {
+        abort_unless(
+            $news->is_published && (!$news->expires_at || !$news->expires_at->isPast())
+                || auth()->user()->hasPermissionTo(\App\Enums\PermissionName::ManageNews->value),
+            404
+        );
+
+        return view('news.show', [
+            'news' => $news,
+        ]);
+    }
+
     public function edit(News $news): View
     {
         return view('news.form', [

@@ -79,7 +79,12 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 class="relative overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-md"
             >
                 @foreach ($latestNews as $index => $item)
-                    <div x-show="active === {{ $index }}" x-cloak class="{{ $item->template === 'highlight' ? 'relative' : 'grid grid-cols-1 sm:grid-cols-3' }}">
+                    <a
+                        href="{{ route('news.show', $item) }}"
+                        x-show="active === {{ $index }}"
+                        x-cloak
+                        class="block cursor-pointer transition hover:brightness-95 {{ $item->template === 'highlight' ? 'relative' : 'grid grid-cols-1 sm:grid-cols-3' }}"
+                    >
                         @if ($item->template === 'highlight')
                             <div class="relative h-56 w-full sm:h-72">
                                 @if ($item->image_path)
@@ -108,7 +113,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                                 <p class="mt-2 text-xs text-neutral-400">{{ $item->created_at->format('d M Y') }}</p>
                             </div>
                         @endif
-                    </div>
+                    </a>
                 @endforeach
 
                 @if ($latestNews->count() > 1)

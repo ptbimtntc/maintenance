@@ -34,10 +34,15 @@
                             <td class="px-3 py-2 font-medium text-neutral-900">{{ $item->title }}</td>
                             <td class="px-3 py-2 text-neutral-600 capitalize">{{ $item->template }}</td>
                             <td class="px-3 py-2">
-                                @if ($item->is_published)
-                                    <span class="inline-flex rounded-full bg-success-100 px-2 py-1 text-xs font-medium text-success-800">Published</span>
-                                @else
+                                @if (!$item->is_published)
                                     <span class="inline-flex rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-500">Draft</span>
+                                @elseif ($item->expires_at && $item->expires_at->isPast())
+                                    <span class="inline-flex rounded-full bg-warning-100 px-2 py-1 text-xs font-medium text-warning-800">Expired</span>
+                                @else
+                                    <span class="inline-flex rounded-full bg-success-100 px-2 py-1 text-xs font-medium text-success-800">Published</span>
+                                @endif
+                                @if ($item->expires_at)
+                                    <span class="block text-xs text-neutral-400">until {{ $item->expires_at->format('d M Y') }}</span>
                                 @endif
                             </td>
                             <td class="px-3 py-2 text-neutral-600">{{ $item->created_at->format('d M Y') }}</td>

@@ -18,6 +18,7 @@ class News extends Model
         'image_path',
         'template',
         'is_published',
+        'expires_at',
         'created_by',
     ];
 
@@ -25,6 +26,7 @@ class News extends Model
     {
         return [
             'is_published' => 'boolean',
+            'expires_at' => 'date',
         ];
     }
 
@@ -33,8 +35,10 @@ class News extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** Published and not past its optional expiry date - what the dashboard carousel shows. */
     public function scopePublished($query)
     {
-        return $query->where('is_published', true);
+        return $query->where('is_published', true)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhereDate('expires_at', '>=', now()->toDateString()));
     }
 }
