@@ -52,6 +52,9 @@ enum PermissionName: string
     case ViewSafety = 'safety.view';
     case ManageSafety = 'safety.manage';
 
+    // News / dashboard announcements
+    case ManageNews = 'news.manage';
+
     public static function all(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());
@@ -86,6 +89,7 @@ enum PermissionName: string
             self::ViewReports => 'View reports',
             self::ViewSafety => 'View safety (LOTOTO)',
             self::ManageSafety => 'Manage safety (LOTOTO)',
+            self::ManageNews => 'Manage news (dashboard announcements)',
         };
     }
 
@@ -106,6 +110,7 @@ enum PermissionName: string
             self::ViewDevelopmentPlans, self::ManageDevelopmentPlans => 'Development Plans',
             self::ViewReports => 'Reports',
             self::ViewSafety, self::ManageSafety => 'Safety',
+            self::ManageNews => 'News',
         };
     }
 

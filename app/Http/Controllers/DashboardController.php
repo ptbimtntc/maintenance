@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDevelopmentPlan;
 use App\Models\EmploymentSource;
 use App\Models\EmploymentType;
+use App\Models\News;
 use App\Models\TrainingRecord;
 use App\Models\TrainingSession;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,7 +58,10 @@ class DashboardController extends Controller
         $developmentPlanSummary = $this->developmentPlanSummary($employeeIds);
         $trainingHoursThisYear = $this->trainingHours($employeeIds, $year);
 
+        $latestNews = News::query()->published()->orderByDesc('created_at')->take(6)->get();
+
         return view('dashboard', [
+            'latestNews' => $latestNews,
             'filters' => [
                 'year' => $year,
                 'business_unit_id' => $businessUnitId,

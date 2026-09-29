@@ -23,6 +23,7 @@ $userManagementActive = request()->routeIs('admin.users.*');
 $roleManagementActive = request()->routeIs('admin.roles.*');
 $auditLogActive = request()->routeIs('audit-logs.*');
 $settingsActive = request()->routeIs('settings.*');
+$newsActive = request()->routeIs('news.*');
 
 $canViewEmployees = $user->can('viewAny', \App\Models\Employee::class);
 $canManageMasterData = $user->can(\App\Enums\PermissionName::ManageMasterData->value);
@@ -37,6 +38,7 @@ $canViewSafety = $user->can(\App\Enums\PermissionName::ViewSafety->value);
 $canViewReports = $user->can(\App\Enums\PermissionName::ViewReports->value);
 $canManageUsers = $user->can(\App\Enums\PermissionName::ManageUsers->value);
 $canManageSettings = $user->can(\App\Enums\PermissionName::ManageSettings->value);
+$canManageNews = $user->can(\App\Enums\PermissionName::ManageNews->value);
 $isGuest = $user->hasRole(\App\Enums\RoleName::Guest->value);
 
 // Section headings only render when at least one item beneath them would -
@@ -45,7 +47,7 @@ $isGuest = $user->hasRole(\App\Enums\RoleName::Guest->value);
 $showOrganizationSection = $canViewEmployees || $canManageMasterData;
 $showCompetencySection = $canViewJobDescriptions || $canViewSkillMatrix || $canViewCompetencyGap;
 $showTrainingSection = $canManageTraining || $canViewTraining || $canViewCertificates || $canViewDevelopmentPlans;
-$showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings;
+$showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings || $canManageNews;
 
 // Each collapsible group starts open automatically when the current page
 // lives inside it, so navigating there never hides where you are.
@@ -53,7 +55,7 @@ $organizationSectionActive = $employeesActive || $organizationChartActive || $qr
 $competencySectionActive = $jobDescriptionsActive || $skillsActive || $skillMatrixActive || $competencyGapActive;
 $trainingSectionActive = $trainingManagementActive || $trainingCalendarActive || $trainingRecordsActive
     || $certificatesActive || $recertificationActive || $signatoriesActive || $developmentPlansActive;
-$insightsSectionActive = $reportsActive || $userManagementActive || $roleManagementActive || $auditLogActive || $settingsActive;
+$insightsSectionActive = $reportsActive || $userManagementActive || $roleManagementActive || $auditLogActive || $settingsActive || $newsActive;
 @endphp
 
 <div class="flex h-full grow flex-col bg-neutral-900">
@@ -183,6 +185,11 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
                 @if ($canManageSettings)
                     <x-nav-item :href="route('settings.edit')" :active="$settingsActive" icon="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.014a3.375 3.375 0 013.375 3.375c0 .174-.024.35-.014.523M11.42 15.17l1.008-1.24">
                         Settings
+                    </x-nav-item>
+                @endif
+                @if ($canManageNews)
+                    <x-nav-item :href="route('news.index')" :active="$newsActive" icon="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z">
+                        News
                     </x-nav-item>
                 @endif
             </x-nav-group>

@@ -72,6 +72,55 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
             </form>
         </div>
 
+        @if ($latestNews->isNotEmpty())
+            <div
+                x-data="{ active: 0, count: {{ $latestNews->count() }} }"
+                x-init="count > 1 && setInterval(() => active = (active + 1) % count, 6000)"
+                class="relative overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-md"
+            >
+                @foreach ($latestNews as $index => $item)
+                    <div x-show="active === {{ $index }}" x-cloak class="{{ $item->template === 'highlight' ? 'relative' : 'grid grid-cols-1 sm:grid-cols-3' }}">
+                        @if ($item->template === 'highlight')
+                            <div class="relative h-56 w-full sm:h-72">
+                                @if ($item->image_path)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->image_path) }}" alt="{{ $item->title }}" class="h-full w-full object-cover">
+                                @else
+                                    <div class="h-full w-full bg-gradient-to-br from-brand-600 to-brand-800"></div>
+                                @endif
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                                <div class="absolute bottom-0 left-0 right-0 p-5">
+                                    <h3 class="text-lg font-semibold text-white">{{ $item->title }}</h3>
+                                    <p class="mt-1 line-clamp-2 text-sm text-neutral-100">{{ $item->body }}</p>
+                                    <p class="mt-1 text-xs text-neutral-300">{{ $item->created_at->format('d M Y') }}</p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="sm:col-span-1">
+                                @if ($item->image_path)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($item->image_path) }}" alt="{{ $item->title }}" class="h-40 w-full object-cover sm:h-full">
+                                @else
+                                    <div class="h-40 w-full bg-gradient-to-br from-brand-100 to-brand-200 sm:h-full"></div>
+                                @endif
+                            </div>
+                            <div class="p-5 sm:col-span-2">
+                                <h3 class="text-base font-semibold text-neutral-900">{{ $item->title }}</h3>
+                                <p class="mt-1 line-clamp-3 text-sm text-neutral-600">{{ $item->body }}</p>
+                                <p class="mt-2 text-xs text-neutral-400">{{ $item->created_at->format('d M Y') }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+
+                @if ($latestNews->count() > 1)
+                    <div class="flex justify-center gap-1.5 border-t border-neutral-100 bg-white py-2">
+                        @foreach ($latestNews as $index => $item)
+                            <button type="button" @click="active = {{ $index }}" :class="active === {{ $index }} ? 'bg-brand-600' : 'bg-neutral-300'" class="h-1.5 w-4 rounded-full transition"></button>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        @endif
+
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
             <x-dashboard-stat
                 label="Total Employees"

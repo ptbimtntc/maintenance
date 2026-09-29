@@ -14,6 +14,7 @@ use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\LototoController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationChartController;
 use App\Http\Controllers\PositionSkillRequirementController;
@@ -252,6 +253,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
 });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageNews->value])
+    ->prefix('news')
+    ->name('news.')
+    ->group(function () {
+        Route::get('/', [NewsController::class, 'index'])->name('index');
+        Route::get('/create', [NewsController::class, 'create'])->name('create');
+        Route::post('/', [NewsController::class, 'store'])->name('store');
+        Route::get('/{news}/edit', [NewsController::class, 'edit'])->name('edit');
+        Route::put('/{news}', [NewsController::class, 'update'])->name('update');
+        Route::delete('/{news}', [NewsController::class, 'destroy'])->name('destroy');
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
