@@ -53,7 +53,7 @@ class NewsController extends Controller
     public function show(News $news): View
     {
         abort_unless(
-            $news->is_published && (!$news->expires_at || !$news->expires_at->isPast())
+            $news->is_published && ! $news->isExpired()
                 || auth()->user()->hasPermissionTo(\App\Enums\PermissionName::ManageNews->value),
             404
         );

@@ -192,6 +192,22 @@ class NewsTest extends TestCase
         $this->assertCount(2, $result);
     }
 
+    public function test_news_expiring_today_is_still_viewable_all_day(): void
+    {
+        // Regression: expires_at is cast to a date (midnight), so a naive
+        // Carbon::isPast() check on it would call a news item expired the
+        // instant its last valid day begins - even though scopePublished()
+        // (used by the dashboard carousel) still counts "today" as valid.
+        // That mismatch previously made news set to "show until today"
+        // appear in the carousel but 404 the moment it was clicked.
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+        $news = News::factory()->create(['is_published' => true, 'expires_at' => now()->toDateString()]);
+
+        $this->assertTrue(News::published()->get()->contains($news));
+        $this->actingAs($staff)->get(route('news.show', $news))->assertOk();
+    }
+
     public function test_any_authenticated_user_can_view_a_published_news_item(): void
     {
         $staff = User::factory()->create();

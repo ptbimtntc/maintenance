@@ -56,4 +56,17 @@ class News extends Model
         return $query->where('is_published', true)
             ->where(fn ($q) => $q->whereNull('expires_at')->orWhereDate('expires_at', '>=', now()->toDateString()));
     }
+
+    /**
+     * "Show Until" is a whole calendar day, not an instant - expires_at is
+     * cast to a date (midnight), so comparing it with Carbon::isPast()
+     * directly would call a news item expired at 12:00am on its last valid
+     * day, hours before that day is actually over. This is the single
+     * source of truth both scopePublished() (via the equivalent whereDate
+     * comparison) and NewsController::show() must agree on.
+     */
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->lt(now()->startOfDay());
+    }
 }

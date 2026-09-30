@@ -36,7 +36,7 @@
                             <td class="px-3 py-2">
                                 @if (!$item->is_published)
                                     <span class="inline-flex rounded-full bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-500">Draft</span>
-                                @elseif ($item->expires_at && $item->expires_at->isPast())
+                                @elseif ($item->isExpired())
                                     <span class="inline-flex rounded-full bg-warning-100 px-2 py-1 text-xs font-medium text-warning-800">Expired</span>
                                 @else
                                     <span class="inline-flex rounded-full bg-success-100 px-2 py-1 text-xs font-medium text-success-800">Published</span>
