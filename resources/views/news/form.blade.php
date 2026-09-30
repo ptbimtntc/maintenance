@@ -40,6 +40,7 @@ $old = fn ($field, $default = null) => old($field, $news?->$field ?? $default);
                         <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($news->image_path) }}" alt="Current image" class="mt-1 mb-2 h-32 w-full max-w-sm rounded-md object-cover">
                     @endif
                     <input id="image" type="file" name="image" accept="image/*" class="mt-1 block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white shadow-sm transition hover:file:bg-brand-700" />
+                    <p class="mt-1 text-xs text-neutral-400">Max 10MB. Automatically resized and compressed for the dashboard - no need to shrink it yourself first.</p>
                     <x-input-error :messages="$errors->get('image')" class="mt-1" />
                 </div>
 

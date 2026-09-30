@@ -6,6 +6,7 @@ use App\Http\Requests\StoreNewsRequest;
 use App\Models\News;
 use App\Models\User;
 use App\Notifications\NewsPublished;
+use App\Support\NewsImageProcessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -41,7 +42,7 @@ class NewsController extends Controller
         ]);
 
         if ($request->hasFile('image')) {
-            $news->update(['image_path' => $request->file('image')->store('news-images', 'public')]);
+            $news->update(['image_path' => NewsImageProcessor::store($request->file('image'), 'news-images')]);
         }
 
         $this->notifyIfNewlyPublished($news, $request->user());
@@ -81,7 +82,7 @@ class NewsController extends Controller
                 Storage::disk('public')->delete($news->image_path);
             }
 
-            $news->image_path = $request->file('image')->store('news-images', 'public');
+            $news->image_path = NewsImageProcessor::store($request->file('image'), 'news-images');
         }
 
         $news->save();
