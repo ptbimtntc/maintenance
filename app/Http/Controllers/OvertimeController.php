@@ -7,7 +7,9 @@ use App\Concerns\PrunesNotificationLinks;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreOvertimeEntryRequest;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
 use App\Models\OvertimeEntry;
+use App\Models\Shift;
 use App\Models\User;
 use App\Notifications\OvertimeEditApproved;
 use App\Notifications\OvertimeEditRequested;
@@ -106,19 +108,64 @@ class OvertimeController extends Controller
     }
 
     /**
+     * The employment source pre-selected in the create/edit form's filter
+     * bar when the request doesn't specify one - "Bekaert" is the source
+     * the overwhelming majority of overtime entries are logged for, so
+     * defaulting to it saves a click on the common case without hiding
+     * other sources (the filter can still be changed/cleared).
+     */
+    private function defaultEmploymentSourceId(): ?int
+    {
+        return EmploymentSource::where('name', 'Bekaert')->value('id');
+    }
+
+    /**
      * Employees the current user is allowed to log/edit overtime for: their
      * own direct reports for an ordinary supervisor, or literally everyone
      * for a ManageOvertime holder (HR/Admin) - they aren't anyone's direct
      * supervisor in the org chart, but still need to be able to enter or
-     * correct any team's overtime themselves.
+     * correct any team's overtime themselves. Only active employees are
+     * offered - overtime isn't logged against someone no longer active -
+     * further narrowed by the optional employment source / shift filters,
+     * except the entry's own current employee (if editing) is always kept
+     * in the list so an existing entry never becomes un-editable because
+     * its employee no longer matches the filter.
      */
-    private function selectableEmployees(Request $request): \Illuminate\Support\Collection
+    private function selectableEmployees(Request $request, ?Employee $keepSelected = null): \Illuminate\Support\Collection
     {
-        if ($this->canManage($request)) {
-            return Employee::query()->orderBy('full_name')->get();
+        $base = $this->canManage($request)
+            ? Employee::query()
+            : Employee::query()->whereIn('id', $this->supervisorEmployee($request)?->directReports()->pluck('id') ?? collect());
+
+        $employmentSourceId = $request->filled('employment_source_id')
+            ? $request->integer('employment_source_id')
+            : $this->defaultEmploymentSourceId();
+
+        $employees = $base->active()
+            ->when($employmentSourceId, fn ($q) => $q->where('employment_source_id', $employmentSourceId))
+            ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')))
+            ->orderBy('full_name')
+            ->get();
+
+        if ($keepSelected && ! $employees->contains('id', $keepSelected->id)) {
+            $employees->push($keepSelected);
         }
 
-        return $this->supervisorEmployee($request)?->directReports()->orderBy('full_name')->get() ?? collect();
+        return $employees;
+    }
+
+    private function employeeFilterOptions(Request $request): array
+    {
+        return [
+            'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),
+            'shifts' => Shift::where('is_active', true)->orderBy('name')->get(),
+            'filters' => [
+                'employment_source_id' => $request->filled('employment_source_id')
+                    ? $request->integer('employment_source_id')
+                    : $this->defaultEmploymentSourceId(),
+                'shift_id' => $request->integer('shift_id') ?: null,
+            ],
+        ];
     }
 
     public function create(Request $request): View
@@ -128,6 +175,7 @@ class OvertimeController extends Controller
         return view('overtime.form', [
             'entry' => null,
             'directReports' => $this->selectableEmployees($request),
+            ...$this->employeeFilterOptions($request),
         ]);
     }
 
@@ -158,7 +206,8 @@ class OvertimeController extends Controller
 
         return view('overtime.form', [
             'entry' => $overtimeEntry,
-            'directReports' => $this->selectableEmployees($request),
+            'directReports' => $this->selectableEmployees($request, $overtimeEntry->employee),
+            ...$this->employeeFilterOptions($request),
         ]);
     }
 

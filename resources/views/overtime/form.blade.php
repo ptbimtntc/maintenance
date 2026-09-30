@@ -6,7 +6,31 @@ $old = fn ($field, $default = null) => old($field, $isEdit ? ($entry->{$field} i
 <x-app-layout>
     <x-slot name="header">{{ $isEdit ? 'Edit Overtime Entry' : 'Log Overtime' }}</x-slot>
 
-    <div class="max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
+    <div class="max-w-2xl space-y-4">
+        <form method="GET" action="{{ $isEdit ? route('overtime.edit', $entry) : route('overtime.create') }}"
+              class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-2">
+            <div>
+                <label class="block text-[11px] font-medium text-neutral-500">Employment Source</label>
+                <select name="employment_source_id" onchange="this.form.submit()" class="mt-0.5 block w-full rounded-md border-neutral-300 text-sm">
+                    <option value="">All Sources</option>
+                    @foreach ($employmentSources as $source)
+                        <option value="{{ $source->id }}" @selected($filters['employment_source_id'] == $source->id)>{{ $source->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label class="block text-[11px] font-medium text-neutral-500">Shift</label>
+                <select name="shift_id" onchange="this.form.submit()" class="mt-0.5 block w-full rounded-md border-neutral-300 text-sm">
+                    <option value="">All Shifts</option>
+                    @foreach ($shifts as $shift)
+                        <option value="{{ $shift->id }}" @selected($filters['shift_id'] == $shift->id)>{{ $shift->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <p class="col-span-full text-[11px] text-neutral-400">Filters narrow the Team Member list below to active employees matching your selection.</p>
+        </form>
+
+        <div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-md">
         <form method="POST" action="{{ $isEdit ? route('overtime.update', $entry) : route('overtime.store') }}">
             @csrf
             @if ($isEdit) @method('PUT') @endif
@@ -20,6 +44,9 @@ $old = fn ($field, $default = null) => old($field, $isEdit ? ($entry->{$field} i
                         @endforeach
                     </select>
                     <x-input-error :messages="$errors->get('employee_id')" class="mt-1" />
+                    @if ($directReports->isEmpty())
+                        <p class="mt-1 text-xs text-warning-700">No active employees match the current filters.</p>
+                    @endif
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -68,5 +95,6 @@ $old = fn ($field, $default = null) => old($field, $isEdit ? ($entry->{$field} i
                 <a href="{{ route('overtime.index') }}" class="text-sm text-neutral-600 hover:underline">Cancel</a>
             </div>
         </form>
+        </div>
     </div>
 </x-app-layout>

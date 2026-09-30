@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\Employee;
+use App\Models\EmploymentSource;
+use App\Models\EmploymentStatus;
 use App\Models\OvertimeEntry;
+use App\Models\Shift;
 use App\Models\User;
 use App\Notifications\OvertimeEditApproved;
 use App\Notifications\OvertimeEditRequested;
@@ -239,6 +242,48 @@ class OvertimeTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_the_create_form_only_lists_active_employees_and_defaults_to_the_bekaert_source(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $bekaert = EmploymentSource::factory()->create(['name' => 'Bekaert']);
+        $otherSource = EmploymentSource::factory()->create();
+        $activeStatus = EmploymentStatus::factory()->create(['counts_as_active' => true]);
+        $inactiveStatus = EmploymentStatus::factory()->create(['counts_as_active' => false]);
+
+        $activeBekaert = Employee::factory()->create(['full_name' => 'Active Bekaert Person', 'employment_source_id' => $bekaert->id, 'employment_status_id' => $activeStatus->id]);
+        $inactiveBekaert = Employee::factory()->create(['full_name' => 'Inactive Bekaert Person', 'employment_source_id' => $bekaert->id, 'employment_status_id' => $inactiveStatus->id]);
+        $activeOtherSource = Employee::factory()->create(['full_name' => 'Active Other Source Person', 'employment_source_id' => $otherSource->id, 'employment_status_id' => $activeStatus->id]);
+
+        $response = $this->actingAs($admin)->get(route('overtime.create'));
+
+        $response->assertOk();
+        $response->assertSee('Active Bekaert Person');
+        $response->assertDontSee('Inactive Bekaert Person');
+        $response->assertDontSee('Active Other Source Person');
+    }
+
+    public function test_the_create_form_can_be_filtered_by_shift(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $bekaert = EmploymentSource::factory()->create(['name' => 'Bekaert']);
+        $activeStatus = EmploymentStatus::factory()->create(['counts_as_active' => true]);
+        $morningShift = Shift::factory()->create();
+        $nightShift = Shift::factory()->create();
+
+        Employee::factory()->create(['full_name' => 'Morning Person', 'employment_source_id' => $bekaert->id, 'employment_status_id' => $activeStatus->id, 'shift_id' => $morningShift->id]);
+        Employee::factory()->create(['full_name' => 'Night Person', 'employment_source_id' => $bekaert->id, 'employment_status_id' => $activeStatus->id, 'shift_id' => $nightShift->id]);
+
+        $response = $this->actingAs($admin)->get(route('overtime.create', ['shift_id' => $morningShift->id]));
+
+        $response->assertOk();
+        $response->assertSee('Morning Person');
+        $response->assertDontSee('Night Person');
     }
 
     public function test_an_overtime_manager_can_log_an_entry_for_any_employee_without_being_their_supervisor(): void
