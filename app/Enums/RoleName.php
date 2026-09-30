@@ -89,6 +89,7 @@ enum RoleName: string
                 PermissionName::ViewReports,
                 PermissionName::ViewSafety,
                 PermissionName::ManageNews,
+                PermissionName::ManageOvertime,
             ],
 
             // Read-only, org-wide access for the "View as Guest" button on

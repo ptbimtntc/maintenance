@@ -6,6 +6,7 @@ $employeesActive = request()->routeIs('employees.*');
 $organizationChartActive = request()->routeIs('organization-chart.*');
 $qrCodesActive = request()->routeIs('employees.qr-codes');
 $organizationActive = request()->routeIs('organization.*');
+$overtimeActive = request()->routeIs('overtime.*');
 $skillsActive = request()->routeIs('skills.*');
 $skillMatrixActive = request()->routeIs('skill-matrix.*');
 $jobDescriptionsActive = request()->routeIs('job-descriptions.*');
@@ -39,12 +40,14 @@ $canViewReports = $user->can(\App\Enums\PermissionName::ViewReports->value);
 $canManageUsers = $user->can(\App\Enums\PermissionName::ManageUsers->value);
 $canManageSettings = $user->can(\App\Enums\PermissionName::ManageSettings->value);
 $canManageNews = $user->can(\App\Enums\PermissionName::ManageNews->value);
+$canViewOvertime = $user->can(\App\Enums\PermissionName::ManageOvertime->value)
+    || ($user->employee?->directReports()->exists() ?? false);
 $isGuest = $user->hasRole(\App\Enums\RoleName::Guest->value);
 
 // Section headings only render when at least one item beneath them would -
 // an empty "Insights & System" heading with nothing under it is just noise
 // for roles (e.g. Maintenance Staff) that hold none of those permissions.
-$showOrganizationSection = $canViewEmployees || $canManageMasterData;
+$showOrganizationSection = $canViewEmployees || $canManageMasterData || $canViewOvertime;
 $showCompetencySection = $canViewJobDescriptions || $canViewSkillMatrix || $canViewCompetencyGap;
 $showTrainingSection = $canManageTraining || $canViewTraining || $canViewCertificates || $canViewDevelopmentPlans;
 $showSafetySection = $canViewSafety;
@@ -52,7 +55,7 @@ $showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings 
 
 // Each collapsible group starts open automatically when the current page
 // lives inside it, so navigating there never hides where you are.
-$organizationSectionActive = $employeesActive || $organizationChartActive || $qrCodesActive || $organizationActive;
+$organizationSectionActive = $employeesActive || $organizationChartActive || $qrCodesActive || $organizationActive || $overtimeActive;
 $competencySectionActive = $jobDescriptionsActive || $skillsActive || $skillMatrixActive || $competencyGapActive;
 $trainingSectionActive = $trainingManagementActive || $trainingCalendarActive || $trainingRecordsActive
     || $certificatesActive || $recertificationActive || $signatoriesActive || $developmentPlansActive;
@@ -94,6 +97,11 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
                 @if ($canManageMasterData)
                     <x-nav-item :href="route('organization.landing')" :active="$organizationActive" icon="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21">
                         Organization
+                    </x-nav-item>
+                @endif
+                @if ($canViewOvertime)
+                    <x-nav-item :href="route('overtime.index')" :active="$overtimeActive" icon="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z">
+                        Overtime
                     </x-nav-item>
                 @endif
             </x-nav-group>

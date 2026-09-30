@@ -55,6 +55,12 @@ enum PermissionName: string
     // News / dashboard announcements
     case ManageNews = 'news.manage';
 
+    // Overtime: reviewing/approving edit requests, exporting to HR, and
+    // marking batches as sent - logging an entry for your own team only
+    // requires being that team's supervisor (see OvertimeController), not
+    // a permission, so every role can do that without being granted this.
+    case ManageOvertime = 'overtime.manage';
+
     public static function all(): array
     {
         return array_map(fn (self $case) => $case->value, self::cases());
@@ -90,6 +96,7 @@ enum PermissionName: string
             self::ViewSafety => 'View safety (LOTOTO)',
             self::ManageSafety => 'Manage safety (LOTOTO)',
             self::ManageNews => 'Manage news (dashboard announcements)',
+            self::ManageOvertime => 'Manage overtime (approve edits, export to HR)',
         };
     }
 
@@ -111,6 +118,7 @@ enum PermissionName: string
             self::ViewReports => 'Reports',
             self::ViewSafety, self::ManageSafety => 'Safety',
             self::ManageNews => 'News',
+            self::ManageOvertime => 'Overtime',
         };
     }
 

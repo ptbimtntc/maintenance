@@ -17,6 +17,7 @@ use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationChartController;
+use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\PositionSkillRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PublicCertificateController;
@@ -57,6 +58,19 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 Route::middleware(['auth', 'verified'])
     ->get('/organization-chart', [OrganizationChartController::class, 'index'])
     ->name('organization-chart.index');
+
+Route::middleware(['auth', 'verified'])->prefix('overtime')->name('overtime.')->group(function () {
+    Route::get('/', [OvertimeController::class, 'index'])->name('index');
+    Route::get('/create', [OvertimeController::class, 'create'])->name('create');
+    Route::post('/', [OvertimeController::class, 'store'])->name('store');
+    Route::get('/export', [OvertimeController::class, 'export'])->name('export');
+    Route::post('/mark-submitted', [OvertimeController::class, 'markSubmitted'])->name('mark-submitted');
+    Route::get('/{overtimeEntry}/edit', [OvertimeController::class, 'edit'])->name('edit');
+    Route::put('/{overtimeEntry}', [OvertimeController::class, 'update'])->name('update');
+    Route::post('/{overtimeEntry}/request-edit', [OvertimeController::class, 'requestEdit'])->name('request-edit');
+    Route::post('/{overtimeEntry}/approve-edit', [OvertimeController::class, 'approveEdit'])->name('approve-edit');
+    Route::post('/{overtimeEntry}/reject-edit', [OvertimeController::class, 'rejectEdit'])->name('reject-edit');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('employees', EmployeeController::class)
