@@ -160,4 +160,88 @@ class TaskPlannerTest extends TestCase
         $this->actingAs($owner)->get(route('tasks.plans.show', [$plan, 'filter' => 'mine']))->assertOk()->assertSee('Check bearings');
         $this->actingAs($owner)->get(route('tasks.show', $task))->assertOk()->assertSee('Step 1');
     }
+
+    public function test_new_tasks_default_to_today_and_seven_days_out(): void
+    {
+        [$owner] = $this->staffWithEmployee();
+        $plan = $this->makePlan($owner);
+
+        $this->actingAs($owner)->post(route('tasks.store', $plan), ['task_bucket_id' => $plan->buckets->first()->id, 'title' => 'Defaults']);
+
+        $task = Task::where('title', 'Defaults')->firstOrFail();
+        $this->assertTrue($task->start_date->isToday());
+        $this->assertTrue($task->due_date->isSameDay(now()->addDays(7)));
+    }
+
+    public function test_task_page_shows_assignee_avatars_with_names(): void
+    {
+        [$owner] = $this->staffWithEmployee();
+        $person = Employee::factory()->create(['full_name' => 'Budi Santoso']);
+        $plan = $this->makePlan($owner);
+        $task = $plan->tasks()->create(['task_bucket_id' => $plan->buckets->first()->id, 'title' => 'T', 'created_by' => $owner->id]);
+        $task->assignees()->attach($person->id);
+
+        $this->actingAs($owner)->get(route('tasks.show', $task))->assertOk()->assertSee('aria-label="Budi Santoso"', false);
+    }
+
+    public function test_editing_a_task_emails_existing_assignees_but_not_the_editor_or_new_assignees(): void
+    {
+        [$owner, $ownerEmployee] = $this->staffWithEmployee();
+        [$existing, $existingEmployee] = $this->staffWithEmployee();
+        [$newcomer, $newcomerEmployee] = $this->staffWithEmployee();
+        $plan = $this->makePlan($owner);
+        $bucket = $plan->buckets->first();
+        $task = $plan->tasks()->create(['task_bucket_id' => $bucket->id, 'title' => 'Old', 'priority' => 'low', 'created_by' => $owner->id]);
+        $task->assignees()->attach([$existingEmployee->id, $ownerEmployee->id]);
+
+        Notification::fake();
+        $this->actingAs($owner)->put(route('tasks.update', $task), [
+            'title' => 'Old', 'task_bucket_id' => $bucket->id, 'priority' => 'urgent', 'progress' => 'not_started',
+            'assignee_ids' => [$existingEmployee->id, $ownerEmployee->id, $newcomerEmployee->id],
+        ]);
+
+        Notification::assertSentTo($existing, \App\Notifications\TaskActivity::class, fn ($n, $channels) => in_array('mail', $channels, true));
+        Notification::assertSentTo($newcomer, TaskAssigned::class);
+        Notification::assertNotSentTo($newcomer, \App\Notifications\TaskActivity::class);
+        Notification::assertNotSentTo($owner, \App\Notifications\TaskActivity::class);
+    }
+
+    public function test_no_email_when_nothing_actually_changed(): void
+    {
+        [$owner] = $this->staffWithEmployee();
+        [$existing, $existingEmployee] = $this->staffWithEmployee();
+        $plan = $this->makePlan($owner);
+        $bucket = $plan->buckets->first();
+        $task = $plan->tasks()->create(['task_bucket_id' => $bucket->id, 'title' => 'Same', 'priority' => 'medium', 'created_by' => $owner->id]);
+        $task->assignees()->attach($existingEmployee->id);
+
+        Notification::fake();
+        $this->actingAs($owner)->put(route('tasks.update', $task), [
+            'title' => 'Same', 'task_bucket_id' => $bucket->id, 'priority' => 'medium', 'progress' => 'not_started',
+            'assignee_ids' => [$existingEmployee->id],
+        ]);
+
+        Notification::assertNothingSent();
+    }
+
+    public function test_unassigned_and_deleted_notify_and_login_less_employees_get_email_only(): void
+    {
+        [$owner] = $this->staffWithEmployee();
+        $noLogin = Employee::factory()->create(['user_id' => null, 'email' => 'nologin@example.com']);
+        $plan = $this->makePlan($owner);
+        $bucket = $plan->buckets->first();
+        $task = $plan->tasks()->create(['task_bucket_id' => $bucket->id, 'title' => 'T', 'created_by' => $owner->id]);
+        $task->assignees()->attach($noLogin->id);
+
+        Notification::fake();
+        $this->actingAs($owner)->put(route('tasks.update', $task), [
+            'title' => 'T2', 'task_bucket_id' => $bucket->id, 'priority' => 'medium', 'progress' => 'not_started',
+            'assignee_ids' => [$noLogin->id],
+        ]);
+        Notification::assertSentOnDemand(\App\Notifications\TaskActivity::class, fn ($n, $channels, $notifiable) => $channels === ['mail'] && array_key_exists('nologin@example.com', $notifiable->routes['mail']));
+
+        Notification::fake();
+        $this->actingAs($owner)->delete(route('tasks.destroy', $task));
+        Notification::assertSentOnDemand(\App\Notifications\TaskActivity::class);
+    }
 }

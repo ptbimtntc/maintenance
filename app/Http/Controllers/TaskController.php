@@ -7,7 +7,7 @@ use App\Models\Task;
 use App\Models\TaskBucket;
 use App\Models\TaskChecklistItem;
 use App\Models\TaskPlan;
-use App\Notifications\TaskAssigned;
+use App\Services\TaskNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +17,8 @@ use Illuminate\View\View;
 
 class TaskController extends Controller
 {
+    public function __construct(private readonly TaskNotifier $notifier) {}
+
     public function store(Request $request, TaskPlan $plan): RedirectResponse
     {
         $this->authorize('view', $plan);
@@ -28,6 +30,8 @@ class TaskController extends Controller
 
         $task = $plan->tasks()->create($data + [
             'created_by' => $request->user()->id,
+            'start_date' => today(),
+            'due_date' => today()->addDays(7),
             'position' => (Task::where('task_bucket_id', $data['task_bucket_id'])->max('position') ?? -1) + 1,
         ]);
 
@@ -77,10 +81,23 @@ class TaskController extends Controller
                 $task->position = (Task::where('task_bucket_id', $data['task_bucket_id'])->max('position') ?? -1) + 1;
             }
 
+            $lines = $this->describeChanges($task);
             $task->save();
 
-            $changes = $task->assignees()->sync($assigneeIds);
-            $this->notifyNewAssignees($task, $changes['attached'], $request->user()->name, $request->user()->employee?->id);
+            $sync = $task->assignees()->sync($assigneeIds);
+            $actor = $request->user();
+            $actorEmployeeId = $actor->employee?->id;
+
+            $this->notifier->assigned($task, $sync['attached'], $actor->name, $actorEmployeeId);
+
+            if ($sync['detached']) {
+                $this->notifier->removedFrom($task, $sync['detached'], 'Removed from task', ["{$actor->name} removed you from this task"], $actorEmployeeId);
+            }
+
+            // People just assigned already got the "assigned" email - only tell everyone else what changed.
+            if ($lines) {
+                $this->notifier->changedExcept($task, 'Task updated', array_merge(["Updated by {$actor->name}"], $lines), $actorEmployeeId, $sync['attached']);
+            }
         });
 
         return redirect()->route('tasks.show', $task)->with('status', 'Task saved.');
@@ -91,6 +108,8 @@ class TaskController extends Controller
         $this->authorize('view', $task->plan);
 
         $plan = $task->plan;
+        $actor = request()->user();
+        $this->notifier->removedFrom($task, $task->assignees()->pluck('employees.id'), 'Task deleted', ["{$actor->name} deleted this task"], $actor->employee?->id);
         $task->delete();
 
         return redirect()->route('tasks.plans.show', $plan)->with('status', 'Task deleted.');
@@ -104,6 +123,9 @@ class TaskController extends Controller
         $task->applyProgress($task->progress === 'completed' ? 'in_progress' : 'completed');
         $task->save();
 
+        $actor = request()->user();
+        $this->notifier->changed($task, 'Task updated', ["{$actor->name} marked it ".strtolower(Task::progressLabel($task->progress))], $actor->employee?->id);
+
         return back();
     }
 
@@ -116,6 +138,8 @@ class TaskController extends Controller
             'task_bucket_id' => ['required', Rule::exists('task_buckets', 'id')->where('task_plan_id', $task->task_plan_id)],
             'position' => ['required', 'integer', 'min:0'],
         ]);
+
+        $bucketChanged = (int) $data['task_bucket_id'] !== $task->task_bucket_id;
 
         DB::transaction(function () use ($task, $data) {
             $ids = Task::where('task_bucket_id', $data['task_bucket_id'])
@@ -132,6 +156,11 @@ class TaskController extends Controller
                 Task::whereKey($id)->update(['position' => $i]);
             }
         });
+
+        if ($bucketChanged) {
+            $actor = $request->user();
+            $this->notifier->changed($task, 'Task updated', ["{$actor->name} moved it to \"".TaskBucket::find($data['task_bucket_id'])->name.'"'], $actor->employee?->id);
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -167,14 +196,30 @@ class TaskController extends Controller
         return back();
     }
 
-    /** Only newly-added assignees who have a login are notified, and never yourself. */
-    private function notifyNewAssignees(Task $task, array $employeeIds, string $assignerName, ?int $assignerEmployeeId): void
+    /** Human-readable list of what the pending (unsaved) edit changes, for the "Task updated" email. */
+    private function describeChanges(Task $task): array
     {
-        $task->loadMissing('plan');
+        $lines = [];
+        $fmt = fn ($v) => $v instanceof \Carbon\Carbon ? $v->format('d M Y') : ($v === null || $v === '' ? 'none' : (string) $v);
 
-        Employee::with('user')
-            ->whereIn('id', array_diff($employeeIds, [$assignerEmployeeId]))
-            ->get()
-            ->each(fn (Employee $e) => $e->user?->notify(new TaskAssigned($task, $assignerName)));
+        foreach (['title' => 'Title', 'priority' => 'Priority', 'start_date' => 'Start date', 'due_date' => 'Due date'] as $field => $label) {
+            if ($task->isDirty($field) && $fmt($task->getOriginal($field)) !== $fmt($task->{$field})) {
+                $lines[] = "{$label}: {$fmt($task->getOriginal($field))} → {$fmt($task->{$field})}";
+            }
+        }
+
+        if ($task->isDirty('progress')) {
+            $lines[] = 'Progress: '.Task::progressLabel($task->getOriginal('progress')).' → '.Task::progressLabel($task->progress);
+        }
+
+        if ($task->isDirty('task_bucket_id')) {
+            $lines[] = 'Moved to bucket "'.TaskBucket::find($task->task_bucket_id)->name.'"';
+        }
+
+        if ($task->isDirty('description')) {
+            $lines[] = 'Notes were edited';
+        }
+
+        return $lines;
     }
 }

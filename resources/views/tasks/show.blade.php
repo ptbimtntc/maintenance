@@ -61,7 +61,24 @@
             </div>
 
             <div>
-                <x-input-label value="Assign to" />
+                <div class="flex items-center gap-3">
+                    <x-input-label value="Assign to" />
+                    <div class="flex -space-x-2">
+                        @foreach ($task->assignees as $assignee)
+                            <div x-data="{ open: false }" class="group relative" @click.outside="open = false">
+                                <button type="button" @click="open = !open" aria-label="{{ $assignee->full_name }}" class="block rounded-full ring-2 ring-white">
+                                    @if ($assignee->photo_path)
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($assignee->photo_path) }}" alt="{{ $assignee->full_name }}" class="h-8 w-8 rounded-full object-cover">
+                                    @else
+                                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{{ strtoupper(mb_substr($assignee->full_name, 0, 1)) }}</span>
+                                    @endif
+                                </button>
+                                <span x-show="open" x-cloak class="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-neutral-900 px-2 py-1 text-xs text-white shadow group-hover:block" :class="open ? '' : 'hidden'">{{ $assignee->full_name }}</span>
+                                <span x-show="!open" class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-neutral-900 px-2 py-1 text-xs text-white shadow group-hover:block">{{ $assignee->full_name }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
                 <input type="text" x-model="q" placeholder="Search employees…" class="mt-1 block w-full rounded-md border-neutral-300 text-sm">
                 <div class="mt-2 max-h-48 divide-y divide-neutral-100 overflow-y-auto rounded-md border border-neutral-200">
                     <template x-for="e in employees.filter(e => (e.full_name + ' ' + e.employee_number).toLowerCase().includes(q.toLowerCase()))" :key="e.id">
