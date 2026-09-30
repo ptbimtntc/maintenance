@@ -17,7 +17,7 @@ $certificatesActive = request()->routeIs('certificates.index');
 $recertificationActive = request()->routeIs('certificates.recertification');
 $signatoriesActive = request()->routeIs('signatories.*');
 $developmentPlansActive = request()->routeIs('development-plans.*');
-$safetyActive = request()->routeIs('safety.lototo.*');
+$lototoActive = request()->routeIs('safety.lototo.*');
 $reportsActive = request()->routeIs('reports.*');
 $userManagementActive = request()->routeIs('admin.users.*');
 $roleManagementActive = request()->routeIs('admin.roles.*');
@@ -47,6 +47,7 @@ $isGuest = $user->hasRole(\App\Enums\RoleName::Guest->value);
 $showOrganizationSection = $canViewEmployees || $canManageMasterData;
 $showCompetencySection = $canViewJobDescriptions || $canViewSkillMatrix || $canViewCompetencyGap;
 $showTrainingSection = $canManageTraining || $canViewTraining || $canViewCertificates || $canViewDevelopmentPlans;
+$showSafetySection = $canViewSafety;
 $showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings || $canManageNews;
 
 // Each collapsible group starts open automatically when the current page
@@ -55,6 +56,7 @@ $organizationSectionActive = $employeesActive || $organizationChartActive || $qr
 $competencySectionActive = $jobDescriptionsActive || $skillsActive || $skillMatrixActive || $competencyGapActive;
 $trainingSectionActive = $trainingManagementActive || $trainingCalendarActive || $trainingRecordsActive
     || $certificatesActive || $recertificationActive || $signatoriesActive || $developmentPlansActive;
+$safetySectionActive = $lototoActive;
 $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagementActive || $auditLogActive || $settingsActive || $newsActive;
 @endphp
 
@@ -156,12 +158,14 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
             </x-nav-group>
         @endif
 
-        @if ($canViewSafety)
-            <div class="space-y-1">
-                <x-nav-item :href="route('safety.lototo.index')" :active="$safetyActive" icon="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z">
-                    LOTOTO (Safety)
-                </x-nav-item>
-            </div>
+        @if ($showSafetySection)
+            <x-nav-group label="Safety" :active="$safetySectionActive">
+                @if ($canViewSafety)
+                    <x-nav-item :href="route('safety.lototo.index')" :active="$lototoActive" icon="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z">
+                        LOTOTO
+                    </x-nav-item>
+                @endif
+            </x-nav-group>
         @endif
 
         @if ($showInsightsSection)
