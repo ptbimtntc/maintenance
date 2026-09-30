@@ -187,6 +187,8 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
             Route::post('/programs/{program}/sessions', [TrainingSessionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.store');
 
             Route::get('/sessions/{trainingSession}', [TrainingSessionController::class, 'show'])->name('sessions.show');
+            Route::get('/sessions/{trainingSession}/check-in', [\App\Http\Controllers\TrainingCheckInController::class, 'show'])->name('sessions.check-in');
+            Route::post('/sessions/{trainingSession}/check-in', [\App\Http\Controllers\TrainingCheckInController::class, 'attempt'])->name('sessions.check-in.attempt');
             Route::get('/sessions/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.edit');
             Route::put('/sessions/{trainingSession}', [TrainingSessionController::class, 'update'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.update');
             Route::delete('/sessions/{trainingSession}', [TrainingSessionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.destroy');

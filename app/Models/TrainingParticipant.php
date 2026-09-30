@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['training_session_id', 'employee_id', 'attendance_status', 'notes', 'quiz_submitted_at', 'quiz_score', 'certificate_id'])]
+#[Fillable(['training_session_id', 'employee_id', 'attendance_status', 'checked_in_at', 'notes', 'quiz_submitted_at', 'quiz_score', 'certificate_id'])]
 class TrainingParticipant extends Model
 {
     /** @use HasFactory<\Database\Factories\TrainingParticipantFactory> */
@@ -17,7 +17,7 @@ class TrainingParticipant extends Model
 
     protected function casts(): array
     {
-        return ['quiz_submitted_at' => 'datetime'];
+        return ['quiz_submitted_at' => 'datetime', 'checked_in_at' => 'datetime'];
     }
 
     public function certificate(): BelongsTo

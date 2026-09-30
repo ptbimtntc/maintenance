@@ -12,6 +12,10 @@ if (document.getElementById('face-login-panel') || document.getElementById('face
     import('./face-login');
 }
 
+if (document.getElementById('training-checkin-panel')) {
+    import('./training-checkin');
+}
+
 if (document.querySelector('trix-editor')) {
     import('./news-editor');
 }

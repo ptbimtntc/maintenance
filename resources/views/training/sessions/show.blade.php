@@ -20,7 +20,10 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                     <p class="text-sm text-neutral-500">{{ $trainingSession->start_date->format('d M Y') }} &ndash; {{ $trainingSession->end_date->format('d M Y') }} &middot; {{ $trainingSession->location?->name ?? 'No location set' }}</p>
                 </div>
                 @can(\App\Enums\PermissionName::ManageTraining->value)
-                    <a href="{{ route('training.sessions.edit', $trainingSession) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('training.sessions.check-in', $trainingSession) }}" class="rounded-md border border-brand-300 px-3 py-1.5 text-sm font-medium text-brand-700 shadow-sm transition hover:bg-brand-50">Face Check-in</a>
+                        <a href="{{ route('training.sessions.edit', $trainingSession) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:bg-neutral-50">Edit</a>
+                    </div>
                 @endcan
             </div>
         </div>
@@ -57,6 +60,9 @@ $attendanceStyles = ['invited' => 'bg-neutral-100 text-neutral-600', 'confirmed'
                                     @else
                                         <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $attendanceStyles[$participant->attendance_status] }}">{{ ucfirst($participant->attendance_status) }}</span>
                                     @endcan
+                                    @if ($participant->checked_in_at)
+                                        <span class="ml-1 text-xs text-neutral-400">via Face Check-in, {{ $participant->checked_in_at->format('d M H:i') }}</span>
+                                    @endif
                                 </td>
                                 <td class="px-3 py-2 text-right">
                                     <div class="inline-flex items-center gap-3">

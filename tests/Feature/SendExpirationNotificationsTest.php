@@ -42,7 +42,9 @@ class SendExpirationNotificationsTest extends TestCase
 
         $this->artisan('app:send-expiration-notifications')->assertSuccessful();
 
-        Notification::assertSentTo($manager, CertificateExpiringSoon::class);
+        Notification::assertSentTo($manager, CertificateExpiringSoon::class, function (CertificateExpiringSoon $notification, array $channels) use ($manager) {
+            return in_array('mail', $channels, true) && $notification->toMail($manager)->subject !== null;
+        });
         $this->assertNotNull($certificate->fresh()->expiry_notified_at);
 
         Notification::fake();
@@ -85,7 +87,9 @@ class SendExpirationNotificationsTest extends TestCase
 
         $this->artisan('app:send-expiration-notifications')->assertSuccessful();
 
-        Notification::assertSentTo($user, UpcomingTrainingSession::class);
+        Notification::assertSentTo($user, UpcomingTrainingSession::class, function (UpcomingTrainingSession $notification, array $channels) use ($user) {
+            return in_array('mail', $channels, true) && $notification->toMail($user)->subject !== null;
+        });
         $this->assertNotNull($participant->fresh()->reminded_at);
 
         Notification::fake();
