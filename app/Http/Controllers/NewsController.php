@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreNewsRequest;
 use App\Models\News;
 use App\Models\User;
+use App\Concerns\PrunesNotificationLinks;
 use App\Notifications\NewsPublished;
 use App\Support\NewsImageProcessor;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +15,8 @@ use Illuminate\View\View;
 
 class NewsController extends Controller
 {
+    use PrunesNotificationLinks;
+
     public function index(): View
     {
         $news = News::query()
@@ -113,6 +116,8 @@ class NewsController extends Controller
         if ($news->image_path) {
             Storage::disk('public')->delete($news->image_path);
         }
+
+        $this->pruneNotificationsLinkedTo(route('news.show', $news));
 
         $news->delete();
 

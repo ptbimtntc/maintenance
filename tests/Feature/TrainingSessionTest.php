@@ -4,11 +4,14 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\Employee;
+use App\Models\TrainingParticipant;
 use App\Models\TrainingProgram;
 use App\Models\TrainingSession;
 use App\Models\User;
+use App\Notifications\UpcomingTrainingSession;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Notifications\DatabaseNotification;
 use Tests\TestCase;
 
 class TrainingSessionTest extends TestCase
@@ -35,6 +38,25 @@ class TrainingSessionTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('end_date');
+    }
+
+    public function test_deleting_a_session_removes_notifications_that_link_to_it(): void
+    {
+        // Regression: UpcomingTrainingSession stores the session's URL at
+        // send time; without cleanup, deleting the session leaves a dead
+        // link behind that 404s the next time someone clicks it.
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+
+        $user = User::factory()->create();
+        $employee = Employee::factory()->create(['user_id' => $user->id]);
+        $session = TrainingSession::factory()->create();
+        TrainingParticipant::factory()->create(['employee_id' => $employee->id, 'training_session_id' => $session->id]);
+        $user->notify(new UpcomingTrainingSession($session));
+
+        $this->actingAs($manager)->delete(route('training.sessions.destroy', $session));
+
+        $this->assertSame(0, DatabaseNotification::where('notifiable_id', $user->id)->where('type', UpcomingTrainingSession::class)->count());
     }
 
     public function test_manager_can_add_a_participant_to_a_session(): void

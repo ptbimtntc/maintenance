@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\PrunesNotificationLinks;
 use App\Enums\PermissionName;
 use App\Http\Requests\StoreTrainingSessionRequest;
 use App\Models\Employee;
@@ -20,6 +21,8 @@ use Illuminate\View\View;
 
 class TrainingSessionController extends Controller
 {
+    use PrunesNotificationLinks;
+
     /**
      * Two views of the same data: a list grouped by month (the original,
      * good for scanning many sessions at once) and a month grid (better for
@@ -144,6 +147,8 @@ class TrainingSessionController extends Controller
     {
         $this->authorize(PermissionName::ManageTraining->value);
         $program = $trainingSession->trainingProgram;
+
+        $this->pruneNotificationsLinkedTo(route('training.sessions.show', $trainingSession));
 
         $trainingSession->delete();
 

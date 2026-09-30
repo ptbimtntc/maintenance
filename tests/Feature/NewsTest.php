@@ -117,6 +117,30 @@ class NewsTest extends TestCase
         $this->assertDatabaseMissing('news', ['id' => $news->id]);
     }
 
+    public function test_deleting_a_news_item_removes_notifications_that_link_to_it(): void
+    {
+        // Regression: a notification's url is resolved once at send time
+        // and never re-checked - deleting the news it points to used to
+        // leave the notification behind, so clicking it 404'd forever.
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $colleague = User::factory()->create();
+
+        $this->actingAs($admin)->post(route('news.store'), [
+            'title' => 'Soon Deleted',
+            'body' => '<p>Body</p>',
+            'template' => 'standard',
+            'is_published' => '1',
+        ]);
+        $news = News::where('title', 'Soon Deleted')->firstOrFail();
+
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $colleague->id, 'type' => NewsPublished::class]);
+
+        $this->actingAs($admin)->delete(route('news.destroy', $news));
+
+        $this->assertDatabaseMissing('notifications', ['notifiable_id' => $colleague->id, 'type' => NewsPublished::class]);
+    }
+
     public function test_publishing_a_news_item_notifies_every_other_user_once(): void
     {
         $admin = User::factory()->create();
