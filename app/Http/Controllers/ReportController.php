@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\ExportsPdf;
 use App\Concerns\ExportsSpreadsheet;
 use App\Enums\PermissionName;
 use App\Models\CompetencyLevel;
@@ -15,11 +16,12 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    use ExportsSpreadsheet;
+    use ExportsSpreadsheet, ExportsPdf;
 
     /**
      * Column headers the Assessment History "Import XLSX" upload is
@@ -48,7 +50,7 @@ class ReportController extends Controller
     /**
      * Total training hours per employee, with a completed-session count.
      */
-    public function trainingHours(Request $request): View|StreamedResponse
+    public function trainingHours(Request $request): View|StreamedResponse|Response
     {
         $rows = Employee::query()
             ->withSum('trainingRecords', 'duration_hours')
@@ -79,6 +81,14 @@ class ReportController extends Controller
             ->filter(fn ($hours) => $hours > 0)
             ->sortDesc();
 
+        if ($request->string('export') == 'pdf') {
+            return $this->streamPdf(
+                'training-hours-report-'.now()->format('Y-m-d').'.pdf',
+                'reports.pdf.training-hours',
+                ['rows' => $rows, 'byDepartment' => $byDepartment]
+            );
+        }
+
         return view('reports.training-hours', ['rows' => $rows, 'byDepartment' => $byDepartment]);
     }
 
@@ -86,7 +96,7 @@ class ReportController extends Controller
      * Employee Development Summary: how many plans are in each status, and
      * a breakdown of the development actions being used.
      */
-    public function developmentSummary(): View
+    public function developmentSummary(Request $request): View|Response
     {
         $plans = EmployeeDevelopmentPlan::with('employee')->get();
 
@@ -94,13 +104,19 @@ class ReportController extends Controller
         $byAction = $plans->groupBy('development_action')->map->count();
         $byPriority = $plans->groupBy('priority')->map->count();
 
-        return view('reports.development-summary', [
+        $data = [
             'totalPlans' => $plans->count(),
             'byStatus' => $byStatus,
             'byAction' => $byAction,
             'byPriority' => $byPriority,
             'overdue' => $plans->filter(fn ($p) => $p->status !== 'completed' && $p->target_completion_date?->isPast())->count(),
-        ]);
+        ];
+
+        if ($request->string('export') == 'pdf') {
+            return $this->streamPdf('employee-development-summary-'.now()->format('Y-m-d').'.pdf', 'reports.pdf.development-summary', $data);
+        }
+
+        return view('reports.development-summary', $data);
     }
 
     /**
@@ -108,7 +124,7 @@ class ReportController extends Controller
      * across all employees - the append-only log described in Phase 3,
      * surfaced here as a report rather than only per-employee.
      */
-    public function assessmentHistory(Request $request): View|StreamedResponse
+    public function assessmentHistory(Request $request): View|StreamedResponse|Response
     {
         $query = EmployeeSkillAssessment::query()
             ->with(['employee', 'skill', 'competencyLevel', 'assessedBy'])
@@ -129,6 +145,14 @@ class ReportController extends Controller
             ]);
 
             return $this->streamXlsx('competency-assessment-history-'.now()->format('Y-m-d').'.xlsx', $header, $rows);
+        }
+
+        if ($request->string('export') == 'pdf') {
+            return $this->streamPdf(
+                'competency-assessment-history-'.now()->format('Y-m-d').'.pdf',
+                'reports.pdf.assessment-history',
+                ['assessments' => $query->orderByDesc('assessment_date')->get()]
+            );
         }
 
         $assessments = $query->orderByDesc('assessment_date')->paginate(30)->withQueryString();

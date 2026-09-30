@@ -2,7 +2,10 @@
     <x-slot name="header">Employee Development Summary</x-slot>
 
     <div class="space-y-8">
-        <a href="{{ route('reports.index') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Reports</a>
+        <div class="flex items-center justify-between">
+            <a href="{{ route('reports.index') }}" class="text-sm text-neutral-600 hover:underline">&larr; Back to Reports</a>
+            <a href="{{ route('reports.development-summary', ['export' => 'pdf']) }}" class="text-sm text-neutral-600 hover:underline">Export PDF</a>
+        </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <x-dashboard-stat label="Total Development Plans" :value="$totalPlans" />

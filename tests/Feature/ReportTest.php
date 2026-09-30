@@ -66,6 +66,50 @@ class ReportTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_training_hours_report_can_be_exported_as_pdf(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        $employee = Employee::factory()->create();
+        TrainingRecord::factory()->create(['employee_id' => $employee->id, 'duration_hours' => 5]);
+
+        $response = $this->actingAs($manager)->get(route('reports.training-hours', ['export' => 'pdf']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_development_summary_can_be_exported_as_pdf(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        EmployeeDevelopmentPlan::factory()->create(['status' => 'in_progress']);
+
+        $response = $this->actingAs($manager)->get(route('reports.development-summary', ['export' => 'pdf']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_assessment_history_can_be_exported_as_pdf(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+
+        $response = $this->actingAs($manager)->get(route('reports.assessment-history', ['export' => 'pdf']));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_maintenance_staff_cannot_export_reports_as_pdf(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $this->actingAs($staff)->get(route('reports.training-hours', ['export' => 'pdf']))->assertForbidden();
+    }
+
     public function test_development_summary_counts_plans_by_status(): void
     {
         $manager = User::factory()->create();

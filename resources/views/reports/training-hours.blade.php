@@ -7,7 +7,10 @@
         <div>
             <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold uppercase tracking-wide text-neutral-500">By Employee</h2>
-                <a href="{{ route('reports.training-hours', ['export' => 'xlsx']) }}" class="text-sm text-neutral-600 hover:underline">Export XLSX</a>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('reports.training-hours', ['export' => 'xlsx']) }}" class="text-sm text-neutral-600 hover:underline">Export XLSX</a>
+                    <a href="{{ route('reports.training-hours', ['export' => 'pdf']) }}" class="text-sm text-neutral-600 hover:underline">Export PDF</a>
+                </div>
             </div>
             <div class="mt-3 overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md shadow-md">
                 <table class="min-w-full divide-y divide-neutral-200 text-sm">
