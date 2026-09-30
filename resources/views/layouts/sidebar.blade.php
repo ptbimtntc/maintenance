@@ -79,6 +79,11 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
             <x-nav-item :href="route('dashboard')" :active="$dashboardActive" icon="M3.75 12l1.5-1.5m0 0l6-6 6 6m-6-6v18m6-9l1.5 1.5M4.5 19.5h15">
                 Dashboard
             </x-nav-item>
+            @unless ($isGuest)
+                <x-nav-item :href="route('tasks.index')" :active="request()->routeIs('tasks.*')" icon="M9 12.75L11.25 15 15 9.75M6 4.5h12A1.5 1.5 0 0119.5 6v12a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 18V6A1.5 1.5 0 016 4.5z">
+                    Tasks
+                </x-nav-item>
+            @endunless
         </div>
 
         @if ($showOrganizationSection)

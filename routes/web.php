@@ -201,6 +201,28 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
         });
     });
 
+// Task Planner: open to every signed-in employee - access is decided per
+// plan by TaskPlanPolicy (owner, assignee, or Administrator), not a role.
+Route::middleware(['auth', 'verified'])->prefix('tasks')->name('tasks.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TaskPlanController::class, 'index'])->name('index');
+    Route::post('/plans', [\App\Http\Controllers\TaskPlanController::class, 'store'])->name('plans.store');
+    Route::get('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'show'])->name('plans.show');
+    Route::put('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'update'])->name('plans.update');
+    Route::delete('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'destroy'])->name('plans.destroy');
+    Route::post('/plans/{plan}/buckets', [\App\Http\Controllers\TaskPlanController::class, 'storeBucket'])->name('plans.buckets.store');
+    Route::put('/plans/{plan}/buckets/{bucket}', [\App\Http\Controllers\TaskPlanController::class, 'updateBucket'])->name('plans.buckets.update');
+    Route::delete('/plans/{plan}/buckets/{bucket}', [\App\Http\Controllers\TaskPlanController::class, 'destroyBucket'])->name('plans.buckets.destroy');
+    Route::post('/plans/{plan}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('store');
+    Route::get('/{task}', [\App\Http\Controllers\TaskController::class, 'show'])->name('show');
+    Route::put('/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('update');
+    Route::delete('/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('destroy');
+    Route::post('/{task}/toggle-complete', [\App\Http\Controllers\TaskController::class, 'toggleComplete'])->name('toggle-complete');
+    Route::post('/{task}/move', [\App\Http\Controllers\TaskController::class, 'move'])->name('move');
+    Route::post('/{task}/checklist', [\App\Http\Controllers\TaskController::class, 'storeChecklistItem'])->name('checklist.store');
+    Route::post('/{task}/checklist/{item}/toggle', [\App\Http\Controllers\TaskController::class, 'toggleChecklistItem'])->name('checklist.toggle');
+    Route::delete('/{task}/checklist/{item}', [\App\Http\Controllers\TaskController::class, 'destroyChecklistItem'])->name('checklist.destroy');
+});
+
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
     ->get('/development-plans', [EmployeeDevelopmentPlanController::class, 'index'])
     ->name('development-plans.index');

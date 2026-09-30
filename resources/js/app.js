@@ -16,6 +16,10 @@ if (document.getElementById('training-checkin-panel')) {
     import('./training-checkin');
 }
 
+if (document.getElementById('task-board')) {
+    import('./task-board');
+}
+
 if (document.querySelector('trix-editor')) {
     import('./news-editor');
 }
