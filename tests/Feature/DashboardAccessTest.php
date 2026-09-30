@@ -6,7 +6,10 @@ use App\Enums\RoleName;
 use App\Models\CompetencyLevel;
 use App\Models\Employee;
 use App\Models\EmployeeSkillAssessment;
+use App\Models\OvertimeEntry;
+use App\Models\PositionSkillRequirement;
 use App\Models\Skill;
+use App\Models\TrainingRecord;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,6 +91,74 @@ class DashboardAccessTest extends TestCase
         // falls under "no requirements defined" - the same classification
         // Employee::skillGapRows() would produce.
         $response->assertViewHas('competencyBreakdown', fn ($breakdown) => $breakdown['no_requirements'] === 1);
+    }
+
+    public function test_training_completion_rate_reflects_completed_vs_total_records_this_year(): void
+    {
+        $employee = Employee::factory()->create();
+        TrainingRecord::factory()->count(3)->create(['employee_id' => $employee->id, 'training_date' => now(), 'completion_status' => 'completed']);
+        TrainingRecord::factory()->create(['employee_id' => $employee->id, 'training_date' => now(), 'completion_status' => 'failed']);
+        // Outside the selected year - must not affect the rate.
+        TrainingRecord::factory()->create(['employee_id' => $employee->id, 'training_date' => now()->subYears(2), 'completion_status' => 'incomplete']);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard?year='.now()->year);
+
+        $response->assertOk();
+        $response->assertViewHas('kpis', fn ($kpis) => (float) $kpis['training_completion_rate'] === 75.0);
+    }
+
+    public function test_overtime_hours_sum_derived_duration_for_the_selected_year(): void
+    {
+        $employee = Employee::factory()->create();
+        OvertimeEntry::factory()->create([
+            'employee_id' => $employee->id,
+            'start_at' => now()->startOfYear()->addMonth(),
+            'end_at' => now()->startOfYear()->addMonth()->addHours(4),
+        ]);
+        OvertimeEntry::factory()->create([
+            'employee_id' => $employee->id,
+            'start_at' => now()->subYears(2),
+            'end_at' => now()->subYears(2)->addHours(10),
+        ]);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard?year='.now()->year);
+
+        $response->assertOk();
+        $response->assertViewHas('kpis', fn ($kpis) => $kpis['overtime_hours'] === 4.0);
+    }
+
+    public function test_competency_gap_trend_buckets_current_assessments_by_month_recorded(): void
+    {
+        $employee = Employee::factory()->create();
+        $skill = Skill::factory()->create();
+        $requiredLevel = CompetencyLevel::factory()->create(['level_number' => 3]);
+        $belowLevel = CompetencyLevel::factory()->create(['level_number' => 1]);
+
+        PositionSkillRequirement::factory()->create([
+            'position_id' => $employee->position_id,
+            'skill_id' => $skill->id,
+            'required_competency_level_id' => $requiredLevel->id,
+        ]);
+
+        EmployeeSkillAssessment::factory()->create([
+            'employee_id' => $employee->id,
+            'skill_id' => $skill->id,
+            'competency_level_id' => $belowLevel->id,
+            'assessment_date' => now()->startOfYear()->addMonths(2),
+        ]);
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/dashboard?year='.now()->year);
+
+        $response->assertOk();
+        $response->assertViewHas('competencyGapTrend', function ($trend) {
+            return $trend['gap'][2] === 1 && array_sum($trend['meets']) === 0;
+        });
     }
 
     public function test_stat_cards_only_link_to_modules_the_viewer_is_permitted_to_open(): void

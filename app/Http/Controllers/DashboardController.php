@@ -9,6 +9,7 @@ use App\Models\EmployeeDevelopmentPlan;
 use App\Models\EmploymentSource;
 use App\Models\EmploymentType;
 use App\Models\News;
+use App\Models\OvertimeEntry;
 use App\Models\TrainingRecord;
 use App\Models\TrainingSession;
 use Illuminate\Database\Eloquent\Builder;
@@ -57,6 +58,8 @@ class DashboardController extends Controller
         $certificateSummary = $this->certificateSummary($employeeIds, $year);
         $developmentPlanSummary = $this->developmentPlanSummary($employeeIds);
         $trainingHoursThisYear = $this->trainingHours($employeeIds, $year);
+        $trainingCompletion = $this->trainingCompletionSummary($employeeIds, $year);
+        $overtimeHoursThisYear = $this->overtimeHours($employeeIds, $year);
 
         $latestNews = News::query()->published()->orderByDesc('created_at')->take(6)->get();
 
@@ -81,10 +84,16 @@ class DashboardController extends Controller
                 'training_hours' => $trainingHoursThisYear,
                 'certificates_expiring' => $certificateSummary['expiring_soon'],
                 'development_plans' => $developmentPlanSummary['total'],
+                'training_completion_rate' => $trainingCompletion['rate'],
+                'overtime_hours' => $overtimeHoursThisYear,
             ],
             'employeeTrend' => $this->monthlyCumulativeHeadcount($employeeIds, $year),
             'trainingHoursTrend' => $this->monthlyTrainingHours($employeeIds, $year),
             'developmentPlansTrend' => $this->monthlyDevelopmentPlansCreated($employeeIds, $year),
+            'trainingCompletion' => $trainingCompletion,
+            'trainingCompletionTrend' => $this->monthlyTrainingCompletionRate($employeeIds, $year),
+            'overtimeTrend' => $this->monthlyOvertimeHours($employeeIds, $year),
+            'competencyGapTrend' => $this->monthlyCompetencyGapTrend($employeeIds, $year),
             'competencyBreakdown' => $competencyBreakdown,
             'topSkillGaps' => $this->topSkillGaps($employeeIds),
             'trainingSeries' => $this->trainingSeries($employeeIds, $year),
@@ -126,6 +135,122 @@ class DashboardController extends Controller
             ->whereIn('employee_id', $employeeIds)
             ->whereYear('training_date', $year)
             ->sum('duration_hours');
+    }
+
+    /**
+     * Share of this year's TrainingRecord rows marked "completed" (the same
+     * completion_status TrainingRecordController already tracks) out of
+     * everything recorded, whatever the outcome - so a low rate reflects
+     * real incomplete/failed records rather than being silently excluded.
+     */
+    private function trainingCompletionSummary($employeeIds, int $year): array
+    {
+        $rows = TrainingRecord::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereYear('training_date', $year)
+            ->selectRaw('completion_status, COUNT(*) as total')
+            ->groupBy('completion_status')
+            ->pluck('total', 'completion_status');
+
+        $completed = (int) ($rows['completed'] ?? 0);
+        $total = (int) $rows->sum();
+
+        return [
+            'completed' => $completed,
+            'incomplete' => (int) ($rows['incomplete'] ?? 0),
+            'failed' => (int) ($rows['failed'] ?? 0),
+            'total' => $total,
+            'rate' => $total > 0 ? round($completed / $total * 100) : 0,
+        ];
+    }
+
+    /** Monthly training completion rate (% of that month's records marked "completed"), for a trend line. */
+    private function monthlyTrainingCompletionRate($employeeIds, int $year): array
+    {
+        $rows = TrainingRecord::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereYear('training_date', $year)
+            ->selectRaw($this->monthExpr('training_date').' as m, completion_status, COUNT(*) as total')
+            ->groupBy('m', 'completion_status')
+            ->get()
+            ->groupBy('m');
+
+        return collect(range(1, 12))->map(function ($m) use ($rows) {
+            $group = $rows[str_pad($m, 2, '0', STR_PAD_LEFT)] ?? collect();
+            $total = $group->sum('total');
+            $completed = $group->firstWhere('completion_status', 'completed')?->total ?? 0;
+
+            return $total > 0 ? round($completed / $total * 100) : 0;
+        })->all();
+    }
+
+    /**
+     * duration_hours is derived from start_at/end_at rather than stored
+     * (see OvertimeEntry::durationHours()), so it can't be SUM()'d in SQL -
+     * summed here in PHP instead, same as topSkillGaps() below.
+     */
+    private function overtimeHours($employeeIds, int $year): float
+    {
+        return (float) OvertimeEntry::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereYear('start_at', $year)
+            ->get(['start_at', 'end_at'])
+            ->sum->duration_hours;
+    }
+
+    private function monthlyOvertimeHours($employeeIds, int $year): array
+    {
+        $byMonth = OvertimeEntry::query()
+            ->whereIn('employee_id', $employeeIds)
+            ->whereYear('start_at', $year)
+            ->get(['start_at', 'end_at'])
+            ->groupBy(fn (OvertimeEntry $entry) => $entry->start_at->month);
+
+        return collect(range(1, 12))->map(fn ($m) => round(($byMonth[$m] ?? collect())->sum->duration_hours, 1))->all();
+    }
+
+    /**
+     * Monthly count of *currently-current* skill assessments (the same
+     * "latest assessment per employee/skill" used by skillGapRows()) that
+     * fall below vs at/above the position's required level, bucketed by
+     * when that assessment was recorded. This is a real trend of assessment
+     * outcomes over time - not a fabricated "gap count as of each past
+     * month", which would need a snapshot table this app doesn't have.
+     */
+    private function monthlyCompetencyGapTrend($employeeIds, int $year): array
+    {
+        $employees = Employee::whereIn('id', $employeeIds)->with([
+            'position.skillRequirements.skill',
+            'position.skillRequirements.requiredCompetencyLevel',
+            'skillAssessments.competencyLevel',
+        ])->get();
+
+        $gapByMonth = array_fill(1, 12, 0);
+        $meetsByMonth = array_fill(1, 12, 0);
+
+        foreach ($employees as $employee) {
+            $currentLevels = $employee->currentSkillAssessments();
+
+            foreach ($employee->skillGapRows() as $row) {
+                $assessmentDate = $currentLevels->get($row['skill']->id)?->assessment_date;
+
+                if (! $assessmentDate || $assessmentDate->year !== $year) {
+                    continue;
+                }
+
+                if ($row['status'] === 'gap') {
+                    $gapByMonth[$assessmentDate->month]++;
+                } elseif (in_array($row['status'], ['meets', 'exceeds'], true)) {
+                    $meetsByMonth[$assessmentDate->month]++;
+                }
+            }
+        }
+
+        return [
+            'labels' => collect(range(1, 12))->map(fn ($m) => Carbon::create($year, $m, 1)->format('M'))->all(),
+            'gap' => array_values($gapByMonth),
+            'meets' => array_values($meetsByMonth),
+        ];
     }
 
     /** Cumulative headcount by month (employees already joined by that month), for a real "growth" sparkline. */

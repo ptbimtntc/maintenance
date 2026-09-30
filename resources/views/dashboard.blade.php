@@ -13,6 +13,7 @@ $icons = [
     'clock' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
     'certificate' => 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
     'target' => 'M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z',
+    'overtime' => 'M12 6v6l4 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
 ];
 
 $priorityStyles = ['high' => 'bg-danger-100 text-danger-700', 'medium' => 'bg-warning-100 text-warning-700', 'low' => 'bg-neutral-100 text-neutral-600'];
@@ -126,7 +127,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
             </div>
         @endif
 
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-8">
             <x-dashboard-stat
                 label="Total Employees"
                 :value="$kpis['total_employees']"
@@ -180,6 +181,28 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 :chartValues="$developmentPlansTrend"
                 :chartColors="['#7c3aed']"
                 :caption="array_sum($developmentPlansTrend) > 0 ? 'Plans created per month' : null"
+            />
+            <x-dashboard-stat
+                label="Training Completion ({{ $filters['year'] }})"
+                :value="$kpis['training_completion_rate'].'%'"
+                icon="{{ $icons['check'] }}"
+                color="green"
+                :href="$canViewTraining ? route('training.records.index') : null"
+                :chartType="array_sum($trainingCompletionTrend) > 0 ? 'sparkline' : null"
+                :chartValues="$trainingCompletionTrend"
+                :chartColors="['#2F7532']"
+                :caption="$trainingCompletion['total'] > 0 ? $trainingCompletion['completed'].' of '.$trainingCompletion['total'].' completed' : null"
+            />
+            <x-dashboard-stat
+                label="Overtime Hours ({{ $filters['year'] }})"
+                :value="rtrim(rtrim(number_format($kpis['overtime_hours'], 1), '0'), '.')"
+                icon="{{ $icons['overtime'] }}"
+                color="amber"
+                :href="route('overtime.index')"
+                :chartType="array_sum($overtimeTrend) > 0 ? 'sparkline' : null"
+                :chartValues="$overtimeTrend"
+                :chartColors="['#F0900A']"
+                :caption="array_sum($overtimeTrend) > 0 ? 'Monthly OT hours' : null"
             />
         </div>
 
@@ -282,6 +305,26 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                     ['label' => 'Pending Verification', 'value' => $certificateSummary['pending_verification'], 'color' => '#01ADEF'],
                 ]"
             />
+        </div>
+
+        <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
+            <h3 class="mb-3 text-sm font-semibold text-neutral-900">Competency Gap Trend ({{ $filters['year'] }})</h3>
+            @if (array_sum($competencyGapTrend['gap']) + array_sum($competencyGapTrend['meets']) === 0)
+                <p class="py-6 text-center text-sm text-neutral-400">No skill assessments recorded in {{ $filters['year'] }}.</p>
+            @else
+                <div class="relative h-56 w-full">
+                    <canvas
+                        data-chart
+                        data-chart-type="combo"
+                        data-chart-labels="{{ json_encode($competencyGapTrend['labels']) }}"
+                        data-chart-values="{{ json_encode($competencyGapTrend['gap']) }}"
+                        data-chart-secondary-values="{{ json_encode($competencyGapTrend['meets']) }}"
+                        data-chart-bar-label="Assessments Below Requirement"
+                        data-chart-line-label="Assessments Meeting/Exceeding"
+                    ></canvas>
+                </div>
+                <p class="mt-2 text-[11px] text-neutral-400">Based on each employee's current (latest) assessment per skill, grouped by when it was recorded.</p>
+            @endif
         </div>
 
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
