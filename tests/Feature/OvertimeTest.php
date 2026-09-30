@@ -241,6 +241,46 @@ class OvertimeTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_an_overtime_manager_can_log_an_entry_for_any_employee_without_being_their_supervisor(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $employee = Employee::factory()->create();
+
+        $response = $this->actingAs($admin)->post(route('overtime.store'), [
+            'employee_id' => $employee->id,
+            'start_at' => now()->format('Y-m-d H:i'),
+            'end_at' => now()->addHours(2)->format('Y-m-d H:i'),
+            'remarks' => 'Logged directly by admin.',
+            'compensation_type' => 'OT_PAID',
+        ]);
+
+        $response->assertRedirect(route('overtime.index'));
+        $this->assertDatabaseHas('overtime_entries', ['employee_id' => $employee->id, 'created_by' => $admin->id]);
+    }
+
+    public function test_an_overtime_manager_can_edit_any_entry_even_while_locked(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        [, , $report] = $this->makeSupervisorWithReport();
+        $entry = OvertimeEntry::factory()->create(['employee_id' => $report->id, 'status' => OvertimeEntry::STATUS_LOCKED]);
+
+        $this->actingAs($admin)->get(route('overtime.edit', $entry))->assertOk();
+
+        $this->actingAs($admin)->put(route('overtime.update', $entry), [
+            'employee_id' => $report->id,
+            'start_at' => now()->format('Y-m-d H:i'),
+            'end_at' => now()->addHours(5)->format('Y-m-d H:i'),
+            'remarks' => 'Corrected directly by admin.',
+            'compensation_type' => 'OT_LEAVE',
+        ])->assertRedirect(route('overtime.index'));
+
+        $entry->refresh();
+        $this->assertSame('OT_LEAVE', $entry->compensation_type);
+        $this->assertSame(OvertimeEntry::STATUS_LOCKED, $entry->status);
+    }
+
     public function test_a_manager_can_mark_selected_entries_as_submitted_to_hr(): void
     {
         $hr = User::factory()->create();

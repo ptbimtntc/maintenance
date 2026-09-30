@@ -14,11 +14,9 @@ $statusStyles = [
             <p class="text-sm text-neutral-500">
                 {{ $manage ? 'Overtime across all teams.' : 'Overtime for your team.' }}
             </p>
-            @unless ($manage)
-                <a href="{{ route('overtime.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
-                    Log Overtime
-                </a>
-            @endunless
+            <a href="{{ route('overtime.create') }}" class="rounded-md bg-brand-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-brand-700">
+                Log Overtime
+            </a>
         </div>
 
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -137,10 +135,14 @@ $statusStyles = [
                                     <td class="px-3 py-2 text-neutral-600">{{ $entry->submitted_to_hr_at?->format('d M Y') ?? '—' }}</td>
                                 @endif
                                 <td class="px-3 py-2 text-right space-x-2">
-                                    @if ($manage && $entry->status === 'edit_requested')
-                                        <button type="submit" form="approve-{{ $entry->id }}" class="text-success-700 hover:underline">Approve</button>
-                                        <button type="submit" form="reject-{{ $entry->id }}" class="text-danger-600 hover:underline">Decline</button>
-                                    @elseif (! $manage)
+                                    @if ($manage)
+                                        @if ($entry->status === 'edit_requested')
+                                            <button type="submit" form="approve-{{ $entry->id }}" class="text-success-700 hover:underline">Approve</button>
+                                            <button type="submit" form="reject-{{ $entry->id }}" class="text-danger-600 hover:underline">Decline</button>
+                                        @endif
+                                        {{-- HR/Admin can correct any entry directly, locked or not - no approval round-trip needed for their own edits. --}}
+                                        <a href="{{ route('overtime.edit', $entry) }}" class="text-brand-700 hover:underline">Edit</a>
+                                    @else
                                         @if ($entry->status === 'locked')
                                             <button type="button" class="text-neutral-600 hover:underline" onclick="document.getElementById('request-edit-{{ $entry->id }}').classList.toggle('hidden')">Request Edit</button>
                                         @elseif ($entry->status === 'edit_approved')

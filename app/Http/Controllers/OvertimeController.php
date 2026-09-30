@@ -105,22 +105,40 @@ class OvertimeController extends Controller
         ]);
     }
 
+    /**
+     * Employees the current user is allowed to log/edit overtime for: their
+     * own direct reports for an ordinary supervisor, or literally everyone
+     * for a ManageOvertime holder (HR/Admin) - they aren't anyone's direct
+     * supervisor in the org chart, but still need to be able to enter or
+     * correct any team's overtime themselves.
+     */
+    private function selectableEmployees(Request $request): \Illuminate\Support\Collection
+    {
+        if ($this->canManage($request)) {
+            return Employee::query()->orderBy('full_name')->get();
+        }
+
+        return $this->supervisorEmployee($request)?->directReports()->orderBy('full_name')->get() ?? collect();
+    }
+
     public function create(Request $request): View
     {
-        abort_unless($this->isSupervisor($request), 403, 'Only supervisors with direct reports can log overtime.');
+        abort_unless($this->isSupervisor($request) || $this->canManage($request), 403, 'Only supervisors with direct reports can log overtime.');
 
         return view('overtime.form', [
             'entry' => null,
-            'directReports' => $this->supervisorEmployee($request)->directReports()->orderBy('full_name')->get(),
+            'directReports' => $this->selectableEmployees($request),
         ]);
     }
 
     public function store(StoreOvertimeEntryRequest $request): RedirectResponse
     {
-        abort_unless($this->isSupervisor($request), 403);
+        abort_unless($this->isSupervisor($request) || $this->canManage($request), 403);
 
-        $reportIds = $this->supervisorEmployee($request)->directReports()->pluck('id');
-        abort_unless($reportIds->contains((int) $request->input('employee_id')), 403, 'You can only log overtime for your own team.');
+        if (! $this->canManage($request)) {
+            $reportIds = $this->supervisorEmployee($request)->directReports()->pluck('id');
+            abort_unless($reportIds->contains((int) $request->input('employee_id')), 403, 'You can only log overtime for your own team.');
+        }
 
         OvertimeEntry::create([
             ...$request->validated(),
@@ -133,28 +151,36 @@ class OvertimeController extends Controller
 
     public function edit(Request $request, OvertimeEntry $overtimeEntry): View
     {
-        $this->authorizeOwnEntry($request, $overtimeEntry);
-        abort_unless($overtimeEntry->canBeEdited(), 403, 'This entry is locked. Request an edit first.');
+        if (! $this->canManage($request)) {
+            $this->authorizeOwnEntry($request, $overtimeEntry);
+            abort_unless($overtimeEntry->canBeEdited(), 403, 'This entry is locked. Request an edit first.');
+        }
 
         return view('overtime.form', [
             'entry' => $overtimeEntry,
-            'directReports' => $this->supervisorEmployee($request)->directReports()->orderBy('full_name')->get(),
+            'directReports' => $this->selectableEmployees($request),
         ]);
     }
 
     public function update(StoreOvertimeEntryRequest $request, OvertimeEntry $overtimeEntry): RedirectResponse
     {
-        $this->authorizeOwnEntry($request, $overtimeEntry);
-        abort_unless($overtimeEntry->canBeEdited(), 403, 'This entry is locked. Request an edit first.');
+        $manage = $this->canManage($request);
 
-        $reportIds = $this->supervisorEmployee($request)->directReports()->pluck('id');
-        abort_unless($reportIds->contains((int) $request->input('employee_id')), 403);
+        if (! $manage) {
+            $this->authorizeOwnEntry($request, $overtimeEntry);
+            abort_unless($overtimeEntry->canBeEdited(), 403, 'This entry is locked. Request an edit first.');
+
+            $reportIds = $this->supervisorEmployee($request)->directReports()->pluck('id');
+            abort_unless($reportIds->contains((int) $request->input('employee_id')), 403);
+        }
 
         $this->pruneNotificationsLinkedTo(route('overtime.edit', $overtimeEntry));
 
         $overtimeEntry->update([
             ...$request->validated(),
             // Editing again requires a fresh approval - a single edit spends the grant.
+            // An HR/Admin edit is itself the correction, so it locks the entry
+            // the same way rather than needing a request/approval round-trip.
             'status' => OvertimeEntry::STATUS_LOCKED,
             'edit_request_reason' => null,
             'edit_requested_at' => null,
