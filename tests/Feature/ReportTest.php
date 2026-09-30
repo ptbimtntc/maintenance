@@ -124,4 +124,23 @@ class ReportTest extends TestCase
         $response->assertViewHas('totalPlans', 3);
         $response->assertViewHas('byStatus', fn ($byStatus) => $byStatus['in_progress'] === 2 && $byStatus['completed'] === 1);
     }
+
+    public function test_combined_export_downloads_an_xlsx_workbook(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+
+        $response = $this->actingAs($manager)->get(route('reports.combined-export'));
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_maintenance_staff_cannot_download_the_combined_export(): void
+    {
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $this->actingAs($staff)->get(route('reports.combined-export'))->assertForbidden();
+    }
 }

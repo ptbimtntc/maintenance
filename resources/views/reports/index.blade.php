@@ -25,6 +25,9 @@ $sections = [
         ['label' => 'Employee Development Plan Report', 'href' => route('development-plans.index'), 'desc' => 'All development plans, filterable by status/priority.'],
         ['label' => 'Employee Development Summary', 'href' => route('reports.development-summary'), 'desc' => 'Plan counts by status, action, and priority.'],
     ],
+    'Combined' => [
+        ['label' => 'Combined Report (Training + Overtime + Certificates)', 'href' => route('reports.combined-export'), 'desc' => 'One workbook, one sheet per module, for last month. Also emailed automatically on the 1st.'],
+    ],
 ];
 @endphp
 

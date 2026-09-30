@@ -256,6 +256,7 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewReports->value
         Route::get('/development-summary', [ReportController::class, 'developmentSummary'])->name('development-summary');
         Route::get('/assessment-history', [ReportController::class, 'assessmentHistory'])->name('assessment-history');
         Route::post('/assessment-history-import', [ReportController::class, 'assessmentHistoryImport'])->name('assessment-history.import');
+        Route::get('/combined-export', [ReportController::class, 'combinedExport'])->name('combined-export');
     });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSafety->value])

@@ -10,6 +10,7 @@ use App\Models\Employee;
 use App\Models\EmployeeDevelopmentPlan;
 use App\Models\EmployeeSkillAssessment;
 use App\Models\Skill;
+use App\Services\CombinedReportBuilder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -280,5 +281,28 @@ class ReportController extends Controller
         }
 
         return $redirect;
+    }
+
+    /**
+     * On-demand version of the same combined Training + Overtime +
+     * Certificates workbook the scheduled monthly email sends (see
+     * SendCombinedReport / CombinedReportBuilder) - for whenever someone
+     * wants it right now instead of waiting for the 1st of the month.
+     * Defaults to the month just completed, same as the scheduled run;
+     * ?period=YYYY-MM picks a different one.
+     */
+    public function combinedExport(Request $request, CombinedReportBuilder $builder): StreamedResponse
+    {
+        $period = $request->filled('period')
+            ? Carbon::createFromFormat('Y-m', $request->string('period')->toString())
+            : now()->subMonthNoOverflow();
+
+        $periodStart = $period->copy()->startOfMonth();
+        $periodEnd = $period->copy()->endOfMonth();
+
+        return $this->streamMultiSheetXlsx(
+            'combined-report-'.$periodStart->format('Y-m').'.xlsx',
+            $builder->build($periodStart, $periodEnd)
+        );
     }
 }
