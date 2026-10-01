@@ -223,6 +223,18 @@ Route::middleware(['auth', 'verified'])->prefix('tasks')->name('tasks.')->group(
     Route::delete('/{task}/checklist/{item}', [\App\Http\Controllers\TaskController::class, 'destroyChecklistItem'])->name('checklist.destroy');
 });
 
+// Shift Comm: technicians' machine activity log shared across shifts. Open to
+// every signed-in non-guest user; edit/delete limited by ShiftCommPolicy.
+Route::middleware(['auth', 'verified'])->prefix('shift-comm')->name('shift-comm.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\ShiftCommController::class, 'index'])->name('index');
+    Route::get('/create', [\App\Http\Controllers\ShiftCommController::class, 'create'])->name('create');
+    Route::post('/', [\App\Http\Controllers\ShiftCommController::class, 'store'])->name('store');
+    Route::get('/{shiftComm}', [\App\Http\Controllers\ShiftCommController::class, 'show'])->name('show');
+    Route::get('/{shiftComm}/edit', [\App\Http\Controllers\ShiftCommController::class, 'edit'])->name('edit');
+    Route::put('/{shiftComm}', [\App\Http\Controllers\ShiftCommController::class, 'update'])->name('update');
+    Route::delete('/{shiftComm}', [\App\Http\Controllers\ShiftCommController::class, 'destroy'])->name('destroy');
+});
+
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
     ->get('/development-plans', [EmployeeDevelopmentPlanController::class, 'index'])
     ->name('development-plans.index');
