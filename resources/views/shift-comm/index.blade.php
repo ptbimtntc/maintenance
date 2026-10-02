@@ -6,6 +6,12 @@
             <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
+        @foreach ($repeatWarnings as $warning)
+            <div class="rounded-md border border-warning-300 bg-warning-50 px-4 py-3 text-sm text-warning-800">
+                &#9888; WARNING: Mesin {{ $warning['machine'] }} telah mengalami Problem Torsion Shaft sebanyak {{ $warning['count'] }} kali dalam 30 hari terakhir ({{ $warning['first']->format('d M Y') }} s/d {{ $warning['last']->format('d M Y') }}). Mesin ini terindikasi mengalami problem berulang dan perlu dilakukan pengecekan/tindakan lanjutan.
+            </div>
+        @endforeach
+
         <div class="flex flex-wrap items-end justify-between gap-3">
             <form method="GET" action="{{ route('shift-comm.index') }}" class="flex flex-wrap items-end gap-2.5">
                 <div>

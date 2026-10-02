@@ -39,7 +39,7 @@ class ShiftCommController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('shift-comm.index', ['comms' => $comms, 'filters' => $filters]);
+        return view('shift-comm.index', ['comms' => $comms, 'filters' => $filters, 'repeatWarnings' => ShiftComm::repeatTorsionWarnings()]);
     }
 
     public function create(Request $request): View

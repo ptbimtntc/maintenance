@@ -70,6 +70,55 @@ class ShiftComm extends Model
         return in_array($name, self::TEAMS, true) ? $name : null;
     }
 
+    /** Repeat-problem threshold: this many Torsion Shaft problems on one machine within the window. */
+    public const REPEAT_THRESHOLD = 4;
+
+    public const REPEAT_WINDOW_DAYS = 30;
+
+    /**
+     * Machines with repeated Torsion Shaft problems, most problems first. Per
+     * machine the window rolls back 30 days from its latest record; machine
+     * numbers match regardless of case, spaces and hyphens ("M-001" = "m001").
+     * A warning clears once a shift after the machine's latest Torsion Shaft
+     * record has started without a new Torsion Shaft record for it.
+     *
+     * @return list<array{machine: string, count: int, first: Carbon, last: Carbon, slot: int}>
+     */
+    public static function repeatTorsionWarnings(?Carbon $now = null): array
+    {
+        $now ??= now();
+        $currentSlot = self::shiftSlot($now->toDateString(), self::defaultShiftFor($now));
+
+        return static::query()
+            ->where('is_torsion_shaft', true)
+            ->orderBy('comm_date')
+            ->orderBy('shift')
+            ->get(['machine_no', 'comm_date', 'shift'])
+            ->groupBy(fn (self $c) => strtoupper(preg_replace('/[^[:alnum:]]/u', '', $c->machine_no)))
+            ->map(function ($records) {
+                $last = $records->last()->comm_date;
+                $inWindow = $records->filter(fn (self $c) => $c->comm_date->gte($last->copy()->subDays(self::REPEAT_WINDOW_DAYS)));
+
+                return [
+                    'machine' => $records->last()->machine_no,
+                    'count' => $inWindow->count(),
+                    'first' => $inWindow->first()->comm_date,
+                    'last' => $last,
+                    'slot' => self::shiftSlot($last->toDateString(), $records->last()->shift),
+                ];
+            })
+            ->filter(fn (array $w) => $w['count'] >= self::REPEAT_THRESHOLD && $w['slot'] >= $currentSlot)
+            ->sortByDesc('count')
+            ->values()
+            ->all();
+    }
+
+    /** Position of a date + shift on one continuous timeline (3 shifts a day). */
+    private static function shiftSlot(string $date, int $shift): int
+    {
+        return Carbon::parse($date)->diffInDays(Carbon::parse('2000-01-01'), true) * 3 + ($shift - 1);
+    }
+
     /** Most-used constructions first, for the autocomplete suggestions. */
     public static function constructionSuggestions(int $limit = 300): array
     {
