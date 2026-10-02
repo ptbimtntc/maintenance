@@ -25,6 +25,29 @@
                     <label class="block text-[11px] font-medium text-neutral-500">Search</label>
                     <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="ID, machine, construction, problem" class="mt-0.5 block w-64 rounded-md border-neutral-300 text-sm">
                 </div>
+                <div class="self-start pt-[1.125rem]">
+                    <x-filter-panel label="TS filter" :active-count="(int) ($filters['torsion'] !== '') + (int) ($filters['relay'] !== '')">
+                        <div class="flex flex-wrap items-end gap-2.5">
+                        <div>
+                            <label class="block text-[11px] font-medium text-neutral-500">Torsion Shaft</label>
+                            <select name="torsion" onchange="this.form.submit()" class="mt-0.5 block rounded-md border-neutral-300 text-sm">
+                                <option value="">Semua</option>
+                                <option value="1" @selected($filters['torsion'] === '1')>YA</option>
+                                <option value="0" @selected($filters['torsion'] === '0')>TIDAK</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-neutral-500">Estafet Torsion Shaft</label>
+                            <select name="relay" onchange="this.form.submit()" class="mt-0.5 block rounded-md border-neutral-300 text-sm">
+                                <option value="">Semua</option>
+                                @foreach (\App\Models\ShiftComm::TORSION_RELAY_STATUSES as $key => $label)
+                                    <option value="{{ $key }}" @selected($filters['relay'] === $key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        </div>
+                    </x-filter-panel>
+                </div>
                 <x-secondary-button type="submit">Filter</x-secondary-button>
                 @if (array_filter($filters))
                     <a href="{{ route('shift-comm.index') }}" class="py-2 text-sm text-neutral-500 hover:underline">Reset</a>
@@ -44,6 +67,7 @@
                         <th class="px-4 py-2">Machine</th>
                         <th class="px-4 py-2">Problem</th>
                         <th class="px-4 py-2">Construction</th>
+                        <th class="px-4 py-2">Torsion Shaft</th>
                         <th class="px-4 py-2 text-right">Length (m)</th>
                     </tr>
                 </thead>
@@ -57,10 +81,11 @@
                             <td class="px-4 py-2">{{ $comm->machine_no }}</td>
                             <td class="max-w-xs truncate px-4 py-2 text-neutral-600">{{ $comm->problem }}</td>
                             <td class="px-4 py-2">{{ $comm->construction }}</td>
+                            <td class="whitespace-nowrap px-4 py-2">{{ $comm->is_torsion_shaft ? 'YA - '.$comm->torsionRelayLabel() : ($comm->is_torsion_shaft === null ? '' : 'TIDAK') }}</td>
                             <td class="px-4 py-2 text-right">{{ $comm->length_m !== null ? number_format($comm->length_m) : '' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="px-4 py-6 text-center text-neutral-500">No Shift Comm entries found.</td></tr>
+                        <tr><td colspan="9" class="px-4 py-6 text-center text-neutral-500">No Shift Comm entries found.</td></tr>
                     @endforelse
                 </tbody>
             </table>

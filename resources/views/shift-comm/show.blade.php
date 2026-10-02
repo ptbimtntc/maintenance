@@ -38,6 +38,13 @@ $fields = [
                 <div><dt class="text-[11px] font-medium uppercase text-neutral-500">Logged by</dt><dd class="mt-0.5">{{ $comm->creator?->name ?? '-' }}</dd></div>
             </dl>
 
+            <dl class="grid grid-cols-2 gap-4 text-sm">
+                <div><dt class="text-[11px] font-medium uppercase text-neutral-500">Torsion Shaft</dt><dd class="mt-0.5">{{ $comm->is_torsion_shaft === null ? '-' : ($comm->is_torsion_shaft ? 'YA' : 'TIDAK') }}</dd></div>
+                @if ($comm->is_torsion_shaft)
+                    <div><dt class="text-[11px] font-medium uppercase text-neutral-500">Estafet Torsion Shaft</dt><dd class="mt-0.5">{{ $comm->torsionRelayLabel() ?? '-' }}</dd></div>
+                @endif
+            </dl>
+
             @foreach ($fields as $label => $text)
                 <div>
                     <h3 class="text-[11px] font-medium uppercase text-neutral-500">{{ $label }}</h3>

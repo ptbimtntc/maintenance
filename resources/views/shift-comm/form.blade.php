@@ -1,6 +1,7 @@
 @php
 $isEdit = $comm !== null;
 $value = fn ($field) => old($field, $isEdit ? ($field === 'comm_date' ? $comm->comm_date->toDateString() : $comm->{$field}) : ($defaults[$field] ?? null));
+$torsion = old('is_torsion_shaft', $isEdit && $comm->is_torsion_shaft !== null ? (int) $comm->is_torsion_shaft : null);
 $input = 'mt-1 block w-full rounded-md border-neutral-300 text-sm';
 @endphp
 
@@ -58,10 +59,32 @@ $input = 'mt-1 block w-full rounded-md border-neutral-300 text-sm';
                 <x-input-error :messages="$errors->get('problem')" class="mt-1" />
             </div>
 
+            <div x-data="{ torsion: @js($torsion === null ? null : (string) $torsion) }" class="space-y-4">
+            <div>
+                <x-input-label value="Apakah problem berkaitan dengan Torsion Shaft?" />
+                <div class="mt-1 flex items-center gap-6 text-sm">
+                    <label class="inline-flex items-center gap-2"><input type="radio" name="is_torsion_shaft" value="1" x-model="torsion" required class="border-neutral-300 text-brand-600"> YA</label>
+                    <label class="inline-flex items-center gap-2"><input type="radio" name="is_torsion_shaft" value="0" x-model="torsion" required class="border-neutral-300 text-brand-600"> TIDAK</label>
+                </div>
+                <x-input-error :messages="$errors->get('is_torsion_shaft')" class="mt-1" />
+            </div>
+
             <div>
                 <x-input-label for="progress" value="Progress" />
                 <textarea id="progress" name="progress" rows="4" maxlength="5000" class="{{ $input }}">{{ $value('progress') }}</textarea>
                 <x-input-error :messages="$errors->get('progress')" class="mt-1" />
+            </div>
+
+            <div x-show="torsion === '1'" x-cloak>
+                <x-input-label for="torsion_relay_status" value="Estafet Torsion Shaft" />
+                <select id="torsion_relay_status" name="torsion_relay_status" :disabled="torsion !== '1'" :required="torsion === '1'" class="{{ $input }} sm:max-w-xs">
+                    <option value="">Pilih status</option>
+                    @foreach (\App\Models\ShiftComm::TORSION_RELAY_STATUSES as $key => $label)
+                        <option value="{{ $key }}" @selected(old('torsion_relay_status', $isEdit ? $comm->torsion_relay_status : null) === $key)>{{ $label }}</option>
+                    @endforeach
+                </select>
+                <x-input-error :messages="$errors->get('torsion_relay_status')" class="mt-1" />
+            </div>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

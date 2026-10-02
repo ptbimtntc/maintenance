@@ -37,6 +37,7 @@ class ShiftCommTest extends TestCase
             'team' => 'A',
             'machine_no' => 'DR-12',
             'problem' => 'Die broken',
+            'is_torsion_shaft' => 0,
         ];
     }
 
@@ -93,6 +94,41 @@ class ShiftCommTest extends TestCase
         $this->assertSame(['7x7 0.20', '3+9 0.175'], ShiftComm::constructionSuggestions());
         $this->actingAs($user)->get(route('shift-comm.create'))->assertOk()->assertSee('3+9 0.175');
         $this->actingAs($user)->get(route('shift-comm.index'))->assertOk()->assertSee('261001101');
+    }
+
+    public function test_torsion_shaft_answer_controls_the_estafet_status(): void
+    {
+        $user = $this->staff();
+
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 1]))
+            ->assertSessionHasErrors('torsion_relay_status');
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 1, 'torsion_relay_status' => 'next_shift']))
+            ->assertSessionHasNoErrors();
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 0, 'torsion_relay_status' => 'done']))
+            ->assertSessionHasNoErrors();
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => null]))
+            ->assertSessionHasErrors('is_torsion_shaft');
+
+        $rows = ShiftComm::orderBy('id')->get();
+        $this->assertSame('next_shift', $rows[0]->torsion_relay_status);
+        $this->assertTrue($rows[0]->is_torsion_shaft);
+        $this->assertNull($rows[1]->torsion_relay_status);
+        $this->assertFalse($rows[1]->is_torsion_shaft);
+    }
+
+    public function test_index_filters_by_torsion_shaft_and_estafet_status(): void
+    {
+        $user = $this->staff();
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-NO']));
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-DONE', 'is_torsion_shaft' => 1, 'torsion_relay_status' => 'done']));
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-NEXT', 'is_torsion_shaft' => 1, 'torsion_relay_status' => 'next_shift']));
+
+        $this->actingAs($user)->get(route('shift-comm.index', ['torsion' => 1]))
+            ->assertSee('M-DONE')->assertSee('M-NEXT')->assertDontSee('M-NO');
+        $this->actingAs($user)->get(route('shift-comm.index', ['torsion' => 0]))
+            ->assertSee('M-NO')->assertDontSee('M-DONE');
+        $this->actingAs($user)->get(route('shift-comm.index', ['relay' => 'next_shift']))
+            ->assertSee('M-NEXT')->assertDontSee('M-DONE')->assertDontSee('M-NO');
     }
 
     public function test_validation_and_guest_block(): void
