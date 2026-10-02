@@ -24,6 +24,10 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
 <x-app-layout>
     <x-slot name="header">Maintenance People Development Dashboard</x-slot>
 
+    @if (session('status'))
+        <div class="mb-6 rounded-md bg-warning-50 px-4 py-3 text-sm text-warning-800">{{ session('status') }}</div>
+    @endif
+
     <div class="space-y-5">
         <div class="sticky top-0 z-20 flex flex-wrap items-end justify-between gap-3 rounded-lg border border-neutral-200 bg-white p-4 shadow-md">
             <div>

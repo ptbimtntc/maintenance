@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'menu.edit' => EnsureMenuEditPermission::class,
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\EnsureMenuVisible::class);
 
         // Anyone hitting a protected page without a session lands as the
         // read-only Guest account instead of a login wall - see

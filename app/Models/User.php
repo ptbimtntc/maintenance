@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\MenuKey;
 use App\Enums\RoleName;
+use App\Enums\SidebarMenu;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -45,6 +46,11 @@ class User extends Authenticatable
     public function menuPermissions(): HasMany
     {
         return $this->hasMany(UserMenuPermission::class);
+    }
+
+    public function hiddenMenus(): HasMany
+    {
+        return $this->hasMany(UserHiddenMenu::class);
     }
 
     public function trustedDevices(): HasMany
@@ -88,5 +94,30 @@ class User extends Authenticatable
         }
 
         return $menu->editableByDefault() || $this->hasAnyPermission($menu->managePermissionValues());
+    }
+
+    /**
+     * Whether an Administrator has hidden this sidebar menu from the user.
+     * Administrators are never affected, so they can't lock themselves out.
+     */
+    public function isMenuHidden(SidebarMenu|string $menu): bool
+    {
+        if ($this->hasRole(RoleName::Administrator->value)) {
+            return false;
+        }
+
+        $key = $menu instanceof SidebarMenu ? $menu->value : $menu;
+
+        return in_array($key, $this->hiddenMenuKeys(), true);
+    }
+
+    /**
+     * @return string[]
+     */
+    public function hiddenMenuKeys(): array
+    {
+        $rows = $this->relationLoaded('hiddenMenus') ? $this->hiddenMenus : $this->hiddenMenus()->get();
+
+        return $rows->pluck('menu_key')->all();
     }
 }

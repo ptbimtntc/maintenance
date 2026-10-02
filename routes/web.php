@@ -14,6 +14,7 @@ use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
 use App\Http\Controllers\LototoController;
 use App\Http\Controllers\MasterDataController;
+use App\Http\Controllers\MenuVisibilityController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationChartController;
@@ -264,6 +265,16 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+    });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])
+    ->prefix('admin/menu-visibility')
+    ->name('admin.menu-visibility.')
+    ->group(function () {
+        Route::get('/', [MenuVisibilityController::class, 'index'])->name('index');
+        Route::post('/bulk', [MenuVisibilityController::class, 'bulk'])->name('bulk');
+        Route::get('/{user}', [MenuVisibilityController::class, 'edit'])->name('edit');
+        Route::put('/{user}', [MenuVisibilityController::class, 'update'])->name('update');
     });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])

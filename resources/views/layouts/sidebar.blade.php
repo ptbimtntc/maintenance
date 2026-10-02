@@ -46,14 +46,38 @@ $canViewOvertime = $user->can(\App\Enums\PermissionName::ManageOvertime->value)
     || ($user->employee?->directReports()->exists() ?? false);
 $isGuest = $user->hasRole(\App\Enums\RoleName::Guest->value);
 
+// Per-user menu visibility set by an Administrator (Menu Visibility screen).
+$visible = fn (\App\Enums\SidebarMenu $menu) => ! $user->isMenuHidden($menu);
+$showTasks = ! $isGuest && $visible(\App\Enums\SidebarMenu::Tasks);
+$showShiftComm = ! $isGuest && $visible(\App\Enums\SidebarMenu::ShiftComm);
+$showEmployees = $canViewEmployees && $visible(\App\Enums\SidebarMenu::Employees);
+$showOrgChart = $canViewEmployees && $visible(\App\Enums\SidebarMenu::OrganizationChart);
+$showQrCodes = $canViewEmployees && $visible(\App\Enums\SidebarMenu::QrCodes);
+$showOrganization = $canManageMasterData && $visible(\App\Enums\SidebarMenu::Organization);
+$showOvertime = $canViewOvertime && $visible(\App\Enums\SidebarMenu::Overtime);
+$showJobDescriptions = $canViewJobDescriptions && $visible(\App\Enums\SidebarMenu::JobDescriptions);
+$showSkills = $canViewSkillMatrix && $visible(\App\Enums\SidebarMenu::Skills);
+$showSkillMatrix = $canViewSkillMatrix && $visible(\App\Enums\SidebarMenu::SkillMatrix);
+$showCompetencyGap = $canViewCompetencyGap && $visible(\App\Enums\SidebarMenu::CompetencyGap);
+$showTrainingManagement = $canManageTraining && $visible(\App\Enums\SidebarMenu::TrainingManagement);
+$showTrainingCalendar = $canViewTraining && $visible(\App\Enums\SidebarMenu::TrainingCalendar);
+$showTrainingRecords = $canViewTraining && $visible(\App\Enums\SidebarMenu::TrainingRecords);
+$showCertificates = $canViewCertificates && $visible(\App\Enums\SidebarMenu::Certificates);
+$showRecertification = $canViewCertificates && $visible(\App\Enums\SidebarMenu::Recertification);
+$showSignatories = $canViewCertificates && ! $isGuest && $visible(\App\Enums\SidebarMenu::Signatories);
+$showDevelopmentPlans = $canViewDevelopmentPlans && $visible(\App\Enums\SidebarMenu::DevelopmentPlans);
+$showLototo = $canViewSafety && $visible(\App\Enums\SidebarMenu::Lototo);
+$showReports = $canViewReports && $visible(\App\Enums\SidebarMenu::Reports);
+$showNews = $canManageNews && $visible(\App\Enums\SidebarMenu::News);
+
 // Section headings only render when at least one item beneath them would -
 // an empty "Insights & System" heading with nothing under it is just noise
 // for roles (e.g. Maintenance Staff) that hold none of those permissions.
-$showOrganizationSection = $canViewEmployees || $canManageMasterData || $canViewOvertime;
-$showCompetencySection = $canViewJobDescriptions || $canViewSkillMatrix || $canViewCompetencyGap;
-$showTrainingSection = $canManageTraining || $canViewTraining || $canViewCertificates || $canViewDevelopmentPlans;
-$showSafetySection = $canViewSafety;
-$showInsightsSection = $canViewReports || $canManageUsers || $canManageSettings || $canManageNews;
+$showOrganizationSection = $showEmployees || $showOrgChart || $showQrCodes || $showOrganization || $showOvertime;
+$showCompetencySection = $showJobDescriptions || $showSkills || $showSkillMatrix || $showCompetencyGap;
+$showTrainingSection = $showTrainingManagement || $showTrainingCalendar || $showTrainingRecords || $showCertificates || $showRecertification || $showSignatories || $showDevelopmentPlans;
+$showSafetySection = $showLototo;
+$showInsightsSection = $showReports || $canManageUsers || $canManageSettings || $showNews;
 
 // Each collapsible group starts open automatically when the current page
 // lives inside it, so navigating there never hides where you are.
@@ -63,7 +87,7 @@ $trainingSectionActive = $trainingManagementActive || $trainingCalendarActive ||
     || $certificatesActive || $recertificationActive || $signatoriesActive || $developmentPlansActive;
 $taskSectionActive = $myTaskActive || $shiftCommActive;
 $safetySectionActive = $lototoActive;
-$insightsSectionActive = $reportsActive || $userManagementActive || $roleManagementActive || $auditLogActive || $settingsActive || $newsActive;
+$insightsSectionActive = request()->routeIs('admin.menu-visibility.*') || $reportsActive || $userManagementActive || $roleManagementActive || $auditLogActive || $settingsActive || $newsActive;
 @endphp
 
 <div class="flex h-full grow flex-col bg-neutral-900">
@@ -84,36 +108,44 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
             </x-nav-item>
         </div>
 
-        @unless ($isGuest)
+        @if ($showTasks || $showShiftComm)
             <x-nav-group label="Task" :active="$taskSectionActive">
+                @if ($showTasks)
                 <x-nav-item :href="route('tasks.index')" :active="$myTaskActive" icon="M9 12.75L11.25 15 15 9.75M6 4.5h12A1.5 1.5 0 0119.5 6v12a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 18V6A1.5 1.5 0 016 4.5z">
                     My Task
                 </x-nav-item>
+                @endif
+                @if ($showShiftComm)
                 <x-nav-item :href="route('shift-comm.index')" :active="$shiftCommActive" icon="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155">
                     Shift Comm
                 </x-nav-item>
+                @endif
             </x-nav-group>
-        @endunless
+        @endif
 
         @if ($showOrganizationSection)
             <x-nav-group label="People & Organization" :active="$organizationSectionActive">
-                @if ($canViewEmployees)
-                    <x-nav-item :href="route('employees.index')" :active="$employeesActive" icon="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z">
+                @if ($showEmployees)
+<x-nav-item :href="route('employees.index')" :active="$employeesActive" icon="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z">
                         Employees
                     </x-nav-item>
-                    <x-nav-item :href="route('organization-chart.index')" :active="$organizationChartActive" icon="M12 3.75a1.5 1.5 0 013 0v2.25h1.5A2.25 2.25 0 0118.75 8.25v.567c.98.196 1.75.984 1.75 1.933v0M4.5 8.25A2.25 2.25 0 016.75 6h1.5V3.75a1.5 1.5 0 013 0M4.5 8.25v9A2.25 2.25 0 006.75 19.5H9m-4.5-11.25h15M9 19.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3M9 19.5h6">
+@endif
+                    @if ($showOrgChart)
+<x-nav-item :href="route('organization-chart.index')" :active="$organizationChartActive" icon="M12 3.75a1.5 1.5 0 013 0v2.25h1.5A2.25 2.25 0 0118.75 8.25v.567c.98.196 1.75.984 1.75 1.933v0M4.5 8.25A2.25 2.25 0 016.75 6h1.5V3.75a1.5 1.5 0 013 0M4.5 8.25v9A2.25 2.25 0 006.75 19.5H9m-4.5-11.25h15M9 19.5v-3a1.5 1.5 0 011.5-1.5h3a1.5 1.5 0 011.5 1.5v3M9 19.5h6">
                         Organization Chart
                     </x-nav-item>
-                    <x-nav-item :href="route('employees.qr-codes')" :active="$qrCodesActive" icon="M3.75 4.5h5.25v5.25H3.75V4.5zM3.75 14.25h5.25v5.25H3.75v-5.25zM14.25 4.5h5.25v5.25h-5.25V4.5zM14.25 14.25h1.5v1.5h-1.5v-1.5zM18 14.25h1.5v1.5H18v-1.5zM14.25 18h1.5v1.5h-1.5V18zM18 18h1.5v1.5H18V18z">
+@endif
+                    @if ($showQrCodes)
+<x-nav-item :href="route('employees.qr-codes')" :active="$qrCodesActive" icon="M3.75 4.5h5.25v5.25H3.75V4.5zM3.75 14.25h5.25v5.25H3.75v-5.25zM14.25 4.5h5.25v5.25h-5.25V4.5zM14.25 14.25h1.5v1.5h-1.5v-1.5zM18 14.25h1.5v1.5H18v-1.5zM14.25 18h1.5v1.5h-1.5V18zM18 18h1.5v1.5H18V18z">
                         QR Codes
                     </x-nav-item>
-                @endif
-                @if ($canManageMasterData)
+@endif
+                @if ($showOrganization)
                     <x-nav-item :href="route('organization.landing')" :active="$organizationActive" icon="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21">
                         Organization
                     </x-nav-item>
                 @endif
-                @if ($canViewOvertime)
+                @if ($showOvertime)
                     <x-nav-item :href="route('overtime.index')" :active="$overtimeActive" icon="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z">
                         Overtime
                     </x-nav-item>
@@ -123,20 +155,22 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
 
         @if ($showCompetencySection)
             <x-nav-group label="Competency" :active="$competencySectionActive">
-                @if ($canViewJobDescriptions)
+                @if ($showJobDescriptions)
                     <x-nav-item :href="route('job-descriptions.index')" :active="$jobDescriptionsActive" icon="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25">
                         Job Descriptions
                     </x-nav-item>
                 @endif
-                @if ($canViewSkillMatrix)
+                @if ($showSkills)
                     <x-nav-item :href="route('skills.landing')" :active="$skillsActive" icon="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342">
                         Skills &amp; Competencies
                     </x-nav-item>
-                    <x-nav-item :href="route('skill-matrix.index')" :active="$skillMatrixActive" icon="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5m7.5 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M12 10.875v2.25">
+                @endif
+                @if ($showSkillMatrix)
+<x-nav-item :href="route('skill-matrix.index')" :active="$skillMatrixActive" icon="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5m7.5 0c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125M12 10.875v2.25">
                         Skill Matrix
                     </x-nav-item>
-                @endif
-                @if ($canViewCompetencyGap)
+@endif
+                @if ($showCompetencyGap)
                     <x-nav-item :href="route('competency-gap-analysis.index')" :active="$competencyGapActive" icon="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z">
                         Competency Gap Analysis
                     </x-nav-item>
@@ -146,33 +180,37 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
 
         @if ($showTrainingSection)
             <x-nav-group label="Training & Development" :active="$trainingSectionActive">
-                @if ($canManageTraining)
+                @if ($showTrainingManagement)
                     <x-nav-item :href="route('training.programs.index')" :active="$trainingManagementActive" icon="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5">
                         Training Management
                     </x-nav-item>
                 @endif
-                @if ($canViewTraining)
-                    <x-nav-item :href="route('training.calendar')" :active="$trainingCalendarActive" icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                @if ($showTrainingCalendar)
+<x-nav-item :href="route('training.calendar')" :active="$trainingCalendarActive" icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
                         Training Calendar
                     </x-nav-item>
-                    <x-nav-item :href="route('training.records.index')" :active="$trainingRecordsActive" icon="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z">
+@endif
+                    @if ($showTrainingRecords)
+<x-nav-item :href="route('training.records.index')" :active="$trainingRecordsActive" icon="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z">
                         Training Records
                     </x-nav-item>
-                @endif
-                @if ($canViewCertificates)
-                    <x-nav-item :href="route('certificates.index')" :active="$certificatesActive" icon="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z">
+@endif
+                @if ($showCertificates)
+<x-nav-item :href="route('certificates.index')" :active="$certificatesActive" icon="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z">
                         Certificates
                     </x-nav-item>
-                    <x-nav-item :href="route('certificates.recertification')" :active="$recertificationActive" icon="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z">
+@endif
+                    @if ($showRecertification)
+<x-nav-item :href="route('certificates.recertification')" :active="$recertificationActive" icon="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z">
                         Recertification
                     </x-nav-item>
-                    @unless ($isGuest)
-                        <x-nav-item :href="route('signatories.index')" :active="$signatoriesActive" icon="M15.232 5.232l3.536 3.536M9 11l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 14.536a4 4 0 01-1.768 1.06l-3.155.902.902-3.155a4 4 0 011.06-1.768zM4 20h16">
+@endif
+                        @if ($showSignatories)
+<x-nav-item :href="route('signatories.index')" :active="$signatoriesActive" icon="M15.232 5.232l3.536 3.536M9 11l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 14.536a4 4 0 01-1.768 1.06l-3.155.902.902-3.155a4 4 0 011.06-1.768zM4 20h16">
                             Signatories
                         </x-nav-item>
-                    @endunless
-                @endif
-                @if ($canViewDevelopmentPlans)
+@endif
+                @if ($showDevelopmentPlans)
                     <x-nav-item :href="route('development-plans.index')" :active="$developmentPlansActive" icon="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z">
                         Development Plans
                     </x-nav-item>
@@ -182,7 +220,7 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
 
         @if ($showSafetySection)
             <x-nav-group label="Safety" :active="$safetySectionActive">
-                @if ($canViewSafety)
+                @if ($showLototo)
                     <x-nav-item :href="route('safety.lototo.index')" :active="$lototoActive" icon="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z">
                         LOTOTO
                     </x-nav-item>
@@ -192,7 +230,7 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
 
         @if ($showInsightsSection)
             <x-nav-group label="Insights & System" :active="$insightsSectionActive">
-                @if ($canViewReports)
+                @if ($showReports)
                     <x-nav-item :href="route('reports.index')" :active="$reportsActive" icon="M3 13.5l3-3m0 0l3 3m-3-3v9m6-9l3-3m0 0l3 3m-3-3v12">
                         Reports
                     </x-nav-item>
@@ -200,6 +238,9 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
                 @if ($canManageUsers)
                     <x-nav-item :href="route('admin.users.index')" :active="$userManagementActive" icon="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z">
                         User Management
+                    </x-nav-item>
+                    <x-nav-item :href="route('admin.menu-visibility.index')" :active="request()->routeIs('admin.menu-visibility.*')" icon="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+                        Menu Visibility
                     </x-nav-item>
                     <x-nav-item :href="route('admin.roles.index')" :active="$roleManagementActive" icon="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.75h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 0a11.959 11.959 0 018.25 3.286">
                         Roles &amp; Permissions
@@ -213,7 +254,7 @@ $insightsSectionActive = $reportsActive || $userManagementActive || $roleManagem
                         Settings
                     </x-nav-item>
                 @endif
-                @if ($canManageNews)
+                @if ($showNews)
                     <x-nav-item :href="route('news.index')" :active="$newsActive" icon="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z">
                         News
                     </x-nav-item>
