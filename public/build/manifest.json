@@ -1,0 +1,63 @@
+{
+  "_es6-1nSV5nqH.js": {
+    "file": "assets/es6-1nSV5nqH.js",
+    "name": "es6",
+    "imports": [
+      "resources/js/app.js"
+    ]
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-BEvbf7Xm.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-BI1u58rQ.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/face-login.js",
+      "resources/js/training-checkin.js",
+      "resources/js/task-board.js",
+      "resources/js/news-editor.js"
+    ]
+  },
+  "resources/js/face-login.js": {
+    "file": "assets/face-login-CanufOn0.js",
+    "name": "face-login",
+    "src": "resources/js/face-login.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_es6-1nSV5nqH.js"
+    ]
+  },
+  "resources/js/news-editor.js": {
+    "file": "assets/news-editor-DZj4W-qd.js",
+    "name": "news-editor",
+    "src": "resources/js/news-editor.js",
+    "isDynamicEntry": true,
+    "css": [
+      "assets/news-editor-Bh2jpL6a.css"
+    ]
+  },
+  "resources/js/task-board.js": {
+    "file": "assets/task-board-DhmY-QuF.js",
+    "name": "task-board",
+    "src": "resources/js/task-board.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/training-checkin.js": {
+    "file": "assets/training-checkin-BLxt7wnp.js",
+    "name": "training-checkin",
+    "src": "resources/js/training-checkin.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_es6-1nSV5nqH.js"
+    ]
+  }
+}
