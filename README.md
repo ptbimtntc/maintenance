@@ -145,7 +145,14 @@ This starts MySQL, waits for it to be ready, then runs `php artisan serve --host
 php artisan test
 ```
 
-Tests run against an in-memory SQLite database (configured in `phpunit.xml`) so they don't require MySQL and don't touch your development data.
+Tests run against a separate MySQL database, `maintenance_test` (configured in `phpunit.xml`), so they don't touch your development data. Create it once and grant your `DB_USERNAME` access:
+
+```sql
+CREATE DATABASE maintenance_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+GRANT ALL ON maintenance_test.* TO 'maintenance_app'@'%';
+```
+
+Adjust `DB_USERNAME`/`DB_PASSWORD` in `phpunit.xml` to match your local MySQL.
 
 ## Demo user accounts
 

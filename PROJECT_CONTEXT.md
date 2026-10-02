@@ -36,7 +36,7 @@ dengan `.env` `APP_URL=https://fantastic-orbit-5vvj4996g7prcp6r4-8000.app.github
 Pola yang konsisten dipakai sepanjang sesi — lanjutkan pola ini:
 
 1. Tulis kode + migration + test PHPUnit.
-2. `php artisan test` — jalankan di SQLite in-memory (config di `phpunit.xml`), cepat, tidak butuh MySQL.
+2. `php artisan test` — jalan di database MySQL terpisah `maintenance_test` (config di `phpunit.xml`), tidak menyentuh data dev.
 3. `php artisan migrate:fresh --force && php artisan db:seed --force` di MySQL asli (dev, boleh di-fresh karena cuma data dummy).
 4. `npm run build` untuk rebuild asset Tailwind (PENTING: kalau lupa, class Tailwind baru di Blade tidak akan ke-compile dan tampilan jadi polos tanpa warna — ini pernah kejadian dan ketahuan lewat screenshot).
 5. Jalankan **server terpisah** di port lain (8081, 8082, ..., sudah dipakai sampai 8086) dengan `APP_URL=http://127.0.0.1:PORT` supaya bisa dites headless browser tanpa perlu login GitHub (server utama port 8000 pakai APP_URL publik yang butuh auth GitHub, jadi TIDAK BISA dites langsung dari headless browser di sesi ini).

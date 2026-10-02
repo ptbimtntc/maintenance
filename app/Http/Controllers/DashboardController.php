@@ -15,17 +15,14 @@ use App\Models\TrainingSession;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /** SQL expression for a 2-digit month number, portable across the sqlite (dev) and mysql (production) drivers. */
+    /** SQL expression for a 2-digit month number (MySQL). */
     private function monthExpr(string $column): string
     {
-        return DB::connection()->getDriverName() === 'sqlite'
-            ? "strftime('%m', {$column})"
-            : "DATE_FORMAT({$column}, '%m')";
+        return "DATE_FORMAT({$column}, '%m')";
     }
 
     /**
