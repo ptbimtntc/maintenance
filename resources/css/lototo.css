@@ -1,0 +1,1908 @@
+        main:has(.lototo-page) {
+            overflow-x: clip !important;
+            overflow-y: auto !important;
+        }
+
+        main:has(.lototo-page) > div {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+            max-width: none;
+            padding-block: .75rem;
+        }
+
+        .lototo-page {
+            flex: 1 1 auto;
+            min-width: 0;
+            min-height: 0;
+            overflow: visible;
+        }
+
+        .lototo-board,
+        .lototo-board-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .lototo-board-content,
+        .lototo-group,
+        .lototo-group-content {
+            min-height: 0;
+        }
+
+        .lototo-board-content {
+            flex: 1 1 auto;
+        }
+
+        .lototo-group {
+            --lototo-group-label-width: 2rem;
+            flex: var(--lototo-row-count) 1 0;
+            overflow: hidden;
+        }
+
+        .lototo-main-area {
+            display: grid;
+            flex: var(--lototo-row-count) 1 0;
+            grid-template-columns: 2rem repeat(20, minmax(0, 1fr));
+            grid-template-rows: repeat(var(--lototo-grid-rows), minmax(0, 1fr));
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .lototo-main-group {
+            display: flex;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .lototo-technician-group {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 2rem repeat(20, minmax(0, 1fr));
+        }
+
+        .lototo-technician-group > .lototo-group-content {
+            grid-column: 2 / -1;
+        }
+
+        .lototo-group-label {
+            width: var(--lototo-group-label-width);
+        }
+
+        .lototo-supervisor-group {
+            display: grid;
+
+            grid-template-columns: 2.1rem minmax(0, 1fr);
+            z-index: 1;
+            border: 1px solid #d4a900;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .lototo-supervisor-group .lototo-group-content {
+            grid-column: 2 / -1;
+            min-width: 0;
+        }
+
+        .lototo-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 20)), minmax(0, 1fr));
+            grid-template-rows: repeat(var(--lototo-grid-rows), minmax(0, 1fr));
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+        }
+
+        .lototo-supervisor-grid {
+            grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 10)), minmax(0, 1fr));
+        }
+
+        .lototo-technician-grid {
+            grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 20)), minmax(0, 1fr));
+        }
+
+        .lototo-other-grid {
+            display: grid;
+            grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 20)), minmax(0, 1fr));
+            grid-template-rows: repeat(var(--lototo-grid-rows), minmax(0, 1fr));
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+        }
+
+        .lototo-position-index {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            z-index: 5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.15rem;
+            height: .9rem;
+            padding-inline: 2px;
+            border: 1px solid #fff;
+            border-radius: 2px;
+            background: #171717;
+            color: #fff;
+            font-size: 7px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .lototo-empty-slot {
+            background: #f5f5f4;
+        }
+
+        .lototo-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            min-width: 0;
+            min-height: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .lototo-lock-card {
+            padding: 2px;
+            background: repeating-linear-gradient(135deg, #dc2626 0, #dc2626 5px, #fff 5px, #fff 10px);
+            border: 2px solid #171717;
+            border-radius: .55rem;
+        }
+
+        .lototo-lock-card--supervisor {
+            background: repeating-linear-gradient(135deg, #eab308 0, #eab308 5px, #fff 5px, #fff 10px);
+            border-color: #171717;
+        }
+
+        .lototo-active-card {
+            gap: 1px;
+            padding: 2px;
+            background: #fee2e2;
+        }
+
+        .lototo-active-card--supervisor {
+            background: #fef3c7;
+        }
+
+        .lototo-active-photo {
+            width: 26px;
+            height: 26px;
+            flex: 0 0 26px;
+            object-fit: cover;
+        }
+
+        .lototo-active-name {
+            max-width: 100%;
+            overflow: hidden;
+            color: #171717;
+            font-size: 6px;
+            font-weight: 800;
+            line-height: 7px;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .lototo-active-status {
+            padding: 1px 4px;
+            border-radius: 999px;
+            background: #15803d;
+            color: #fff;
+            font-size: 5px;
+            font-weight: 900;
+            line-height: 7px;
+        }
+
+        .lototo-lock-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .lototo-lock-shackle {
+            width: 34%;
+            height: 10px;
+            flex: 0 0 10px;
+            border: 3px solid #525252;
+            border-bottom: 0;
+            border-radius: 999px 999px 0 0;
+            background: linear-gradient(90deg, #a3a3a3, #f5f5f5 45%, #737373);
+        }
+
+        .lototo-lock-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 82%;
+            min-width: 0;
+            padding: 2px;
+            overflow: hidden;
+            border: 2px solid #171717;
+            border-radius: 5px;
+            background: #dc2626;
+        }
+
+        .lototo-lock-card--supervisor .lototo-lock-body {
+            background: #facc15;
+        }
+
+        .lototo-lock-danger {
+            width: 100%;
+            flex: 0 0 auto;
+            margin-bottom: 2px;
+            border: 1px solid #fff;
+            border-radius: 999px;
+            background: #b91c1c;
+            color: #fff;
+            font-size: 5px;
+            font-weight: 900;
+            line-height: 8px;
+        }
+
+        .lototo-lock-card--supervisor .lototo-lock-danger {
+            border-color: #171717;
+            background: #facc15;
+            color: #171717;
+        }
+
+        .lototo-lock-photo-frame {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 0;
+            padding: 2px;
+            overflow: hidden;
+            border-radius: 2px;
+            background: #fff;
+        }
+
+        .lototo-lock-labels {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-width: 0;
+            padding: 1px 2px;
+            background: #fff;
+        }
+
+        .lototo-spare-lock-code-label {
+            font-size: 4px;
+            font-weight: 800;
+            line-height: 5px;
+        }
+
+        .lototo-spare-lock-code-number {
+            max-width: 100%;
+            overflow: hidden;
+            font-size: 7px;
+            font-weight: 900;
+            line-height: 8px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .lototo-spare-lock-active-code {
+            flex: 0 0 auto;
+            padding: 2px 4px;
+            border: 1px solid #171717;
+            border-radius: 3px;
+            background: #fff;
+            color: #171717;
+            line-height: 8px;
+        }
+
+        .lototo-photo {
+            width: 20px;
+            height: 20px;
+            flex: 0 0 20px;
+            object-fit: cover;
+        }
+
+        .lototo-number {
+            margin-top: 1px;
+            overflow: hidden;
+            font-size: 6px;
+            font-weight: 700;
+            line-height: 7px;
+            color: #5c564d;
+        }
+
+        .lototo-name {
+            min-width: 0;
+            min-height: 12px;
+            max-height: 14px;
+            padding-inline: 2px;
+            overflow: hidden;
+            font-size: 6px;
+            font-weight: 700;
+            line-height: 7px;
+            text-transform: uppercase;
+            color: #211f1c;
+        }
+
+        .lototo-employee-number {
+            min-width: 0;
+            padding: 0 2px 1px;
+            overflow: hidden;
+            font-size: 5px;
+            line-height: 6px;
+            color: #999087;
+        }
+
+        @media (max-height: 600px) {
+            .lototo-group {
+                --lototo-group-label-width: 1.5rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .lototo-page {
+                overflow-x: auto;
+                overflow-y: auto;
+            }
+
+            .lototo-board {
+                min-width: 1000px;
+            }
+
+            .lototo-page,
+            .lototo-board {
+                height: auto;
+                min-height: calc(100vh - 8rem);
+                min-height: calc(100dvh - 8rem);
+            }
+
+            .lototo-board-content {
+                flex: 1 0 auto;
+            }
+
+            .lototo-group {
+                flex: var(--lototo-row-count) 0 auto;
+            }
+
+            .lototo-main-area {
+                flex: var(--lototo-row-count) 0 auto;
+            }
+
+            .lototo-grid {
+                height: auto;
+                grid-template-rows: repeat(var(--lototo-grid-rows), minmax(3.5rem, auto));
+            }
+
+            .lototo-other-grid {
+                height: auto;
+                min-height: 3.5rem;
+            }
+        }
+
+    main:has(.lototo-activity-page) > .lototo-activity-layout {
+        width: 100%;
+        max-width: none;
+        padding: 1.5rem 0 0;
+    }
+
+    .lototo-activity-page > header {
+        min-height: 5.25rem;
+    }
+
+    .lototo-activity-page thead th {
+        height: 6.25rem;
+    }
+
+    .lototo-activity-page tbody td[colspan="11"] {
+        height: 7rem;
+    }
+
+    @media (max-width: 640px) {
+        main:has(.lototo-activity-page) > .lototo-activity-layout {
+            padding-top: 1rem;
+        }
+    }
+
+/* LOTOTO board visual refinements: stage 3 */
+.lototo-page .lototo-board {
+    border-width: 3px;
+    border-radius: .75rem;
+    padding: .35rem;
+    box-shadow: 0 14px 30px -20px rgb(0 0 0 / 55%);
+}
+
+.lototo-page .lototo-board-content {
+    border-radius: .45rem;
+    background-color: #fafaf9;
+}
+
+.lototo-board-content > header {
+    gap: .75rem;
+    padding: .75rem clamp(.5rem, 1.6vw, 1rem);
+    background-color: #f5f5f4;
+}
+
+.lototo-board-content > header > div > h1 {
+    font-size: clamp(1.125rem, 2.1vw, 1.65rem);
+    letter-spacing: .04em;
+}
+
+.lototo-board-content > header > p {
+    letter-spacing: .18em;
+}
+
+.lototo-board-content > header a[aria-label="LOTOTO Settings"] {
+    min-height: 2.5rem;
+    align-items: center;
+}
+
+.lototo-board-content > header a[aria-label="LOTOTO Settings"] > svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: .2rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    background-color: #eff6ff;
+}
+
+.lototo-back-button {
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex: 0 0 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #eab308;
+    border-radius: 9999px;
+    background: #facc15;
+    color: #292524;
+    transition: background-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.lototo-back-button:hover {
+    background: #eab308;
+    box-shadow: 0 2px 7px rgb(0 0 0 / 18%);
+    transform: translateX(-1px);
+}
+
+.lototo-back-button:focus-visible {
+    outline: 3px solid #a16207;
+    outline-offset: 2px;
+}
+
+.lototo-back-button svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Board layout tuned to the reference board; scoped to the LOTOTO index only. */
+main:has(.lototo-page) {
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+}
+
+main:has(.lototo-page) > div {
+    display: block;
+    height: auto;
+    min-height: 100%;
+    padding: 1rem clamp(.75rem, 2vw, 2rem);
+}
+
+.lototo-page {
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.lototo-page .lototo-board {
+    width: 100%;
+    max-width: 76rem;
+    height: auto;
+    min-height: 0;
+    margin-inline: auto;
+    padding: .25rem;
+    overflow: visible;
+    border: 2px solid #262626;
+    border-radius: .65rem;
+    background: repeating-linear-gradient(135deg, #171717 0 7px, #facc15 7px 14px);
+    box-shadow: 0 8px 24px -18px rgb(0 0 0 / 55%);
+}
+
+.lototo-page .lototo-board-content {
+    display: flex;
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    gap: .55rem;
+    overflow: visible;
+    border: 1px solid #404040;
+    border-radius: .45rem;
+    background: #fafaf9;
+}
+
+.lototo-board-content > .lototo-board-heading {
+    position: relative;
+    display: block;
+    flex: none;
+    min-height: 5.55rem;
+    padding: .48rem 4rem .55rem;
+    border: 0;
+    border-bottom: 2px solid #34d399;
+    background: #fff;
+}
+
+.lototo-board-heading > div {
+    display: block;
+}
+
+.lototo-board-heading .lototo-station-label {
+    margin: 0;
+    color: #a8a29e;
+    font-size: .55rem;
+    font-weight: 800;
+    letter-spacing: .27em;
+    line-height: 1.2;
+}
+
+.lototo-board-heading .lototo-station-title {
+    margin: .25rem 0 0;
+    color: #171717;
+    font-size: clamp(1.05rem, 1.5vw, 1.4rem);
+    font-weight: 800;
+    letter-spacing: .01em;
+    line-height: 1.15;
+}
+
+.lototo-board-heading .lototo-station-subtitle {
+    margin: .3rem 0 0;
+    color: #a8a29e;
+    font-size: .66rem;
+    line-height: 1.2;
+}
+
+.lototo-board-heading a[aria-label="LOTOTO Settings"] {
+    position: absolute;
+    top: .75rem;
+    right: .8rem;
+    width: auto;
+}
+
+.lototo-board-content > .lototo-main-area {
+    position: relative;
+    display: grid;
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: calc(3.5rem + (var(--lototo-grid-rows) * 3.65rem));
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    grid-template-rows: 1.7rem repeat(var(--lototo-grid-rows), minmax(3.65rem, auto));
+    overflow: visible;
+    border-bottom: 1px solid #d6d3d1;
+    background: #fafaf9;
+}
+
+.lototo-technician-group {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1.7rem minmax(0, 1fr);
+    overflow: visible;
+    border: 0;
+    background: #fafaf9;
+}
+
+.lototo-section-heading {
+    z-index: 2;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: .22rem .75rem;
+    border-radius: .28rem;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.lototo-section-heading--technician {
+    grid-row: 1;
+    background: #e11d48;
+    color: #fff;
+}
+
+.lototo-section-heading .lototo-heading-name {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.lototo-section-heading .lototo-heading-name svg {
+    width: .85rem;
+    height: .85rem;
+}
+
+.lototo-section-heading .lototo-heading-count {
+    font-size: .56rem;
+    font-weight: 700;
+}
+
+.lototo-technician-group > .lototo-group-content {
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    overflow: visible;
+}
+
+.lototo-technician-grid,
+.lototo-supervisor-grid {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    grid-auto-rows: minmax(3.65rem, auto);
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    gap: .15rem;
+    padding: .12rem 0 .2rem;
+}
+
+.lototo-technician-grid > div,
+.lototo-supervisor-grid > div {
+    min-width: 0;
+    min-height: 0;
+}
+
+.lototo-supervisor-group {
+    position: relative;
+    display: block;
+    min-width: 0;
+    min-height: 0;
+
+    z-index: 3;
+    overflow: visible;
+    border: 1px solid #facc15;
+    border-radius: .35rem;
+    background: #fefce8;
+}
+
+.lototo-supervisor-group > .lototo-section-heading {
+    position: static;
+    min-height: 1.5rem;
+    padding: .2rem .35rem;
+    background: #fef08a;
+    color: #713f12;
+    font-size: .62rem;
+    line-height: 1.1;
+}
+
+.lototo-supervisor-group > .lototo-group-content {
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+}
+
+.lototo-supervisor-grid {
+    grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 20)), minmax(0, 1fr));
+    grid-auto-rows: minmax(3.65rem, auto);
+    padding: 0;
+}
+
+.lototo-board-content > section.lototo-group,
+.lototo-board-content > div.lototo-group {
+    position: relative;
+    display: flex;
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 5.25rem;
+    flex-direction: column;
+    overflow: visible;
+    border: 1px solid #fed7aa;
+    border-radius: .4rem;
+}
+
+.lototo-board-content > section.lototo-group {
+    order: 2;
+    background: #fff7ed;
+}
+
+.lototo-board-content > div.lototo-group {
+    border-color: #bae6fd;
+    background: #e0f2fe;
+}
+
+.lototo-board-content > .lototo-main-area {
+    order: 1;
+}
+
+.lototo-board-content > .lototo-group > .lototo-section-heading {
+    flex: none;
+    min-height: 1.65rem;
+    border-bottom: 1px solid currentColor;
+    border-radius: .35rem .35rem 0 0;
+    font-size: .7rem;
+}
+
+.lototo-section-heading--other {
+    background: #ffedd5;
+    color: #7c2d12;
+}
+
+.lototo-section-heading--spare {
+    background: #e0f2fe;
+    color: #164e63;
+}
+
+.lototo-board-content > .lototo-group > .lototo-group-content {
+    display: block;
+    flex: none;
+    width: 100%;
+    min-width: 0;
+    min-height: 3.5rem;
+    overflow: visible;
+}
+
+.lototo-other-grid,
+.lototo-board-content > div.lototo-group .lototo-grid {
+    display: grid;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    grid-auto-rows: minmax(3.65rem, auto);
+    gap: .15rem;
+    padding: .15rem;
+}
+
+.lototo-empty-message {
+    display: grid;
+    min-height: 3.9rem;
+    margin: 0;
+    place-items: center;
+    color: #a8a29e;
+    font-size: .75rem;
+}
+
+.lototo-card {
+    width: 100%;
+    min-width: 0;
+    min-height: 3.5rem;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid #fda4af;
+    border-radius: .28rem;
+    background-color: #fff;
+}
+
+.lototo-card::before {
+    z-index: 0;
+    height: .85rem;
+    background: #e11d48;
+}
+
+.lototo-lock-card--supervisor::before,
+.lototo-active-card--supervisor::before {
+    background: #facc15;
+}
+
+.lototo-position-index,
+.lototo-card > .lototo-position-index {
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 4;
+    display: flex;
+    width: 100%;
+    height: .85rem;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: .2rem .2rem 0 0;
+    background: transparent;
+    color: #fff;
+    font-size: clamp(6px, .55vw, 8px);
+    line-height: .85rem;
+}
+
+.lototo-supervisor-group .lototo-card {
+    border-color: #facc15;
+    background-color: #fff;
+}
+
+.lototo-supervisor-group .lototo-card::before {
+    background: #facc15;
+}
+
+.lototo-supervisor-group .lototo-position-index {
+    color: #713f12;
+}
+
+
+.lototo-active-card .lototo-active-photo {
+    width: clamp(1.1rem, 1.6vw, 1.5rem);
+    height: clamp(1.1rem, 1.6vw, 1.5rem);
+    flex-basis: clamp(1.1rem, 1.6vw, 1.5rem);
+}
+
+.lototo-active-name,
+.lototo-name {
+    max-width: 100%;
+    font-size: clamp(5px, .55vw, 7px);
+    line-height: 1.1;
+}
+
+.lototo-number,
+.lototo-employee-number {
+    font-size: clamp(5px, .48vw, 6px);
+    line-height: 1.1;
+}
+
+@media (max-width: 640px) {
+    main:has(.lototo-page) > div {
+        padding: .75rem;
+    }
+
+}
+
+/* LOTOTO card/tag refinements */
+.lototo-card {
+    isolation: isolate;
+    border-radius: 3px;
+}
+
+.lototo-card::before {
+    position: absolute;
+    z-index: 0;
+    inset: 0 0 auto;
+    height: 14px;
+    background: repeating-linear-gradient(135deg, #dc2626 0 5px, #fff 5px 10px);
+    content: "";
+}
+
+.lototo-lock-card,
+.lototo-lock-card--supervisor {
+    border: 1px solid #be123c;
+    padding: 2px;
+    background: transparent;
+}
+
+/* Reference board layout: keep all changes local to the LOTOTO board. */
+main:has(.lototo-page) {
+    min-width: 0;
+    overflow-x: clip !important;
+    overflow-y: auto !important;
+}
+
+main:has(.lototo-page) > div {
+    display: block;
+    height: auto;
+    min-height: 100%;
+    max-width: none;
+    padding: .65rem clamp(.75rem, 1.2vw, 1.25rem);
+}
+
+.lototo-page {
+    display: flex;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    gap: .55rem;
+    overflow: visible;
+}
+
+.lototo-board-actions {
+    display: flex;
+    min-width: 0;
+    min-height: 2.1rem;
+    align-items: center;
+    gap: .4rem;
+}
+
+.lototo-board-action-spacer {
+    flex: 1 1 auto;
+}
+
+.lototo-board-select-wrap {
+    position: relative;
+    display: flex;
+    width: clamp(12rem, 28vw, 22rem);
+    min-width: 0;
+    height: 2rem;
+    flex: 0 1 22rem;
+    align-items: center;
+}
+
+.lototo-board-select {
+    width: 100%;
+    height: 100%;
+    appearance: none;
+    padding: .25rem 1.8rem .25rem .65rem;
+    overflow: hidden;
+    border: 1px solid #d6d3d1;
+    border-radius: .35rem;
+    background: #fff;
+    color: #292524;
+    font-size: .72rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.lototo-board-select-wrap > svg {
+    position: absolute;
+    right: .5rem;
+    width: 1rem;
+    height: 1rem;
+    pointer-events: none;
+    color: #78716c;
+}
+
+.lototo-board-select-empty {
+    color: #57534e;
+    font-size: .75rem;
+}
+
+.lototo-board-action {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    gap: .4rem;
+    padding: .3rem .65rem;
+    border: 1px solid #d6d3d1;
+    border-radius: .35rem;
+    background: #fff;
+    color: #292524;
+    font-size: .72rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+}
+
+.lototo-board-action:hover {
+    background: #f5f5f4;
+}
+
+.lototo-board-action svg {
+    width: .9rem;
+    height: .9rem;
+}
+
+/* The column count sets how many slots share a row, not the slot size: a slot is always as wide as one column
+   of the 20-column board, so a 10 or 15 column board is that board narrowed by its unused columns.
+   --lototo-board-frame is the width of the board around its slot grids (borders, padding, side label). */
+.lototo-page .lototo-board {
+    --lototo-board-full-width: 100%;
+    --lototo-board-frame: 4.3rem;
+    width: calc(var(--lototo-board-full-width) - (20 - var(--lototo-board-columns)) * (var(--lototo-board-full-width) - var(--lototo-board-frame) + var(--lototo-slot-gap)) / 20);
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: .28rem;
+    overflow: visible;
+    border: 2px solid #171717;
+    border-radius: .72rem;
+    background: repeating-linear-gradient(135deg, #171717 0 8px, #facc15 8px 16px);
+    box-shadow: 0 7px 18px -14px rgb(0 0 0 / 60%);
+}
+
+.lototo-page .lototo-board-content {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    flex: none;
+    flex-direction: column;
+    gap: .55rem;
+    overflow: visible;
+    border: 1px solid #404040;
+    border-radius: .42rem;
+    background: #fff;
+}
+
+.lototo-board-content > .lototo-board-heading {
+    position: relative;
+    display: block;
+    min-height: 6.25rem;
+    flex: none;
+    padding: .55rem 4rem .6rem;
+    border: 0;
+    border-bottom: 2px solid #34d399;
+    background: #fff;
+}
+
+.lototo-board-heading > div {
+    display: block;
+}
+
+.lototo-board-heading .lototo-station-label {
+    margin: 0 0 .15rem;
+    color: #78716c;
+    font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: .015em;
+    line-height: 1.15;
+}
+
+.lototo-board-heading .lototo-station-title {
+    margin: .25rem 0 0;
+    color: #171717;
+    font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+    font-weight: 800;
+    letter-spacing: .015em;
+    line-height: 1.15;
+}
+
+.lototo-board-heading .lototo-station-subtitle {
+    margin: .32rem 0 0;
+    color: #78716c;
+    font-size: .76rem;
+    line-height: 1.2;
+}
+
+.lototo-board-heading a[aria-label="LOTOTO Settings"] {
+    position: absolute;
+    top: .6rem;
+    right: .7rem;
+    width: auto;
+}
+
+.lototo-board-content > .lototo-main-area {
+    position: relative;
+    display: grid;
+    width: 100%;
+    height: auto;
+    flex: none;
+    grid-template-columns: var(--lototo-main-label-width) repeat(20, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--lototo-grid-rows), auto);
+    overflow: visible;
+    /* Supervisor slots take their width from the board columns of this area (see .lototo-supervisor-grid). */
+    container-type: inline-size;
+    border: 1px solid #bbebd2;
+    border-radius: .45rem;
+    background: #edf8f0;
+}
+
+.lototo-technician-group {
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-column: 1 / -1;
+    grid-template-columns: var(--lototo-main-label-width) repeat(20, minmax(0, 1fr));
+    grid-template-rows: repeat(var(--lototo-grid-rows), auto);
+    overflow: visible;
+    border: 0;
+    background: transparent;
+}
+
+.lototo-vertical-label {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: .66rem;
+    font-weight: 900;
+    letter-spacing: .055em;
+}
+
+.lototo-vertical-label svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: 0 0 auto;
+}
+
+.lototo-vertical-count {
+    font-size: .4rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    opacity: .85;
+}
+
+.lototo-vertical-label--technician {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    border-right: 1px solid #258447;
+    border-radius: .35rem 0 0 .35rem;
+    background: #279355;
+    color: #fff;
+}
+
+.lototo-section-heading {
+    z-index: 3;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: .25rem .7rem;
+    border-radius: .28rem;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.lototo-section-heading .lototo-heading-name {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+}
+
+.lototo-section-heading .lototo-heading-name svg {
+    width: .9rem;
+    height: .9rem;
+}
+
+.lototo-section-heading .lototo-heading-count {
+    font-size: .58rem;
+    font-weight: 700;
+}
+
+.lototo-section-heading--technician {
+    display: none;
+    grid-column: 2 / -1;
+    grid-row: 1;
+    background: #e11d48;
+    color: #fff;
+}
+
+.lototo-technician-group > .lototo-group-content {
+    min-width: 0;
+    min-height: 0;
+    grid-column: 2 / -1;
+    grid-row: 1 / -1;
+    overflow: visible;
+}
+
+.lototo-technician-grid,
+.lototo-supervisor-grid {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(20, minmax(0, 1fr));
+    gap: var(--lototo-slot-gap);
+    padding: .12rem .1rem .2rem;
+}
+
+.lototo-technician-grid > div,
+.lototo-supervisor-grid > div {
+    min-width: 0;
+    min-height: 0;
+}
+
+.lototo-supervisor-group {
+    position: relative;
+    z-index: 4;
+    display: grid;
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: 2.1rem minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    overflow: visible;
+    border: 1px solid #facc15;
+    border-radius: .38rem;
+    background: #fff;
+}
+
+.lototo-vertical-label--supervisor {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: 1px solid #eab308;
+    border-radius: .32rem 0 0 .32rem;
+    background: #facc15;
+    color: #713f12;
+    font-size: .47rem;
+}
+
+.lototo-vertical-label--supervisor svg {
+    display: none;
+}
+
+.lototo-supervisor-group > .lototo-group-content {
+    min-width: 0;
+    min-height: 0;
+    grid-column: 2;
+    grid-row: 1;
+    overflow: visible;
+}
+
+.lototo-supervisor-grid {
+    grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns, 10)), minmax(0, 1fr));
+    padding: 0;
+}
+
+.lototo-board-content > div.lototo-group,
+.lototo-board-content > section.lototo-group {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 4.8rem;
+    flex: none;
+    flex-direction: row;
+    overflow: visible;
+    border: 1px solid;
+    border-radius: .42rem;
+}
+
+.lototo-board-content > .lototo-main-area {
+    order: 1;
+}
+
+.lototo-board-content > div.lototo-group {
+    border-color: #a5d8f0;
+    background: #eff8fd;
+}
+
+.lototo-board-content > div.lototo-other-group {
+    border-color: #fed7aa;
+    background: #fff7ed;
+}
+
+.lototo-vertical-label--spare,
+.lototo-vertical-label--other {
+    width: 3rem;
+    min-height: 4.8rem;
+    flex: 0 0 3rem;
+    border-radius: .35rem 0 0 .35rem;
+    color: #fff;
+}
+
+.lototo-vertical-label--spare {
+    background: #229be5;
+}
+
+.lototo-vertical-label--other {
+    background: #f97316;
+}
+
+.lototo-board-content > .lototo-group > .lototo-group-content {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    overflow: visible;
+}
+
+.lototo-section-heading--other {
+    min-height: 1.45rem;
+    flex: none;
+    padding: .12rem .6rem;
+    border-bottom: 1px solid #fed7aa;
+    border-radius: 0 .35rem 0 0;
+    background: #ffedd5;
+    color: #7c2d12;
+    font-size: .64rem;
+}
+
+.lototo-board-content > .lototo-group > .lototo-group-content > .lototo-grid,
+.lototo-other-grid {
+    display: grid;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    grid-template-columns: repeat(var(--lototo-board-columns, 20), minmax(0, 1fr));
+    gap: var(--lototo-slot-gap);
+    padding: .15rem;
+}
+
+.lototo-empty-message {
+    display: grid;
+    min-height: 4.3rem;
+    margin: 0;
+    place-items: center;
+    color: #a8a29e;
+    font-size: .76rem;
+}
+
+/* Every slot (Technician, Supervisor, Spare, Tools) is as tall as its grid says through --lototo-slot-height,
+   defined in the slot size model at the end of this file. A track height or min-height never sizes a slot. */
+.lototo-card {
+    width: 100%;
+    height: var(--lototo-slot-height);
+    min-width: 0;
+    min-height: 0;
+    aspect-ratio: auto;
+    overflow: hidden;
+    border: 1px solid #fda4af;
+    border-radius: .28rem;
+    background-color: #fff;
+}
+
+.lototo-card::before {
+    height: .84rem;
+    background: repeating-linear-gradient(135deg, #e11d48 0 6px, #fff 6px 12px);
+}
+
+.lototo-lock-card--supervisor::before,
+.lototo-active-card--supervisor::before {
+    background: repeating-linear-gradient(135deg, #facc15 0 6px, #fff 6px 12px);
+}
+
+/* Slot index: a small dark chip in the top-left corner, clear of the lock shackle and the follow-up badge. */
+.lototo-card > .lototo-position-index {
+    top: 2px;
+    right: auto;
+    left: 2px;
+    z-index: 6;
+    display: inline-flex;
+    width: auto;
+    min-width: 1.15rem;
+    height: .75rem;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2px;
+    border: 1px solid #fff;
+    border-radius: 3px;
+    background: #171717;
+    color: #fff;
+    font-size: 8px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.lototo-supervisor-group .lototo-card {
+    border-color: #facc15;
+}
+
+.lototo-other-group .lototo-card {
+    border-color: #fed7aa;
+    background-color: #fffaf5;
+}
+
+.lototo-other-group .lototo-card::before {
+    background: #fb923c;
+}
+
+.lototo-other-group .lototo-card > .lototo-position-index {
+    color: #fff;
+}
+
+.lototo-other-grid .lototo-card > svg {
+    width: 1.3rem;
+    height: 1.3rem;
+    color: #78716c;
+}
+
+.lototo-board-heading a[aria-label="LOTOTO Settings"] {
+    display: none;
+}
+
+.lototo-supervisor-group .lototo-active-card {
+    border-color: #facc15;
+}
+
+.lototo-supervisor-group .lototo-active-card::before {
+    background: repeating-linear-gradient(135deg, #facc15 0 6px, #fff 6px 12px);
+}
+
+.lototo-board-content > div.lototo-group:not(.lototo-other-group) .lototo-card::before {
+    background: repeating-linear-gradient(135deg, #1683ca 0 6px, #fff 6px 12px);
+}
+
+@media (max-width: 900px) {
+    .lototo-page {
+        overflow-x: auto;
+        overflow-y: auto;
+        padding-bottom: .4rem;
+    }
+
+    .lototo-page .lototo-board {
+        --lototo-board-full-width: max(100%, 1000px);
+    }
+
+    /* Narrower Technician label; the main area and the Technician group share it so board columns stay aligned. */
+    .lototo-board-content > .lototo-main-area {
+        --lototo-main-label-width: 2rem;
+    }
+
+    .lototo-page .lototo-board {
+        --lototo-slot-gap: clamp(.08rem, .2vw, .16rem);
+    }
+}
+
+@media (max-width: 640px) {
+    main:has(.lototo-page) > div {
+        padding: .5rem;
+    }
+}
+
+.lototo-active-card,
+.lototo-active-card--supervisor {
+    border: 1px solid #be123c;
+    padding: 2px;
+    background: transparent;
+}
+
+/* Lock shared by Technician, Supervisor and Spare slots (_lock.blade.php). Sizes follow the slot width
+   through container units, so the lock keeps its proportions at 10, 15 and 20 board columns. */
+.lototo-main-area .lototo-card,
+.lototo-spare-group .lototo-card {
+    --lototo-lock-stripe: #dc2626;
+    --lototo-lock-accent: #dc2626;
+    --lototo-lock-band: #b91c1c;
+    --lototo-lock-band-border: #fff;
+    --lototo-lock-band-text: #fff;
+    container-type: inline-size;
+}
+
+.lototo-card.lototo-lock-card--supervisor,
+.lototo-card.lototo-active-card--supervisor {
+    --lototo-lock-stripe: #eab308;
+    --lototo-lock-accent: #facc15;
+    --lototo-lock-band: #facc15;
+    --lototo-lock-band-border: #171717;
+    --lototo-lock-band-text: #171717;
+}
+
+.lototo-card.lototo-lock-card--spare,
+.lototo-card.lototo-active-card--spare {
+    --lototo-lock-stripe: #2563eb;
+    --lototo-lock-accent: #2563eb;
+    --lototo-lock-band: #1e3a8a;
+}
+
+.lototo-card.lototo-spare-lock--inactive {
+    --lototo-lock-stripe: #a3a3a3;
+    --lototo-lock-accent: #737373;
+    --lototo-lock-band: #525252;
+}
+
+/* OUT: the lock hangs on the board. */
+.lototo-card.lototo-lock-card {
+    padding: 2px;
+    border: 2px solid #171717;
+    border-radius: .5rem;
+    background: repeating-linear-gradient(135deg, var(--lototo-lock-stripe) 0 7px, #fff 7px 14px);
+}
+
+.lototo-card.lototo-lock-card::before {
+    content: none;
+}
+
+.lototo-card .lototo-lock-content {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    margin-top: 0;
+    justify-content: flex-start;
+}
+
+/* The shackle is at least as tall as the index chip, so the chip never covers the lock body. */
+.lototo-card .lototo-lock-shackle {
+    width: 38%;
+    height: clamp(13px, 18cqi, 20px);
+    flex: none;
+    border-width: clamp(2px, 5cqi, 5px);
+}
+
+.lototo-card .lototo-lock-body {
+    flex: 1 1 auto;
+    width: 94%;
+    min-height: 0;
+    gap: clamp(1px, 3cqi, 4px);
+    padding: clamp(2px, 4cqi, 5px);
+    border: 2px solid #171717;
+    border-radius: clamp(4px, 10cqi, 10px);
+    background: var(--lototo-lock-accent);
+}
+
+/* IN: the lock is off the board, so only its tag stays below the striped header. */
+.lototo-card .lototo-lock-content--in {
+    margin-top: .85rem;
+}
+
+.lototo-card .lototo-lock-content--in .lototo-lock-body {
+    border-color: var(--lototo-lock-stripe);
+    background: #fff;
+}
+
+.lototo-card .lototo-lock-danger {
+    flex: none;
+    width: 100%;
+    margin: 0;
+    padding: 0 2px;
+    overflow: hidden;
+    border: 1px solid var(--lototo-lock-band-border);
+    border-radius: 999px;
+    background: var(--lototo-lock-band);
+    color: var(--lototo-lock-band-text);
+    font-size: clamp(5px, 9.5cqi, 11px);
+    font-weight: 900;
+    letter-spacing: .02em;
+    line-height: 1.3;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* IN keeps the green status colour, now as the tag's band. */
+.lototo-card .lototo-lock-danger--in {
+    border-color: #fff;
+    background: #15803d;
+    color: #fff;
+}
+
+.lototo-card .lototo-lock-plate {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    padding: clamp(1px, 3cqi, 4px) 2px;
+    overflow: hidden;
+    border-radius: clamp(2px, 6cqi, 6px);
+    background: #fff;
+    color: #171717;
+}
+
+.lototo-card .lototo-photo {
+    width: clamp(14px, 34cqi, 48px);
+    height: clamp(14px, 34cqi, 48px);
+    flex: none;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    object-fit: cover;
+}
+
+.lototo-card .lototo-photo--initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #e5e5e5;
+    color: #404040;
+    font-size: clamp(6px, 12cqi, 15px);
+    font-weight: 800;
+    line-height: 1;
+}
+
+.lototo-card .lototo-lock-plate .lototo-number {
+    margin: 0;
+    color: #171717;
+    font-size: clamp(8px, 14cqi, 17px);
+    font-weight: 900;
+    line-height: 1;
+}
+
+.lototo-card .lototo-lock-plate .lototo-name {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    max-height: none;
+    padding: 0;
+    overflow: hidden;
+    color: #171717;
+    font-size: clamp(6px, 10cqi, 12px);
+    font-weight: 800;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lototo-card .lototo-lock-plate .lototo-spare-lock-code-number {
+    max-width: 100%;
+    overflow: hidden;
+    color: #1e3a8a;
+    font-size: clamp(8px, 16cqi, 18px);
+    font-weight: 900;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Narrowest slots (20 columns on a small screen): thinner frame so the band and code keep their text. */
+@container (max-width: 40px) {
+    .lototo-card .lototo-lock-body {
+        width: 100%;
+        padding: 1px;
+        border-width: 1px;
+    }
+
+    .lototo-card .lototo-lock-danger {
+        padding: 0;
+        border-width: 0;
+        letter-spacing: 0;
+    }
+
+    .lototo-card .lototo-lock-plate {
+        padding-inline: 1px;
+    }
+
+    .lototo-card .lototo-lock-plate .lototo-spare-lock-code-number {
+        font-size: 7px;
+    }
+}
+
+/* A slot without a LOTOTO lock stays plain but keeps its size and index. */
+.lototo-main-area .lototo-card.lototo-empty-slot,
+.lototo-spare-group .lototo-card.lototo-empty-slot {
+    border: 1px dashed #a8a29e;
+    background-image: none;
+}
+
+.lototo-main-area .lototo-card.lototo-empty-slot::before,
+.lototo-spare-group .lototo-card.lototo-empty-slot::before {
+    content: none;
+}
+
+.lototo-card > :not(.lototo-position-index):not(.lototo-follow-up-badge):not(.lototo-card-drag-handle) {
+    position: relative;
+    z-index: 1;
+}
+
+[data-slot-row].lototo-slot-dragging {
+    opacity: .45;
+}
+
+.lototo-main-area .lototo-technician-group {
+    background-color: #f0fdf4;
+}
+
+.lototo-main-area .lototo-supervisor-group {
+    border-color: #eab308;
+    border-radius: .5rem;
+    background-color: #fefce8;
+}
+
+.lototo-board-content > section.lototo-group {
+    background-color: #fff7ed;
+}
+
+.lototo-board-content > div.lototo-group {
+    background-color: #eff6ff;
+}
+
+.lototo-card > .lototo-position-index {
+    top: 3px;
+    left: 3px;
+    min-width: 1.25rem;
+    height: 1rem;
+    font-size: 8px;
+}
+
+.lototo-other-grid .lototo-card > svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-basis: 1.25rem;
+}
+
+.lototo-other-grid .lototo-tool-name {
+    font-size: 7px;
+    line-height: 1.15;
+    max-width: calc(100% - .25rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lototo-active-name,
+.lototo-name {
+    font-size: 7px;
+    line-height: 8px;
+}
+
+.lototo-employee-number {
+    font-size: 6px;
+    line-height: 7px;
+}
+
+.lototo-spare-lock-code-label {
+    font-size: 5px;
+    line-height: 6px;
+}
+
+.lototo-spare-lock-code-number {
+    font-size: 8px;
+    line-height: 9px;
+}
+
+.lototo-spare-lock-active-code {
+    font-size: 7px;
+}
+
+/* LOTOTO board visual refinements: stage 4 */
+.lototo-page .lototo-board-content {
+    gap: .2rem;
+}
+
+.lototo-board-content > .lototo-main-area {
+    order: 1;
+    border-bottom: 1px solid #737373;
+}
+
+.lototo-board-content > section.lototo-group,
+.lototo-board-content > div.lototo-group {
+    border-bottom-width: 1px;
+    border-radius: .25rem;
+}
+
+.lototo-main-area .lototo-technician-group {
+    background-color: #f0fdf4;
+}
+
+.lototo-technician-group .lototo-empty-slot {
+    background-color: #dcfce7;
+}
+
+.lototo-main-area .lototo-supervisor-group {
+    background-color: #fefce8;
+}
+
+.lototo-supervisor-group .lototo-empty-slot {
+    background-color: #fef9c3;
+}
+
+.lototo-board-content > section.lototo-group,
+.lototo-board-content > section.lototo-group .lototo-other-grid {
+    background-color: #fff7ed;
+}
+
+.lototo-other-grid .lototo-card {
+    background-color: #ffedd5;
+}
+
+.lototo-board-content > div.lototo-group,
+.lototo-board-content > div.lototo-group .lototo-grid {
+    background-color: #eff6ff;
+}
+
+.lototo-board-content > div.lototo-group .lototo-empty-slot {
+    background-color: #dbeafe;
+}
+
+.lototo-board-content > header a[aria-label="LOTOTO Settings"] > svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+@media (max-width: 640px) {
+    .lototo-board-actions {
+        flex-wrap: wrap;
+    }
+
+    .lototo-board-select-wrap {
+        width: min(100%, 22rem);
+        flex-basis: 100%;
+    }
+
+    .lototo-board-action-spacer {
+        display: none;
+    }
+}
+ 
+    /* LOTOTO: column count for the selected board */
+    .lototo-page {
+        --lototo-board-columns: 20;
+        --lototo-main-label-width: 3rem;
+        --lototo-slot-gap: .16rem;
+    }
+
+    .lototo-board-content > .lototo-main-area {
+        grid-template-columns: var(--lototo-main-label-width) repeat(var(--lototo-board-columns), minmax(0, 1fr));
+    }
+
+    .lototo-technician-group {
+        grid-template-columns: var(--lototo-main-label-width) repeat(var(--lototo-board-columns), minmax(0, 1fr));
+    }
+
+    .lototo-technician-grid,
+    .lototo-other-grid,
+    .lototo-board-content > div.lototo-group .lototo-grid {
+        grid-template-columns: repeat(var(--lototo-board-columns), minmax(0, 1fr));
+    }
+
+    /* Supervisor has its own column count but the same slot width as one board column (slot size model below). */
+    .lototo-supervisor-grid {
+        grid-template-columns: repeat(var(--lototo-supervisor-columns, var(--lototo-board-columns)), var(--lototo-slot-width));
+    }
+
+/* Slot size model. One slot is one board column wide and 4/3 of that tall, for Technician, Supervisor, Spare
+   and Tools alike, so the column count changes the slot size but never its proportions. A Tools slot with a
+   span of 2 or 3 covers that many columns (plus the gaps between them) at the same height.
+   The width comes from the grid's own width (container units), not from the row height: row tracks are auto
+   and only follow the slots. */
+.lototo-technician-grid,
+.lototo-board-content > div.lototo-group .lototo-grid,
+.lototo-other-grid {
+    container-type: inline-size;
+    --lototo-slot-width: calc((100cqw - (var(--lototo-board-columns) - 1) * var(--lototo-slot-gap)) / var(--lototo-board-columns));
+    --lototo-slot-height: calc(var(--lototo-slot-width) * 4 / 3);
+}
+
+/* Supervisor sits in the main area beside or below Technician, so its board column is measured on the main area:
+   minus the Technician label and the Technician grid's side padding (.1rem each). Its label is drawn to the left
+   of its slots, in the free board column the board view reserves for it. */
+.lototo-supervisor-grid {
+    width: max-content;
+    --lototo-slot-width: calc((100cqw - var(--lototo-main-label-width) - .2rem - (var(--lototo-board-columns) - 1) * var(--lototo-slot-gap)) / var(--lototo-board-columns));
+    --lototo-slot-height: calc(var(--lototo-slot-width) * 4 / 3);
+}
+
+.lototo-board-content > .lototo-main-area > .lototo-supervisor-group {
+    width: max-content;
+    justify-self: end;
+    grid-template-columns: 2.1rem auto;
+}
+
+/* Tools: image, IN badge and link state. The image never sizes the slot: it shrinks inside the fixed card. */
+a.lototo-card {
+    color: inherit;
+    text-decoration: none;
+}
+
+a.lototo-card:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.lototo-other-grid .lototo-card > .lototo-tool-image {
+    position: relative;
+    z-index: 1;
+    display: block;
+    flex: 1 1 0;
+    width: 100%;
+    min-height: 0;
+    max-height: 2.4rem;
+    object-fit: contain;
+}
+
+.lototo-other-grid .lototo-card > .lototo-tool-status {
+    position: absolute;
+    z-index: 2;
+    top: 1px;
+    right: 1px;
+    padding: 0 3px;
+    border-radius: 2px;
+    background: #f59e0b;
+    color: #1c1917;
+    font-size: 7px;
+    font-weight: 900;
+    line-height: 10px;
+}
+
+.lototo-other-grid .lototo-card.lototo-tool-card--in {
+    border-color: #f59e0b;
+    background-color: #fef3c7;
+}
+
+.lototo-other-grid .lototo-card.lototo-tool-card--inactive {
+    opacity: .55;
+}

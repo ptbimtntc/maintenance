@@ -12,7 +12,11 @@ use App\Http\Controllers\EmployeeOnboardingController;
 use App\Http\Controllers\EmployeeSkillAssessmentController;
 use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\JobDescriptionController;
+use App\Http\Controllers\LototoBoardSettingsController;
+use App\Http\Controllers\LototoBoardsController;
 use App\Http\Controllers\LototoController;
+use App\Http\Controllers\LototoToolController;
+use App\Http\Middleware\LogLototoFormAuthorization;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\NotificationController;
@@ -26,7 +30,13 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SignatoryController;
 use App\Http\Controllers\SkillMatrixController;
+use App\Http\Controllers\SpareLockController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskPlanController;
+use App\Http\Controllers\TrainingCheckInController;
 use App\Http\Controllers\TrainingProgramController;
+use App\Http\Controllers\TrainingQuestionController;
+use App\Http\Controllers\TrainingQuizController;
 use App\Http\Controllers\TrainingRecordController;
 use App\Http\Controllers\TrainingSessionController;
 use App\Http\Controllers\UserManagementController;
@@ -46,6 +56,14 @@ Route::get('/verify/{employee:employee_number}', [PublicCertificateController::c
 Route::get('/verify/certificates/{certificate}', [PublicCertificateController::class, 'detail'])->name('verify.certificate');
 Route::get('/verify/certificates/{certificate}/certificate', [PublicCertificateController::class, 'certificate'])->name('verify.certificate.print');
 Route::get('/verify/participants/{participant}', [PublicCertificateController::class, 'participant'])->name('verify.participant');
+
+Route::middleware(['auth', 'verified', LogLototoFormAuthorization::class, 'can:'.PermissionName::ViewSafety->value])->group(function () {
+    Route::get('/safety/lototo/form', [LototoController::class, 'form'])
+        ->name('safety.lototo.form');
+    Route::post('/safety/lototo/form', [LototoController::class, 'storeForm'])
+        ->middleware('throttle:20,1')
+        ->name('safety.lototo.form.store');
+});
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'guest-login');
@@ -164,8 +182,8 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
     ->group(function () {
         Route::get('/calendar', [TrainingSessionController::class, 'calendar'])->name('calendar');
         Route::get('/records', [TrainingRecordController::class, 'index'])->name('records.index');
-        Route::get('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'show'])->name('quiz.show');
-        Route::post('/quiz/{participant}', [\App\Http\Controllers\TrainingQuizController::class, 'submit'])->name('quiz.submit');
+        Route::get('/quiz/{participant}', [TrainingQuizController::class, 'show'])->name('quiz.show');
+        Route::post('/quiz/{participant}', [TrainingQuizController::class, 'submit'])->name('quiz.submit');
         Route::post('/records-import', [TrainingRecordController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('records.import');
 
         // Training Management: program/session administration, including the
@@ -173,11 +191,11 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
         // is restricted to ManageTraining holders only — not every ViewTraining
         // role (e.g. regular staff taking their own quiz) should browse this.
         Route::middleware('can:'.PermissionName::ManageTraining->value)->group(function () {
-            Route::get('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'index'])->name('programs.questions.index');
-            Route::get('/programs/{program}/questions/export', [\App\Http\Controllers\TrainingQuestionController::class, 'export'])->name('programs.questions.export');
-            Route::post('/programs/{program}/questions/import', [\App\Http\Controllers\TrainingQuestionController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.import');
-            Route::post('/programs/{program}/questions', [\App\Http\Controllers\TrainingQuestionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.store');
-            Route::delete('/programs/{program}/questions/{question}', [\App\Http\Controllers\TrainingQuestionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.destroy');
+            Route::get('/programs/{program}/questions', [TrainingQuestionController::class, 'index'])->name('programs.questions.index');
+            Route::get('/programs/{program}/questions/export', [TrainingQuestionController::class, 'export'])->name('programs.questions.export');
+            Route::post('/programs/{program}/questions/import', [TrainingQuestionController::class, 'import'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.import');
+            Route::post('/programs/{program}/questions', [TrainingQuestionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.store');
+            Route::delete('/programs/{program}/questions/{question}', [TrainingQuestionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.questions.destroy');
 
             Route::resource('programs', TrainingProgramController::class)->except(['destroy'])->parameters(['programs' => 'program'])
                 ->middlewareFor(['create', 'store', 'edit', 'update'], 'menu.edit:'.MenuKey::Training->value);
@@ -187,8 +205,8 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
             Route::post('/programs/{program}/sessions', [TrainingSessionController::class, 'store'])->middleware('menu.edit:'.MenuKey::Training->value)->name('programs.sessions.store');
 
             Route::get('/sessions/{trainingSession}', [TrainingSessionController::class, 'show'])->name('sessions.show');
-            Route::get('/sessions/{trainingSession}/check-in', [\App\Http\Controllers\TrainingCheckInController::class, 'show'])->name('sessions.check-in');
-            Route::post('/sessions/{trainingSession}/check-in', [\App\Http\Controllers\TrainingCheckInController::class, 'attempt'])->name('sessions.check-in.attempt');
+            Route::get('/sessions/{trainingSession}/check-in', [TrainingCheckInController::class, 'show'])->name('sessions.check-in');
+            Route::post('/sessions/{trainingSession}/check-in', [TrainingCheckInController::class, 'attempt'])->name('sessions.check-in.attempt');
             Route::get('/sessions/{trainingSession}/edit', [TrainingSessionController::class, 'edit'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.edit');
             Route::put('/sessions/{trainingSession}', [TrainingSessionController::class, 'update'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.update');
             Route::delete('/sessions/{trainingSession}', [TrainingSessionController::class, 'destroy'])->middleware('menu.edit:'.MenuKey::Training->value)->name('sessions.destroy');
@@ -204,23 +222,23 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewTraining->valu
 // Task Planner: open to every signed-in employee - access is decided per
 // plan by TaskPlanPolicy (owner, assignee, or Administrator), not a role.
 Route::middleware(['auth', 'verified'])->prefix('tasks')->name('tasks.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\TaskPlanController::class, 'index'])->name('index');
-    Route::post('/plans', [\App\Http\Controllers\TaskPlanController::class, 'store'])->name('plans.store');
-    Route::get('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'show'])->name('plans.show');
-    Route::put('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'update'])->name('plans.update');
-    Route::delete('/plans/{plan}', [\App\Http\Controllers\TaskPlanController::class, 'destroy'])->name('plans.destroy');
-    Route::post('/plans/{plan}/buckets', [\App\Http\Controllers\TaskPlanController::class, 'storeBucket'])->name('plans.buckets.store');
-    Route::put('/plans/{plan}/buckets/{bucket}', [\App\Http\Controllers\TaskPlanController::class, 'updateBucket'])->name('plans.buckets.update');
-    Route::delete('/plans/{plan}/buckets/{bucket}', [\App\Http\Controllers\TaskPlanController::class, 'destroyBucket'])->name('plans.buckets.destroy');
-    Route::post('/plans/{plan}/tasks', [\App\Http\Controllers\TaskController::class, 'store'])->name('store');
-    Route::get('/{task}', [\App\Http\Controllers\TaskController::class, 'show'])->name('show');
-    Route::put('/{task}', [\App\Http\Controllers\TaskController::class, 'update'])->name('update');
-    Route::delete('/{task}', [\App\Http\Controllers\TaskController::class, 'destroy'])->name('destroy');
-    Route::post('/{task}/toggle-complete', [\App\Http\Controllers\TaskController::class, 'toggleComplete'])->name('toggle-complete');
-    Route::post('/{task}/move', [\App\Http\Controllers\TaskController::class, 'move'])->name('move');
-    Route::post('/{task}/checklist', [\App\Http\Controllers\TaskController::class, 'storeChecklistItem'])->name('checklist.store');
-    Route::post('/{task}/checklist/{item}/toggle', [\App\Http\Controllers\TaskController::class, 'toggleChecklistItem'])->name('checklist.toggle');
-    Route::delete('/{task}/checklist/{item}', [\App\Http\Controllers\TaskController::class, 'destroyChecklistItem'])->name('checklist.destroy');
+    Route::get('/', [TaskPlanController::class, 'index'])->name('index');
+    Route::post('/plans', [TaskPlanController::class, 'store'])->name('plans.store');
+    Route::get('/plans/{plan}', [TaskPlanController::class, 'show'])->name('plans.show');
+    Route::put('/plans/{plan}', [TaskPlanController::class, 'update'])->name('plans.update');
+    Route::delete('/plans/{plan}', [TaskPlanController::class, 'destroy'])->name('plans.destroy');
+    Route::post('/plans/{plan}/buckets', [TaskPlanController::class, 'storeBucket'])->name('plans.buckets.store');
+    Route::put('/plans/{plan}/buckets/{bucket}', [TaskPlanController::class, 'updateBucket'])->name('plans.buckets.update');
+    Route::delete('/plans/{plan}/buckets/{bucket}', [TaskPlanController::class, 'destroyBucket'])->name('plans.buckets.destroy');
+    Route::post('/plans/{plan}/tasks', [TaskController::class, 'store'])->name('store');
+    Route::get('/{task}', [TaskController::class, 'show'])->name('show');
+    Route::put('/{task}', [TaskController::class, 'update'])->name('update');
+    Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+    Route::post('/{task}/toggle-complete', [TaskController::class, 'toggleComplete'])->name('toggle-complete');
+    Route::post('/{task}/move', [TaskController::class, 'move'])->name('move');
+    Route::post('/{task}/checklist', [TaskController::class, 'storeChecklistItem'])->name('checklist.store');
+    Route::post('/{task}/checklist/{item}/toggle', [TaskController::class, 'toggleChecklistItem'])->name('checklist.toggle');
+    Route::delete('/{task}/checklist/{item}', [TaskController::class, 'destroyChecklistItem'])->name('checklist.destroy');
 });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewDevelopmentPlans->value])
@@ -285,7 +303,74 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSafety->value]
     ->prefix('safety')
     ->name('safety.')
     ->group(function () {
-        Route::get('/lototo', [LototoController::class, 'index'])->name('lototo.index');
+        Route::get('/lototo', [LototoController::class, 'index'])
+            ->name('lototo.index');
+        Route::get('/lototo/boards/{board}', [LototoController::class, 'board'])
+            ->name('lototo.boards.show');
+
+        Route::middleware('can:'.PermissionName::ManageSafety->value)->group(function () {
+            Route::get('/lototo/boards', [LototoBoardsController::class, 'index'])
+                ->name('lototo.boards.index');
+            Route::post('/lototo/boards', [LototoBoardsController::class, 'store'])
+                ->name('lototo.boards.store');
+            Route::get('/lototo/boards/{board}/edit', [LototoBoardsController::class, 'edit'])
+                ->name('lototo.boards.edit');
+            Route::put('/lototo/boards/{board}', [LototoBoardsController::class, 'update'])
+                ->name('lototo.boards.update');
+            Route::delete('/lototo/boards/{board}', [LototoBoardsController::class, 'destroy'])
+                ->name('lototo.boards.destroy');
+            Route::put('/lototo/boards/{board}/presentation', [LototoBoardsController::class, 'updatePresentation'])
+                ->name('lototo.boards.presentation.update');
+            Route::get('/lototo/settings', [LototoBoardSettingsController::class, 'index'])
+                ->name('lototo.settings');
+            Route::post('/lototo/settings/{category}/positions', [LototoBoardSettingsController::class, 'addPosition'])
+                ->whereIn('category', ['technician', 'supervisor', 'spare', 'tool'])
+                ->name('lototo.settings.positions.store');
+            Route::delete('/lototo/settings/{category}/positions/{slot}', [LototoBoardSettingsController::class, 'destroyPosition'])
+                ->whereIn('category', ['technician', 'supervisor', 'spare', 'tool'])
+                ->name('lototo.settings.positions.destroy');
+            Route::put('/lototo/settings/{category}', [LototoBoardSettingsController::class, 'update'])
+                ->whereIn('category', ['technician', 'supervisor', 'spare', 'tool'])
+                ->name('lototo.settings.update');
+        });
+
+        Route::get('/lototo/spare-lock/{spareLock}', [SpareLockController::class, 'show'])
+            ->name('lototo.spare-locks.show');
+
+        Route::get('/lototo/follow-up/{activity}', [LototoController::class, 'followUp'])
+            ->name('lototo.follow-up');
+        Route::post('/lototo/follow-up/{activity}', [LototoController::class, 'submitFollowUp'])
+            ->name('lototo.follow-up.store');
+
+        Route::middleware('can:'.PermissionName::ManageSafety->value)
+            ->prefix('lototo/spare-locks')
+            ->name('lototo.spare-locks.')
+            ->group(function () {
+                Route::post('/', [SpareLockController::class, 'store'])->name('store');
+                Route::post('/batch', [SpareLockController::class, 'storeBatch'])->name('store-batch');
+                Route::patch('/{spareLock}', [SpareLockController::class, 'update'])->name('update');
+                Route::delete('/{spareLock}', [SpareLockController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::get('/lototo/tools/{tool}/form', [LototoToolController::class, 'form'])
+            ->name('lototo.tools.form');
+        Route::post('/lototo/tools/{tool}/form', [LototoToolController::class, 'storeForm'])
+            ->middleware('throttle:20,1')
+            ->name('lototo.tools.form.store');
+        Route::get('/lototo/tools/{tool}/image', [LototoToolController::class, 'image'])
+            ->name('lototo.tools.image');
+
+        Route::middleware('can:'.PermissionName::ManageSafety->value)
+            ->prefix('lototo/tools')
+            ->name('lototo.tools.')
+            ->group(function () {
+                Route::post('/', [LototoToolController::class, 'store'])->name('store');
+                Route::patch('/{tool}', [LototoToolController::class, 'update'])->name('update');
+                Route::delete('/{tool}', [LototoToolController::class, 'destroy'])->name('destroy');
+            });
+
+        Route::get('/lototo/{employee}', [LototoController::class, 'show'])
+            ->name('lototo.show');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {
