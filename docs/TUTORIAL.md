@@ -454,6 +454,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-05 | Logo aplikasi (sidebar, halaman login, laporan PDF) dan favicon diganti dengan logo perisai + topi toga. Tidak ada perubahan alur kerja. |
 | 2026-10-22 | Shift Comm: banner WARNING mesin bermasalah berulang kini bisa di-expand/collapse (default tertutup). |
 | 2026-10-22 | Help kini menyesuaikan isi dengan akun yang login (role, menu yang tersedia/disembunyikan, hak edit): tamu hanya melihat panduan tamu, Administrator melihat panduan Administrator, dan seterusnya. Bagian bernomor dihapus dari judul; ditambah bagian *Panduan Tamu* dan *Mengerjakan Kuis Training*. |
 | 2026-10-22 | Menambahkan menu **Help** di sidebar yang menampilkan tutorial ini di dalam aplikasi (bagian 2); Help dapat disembunyikan per pengguna lewat Menu Visibility. |
