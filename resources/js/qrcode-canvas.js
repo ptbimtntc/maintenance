@@ -31,9 +31,9 @@ function initQrCodes() {
  * printed above it, so a downloaded/printed badge is self-identifying
  * without needing the surrounding page for context.
  */
-function composeQrWithLabel(qrCanvas, name, nik) {
+function composeQrWithLabel(qrCanvas, name, identifier, identifierLabel = 'NIK') {
     const padding = 16;
-    const textBlockHeight = name || nik ? 54 : 0;
+    const textBlockHeight = name || identifier ? 54 : 0;
     const width = qrCanvas.width + padding * 2;
     const height = qrCanvas.height + padding * 2 + textBlockHeight;
 
@@ -52,10 +52,10 @@ function composeQrWithLabel(qrCanvas, name, nik) {
         ctx.fillText(name, width / 2, padding + 20, width - padding * 2);
     }
 
-    if (nik) {
+    if (identifier) {
         ctx.fillStyle = '#525252';
         ctx.font = '13px Arial, sans-serif';
-        ctx.fillText(`NIK: ${nik}`, width / 2, padding + (name ? 42 : 20), width - padding * 2);
+        ctx.fillText(`${identifierLabel}: ${identifier}`, width / 2, padding + (name ? 42 : 20), width - padding * 2);
     }
 
     ctx.drawImage(qrCanvas, padding, padding + textBlockHeight);
@@ -83,7 +83,12 @@ function initQrDownloadButtons() {
                 return;
             }
 
-            const output = composeQrWithLabel(canvas, button.dataset.name, button.dataset.nik);
+            const output = composeQrWithLabel(
+                canvas,
+                button.dataset.name,
+                button.dataset.nik,
+                button.dataset.identifierLabel || 'NIK',
+            );
 
             const link = document.createElement('a');
             link.download = `${button.dataset.filename || 'qrcode'}.png`;
