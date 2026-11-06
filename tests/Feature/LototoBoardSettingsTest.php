@@ -46,133 +46,37 @@ class LototoBoardSettingsTest extends TestCase
         $this->activeStatus = EmploymentStatus::factory()->create(['code' => 'ACTIVE']);
     }
 
-    public function test_only_administrators_can_open_board_settings(): void
-    {
-        $admin = User::factory()->create();
-        $admin->assignRole(RoleName::Administrator->value);
-        $staff = User::factory()->create();
-        $staff->assignRole(RoleName::MaintenanceStaff->value);
-
-        $this->actingAs($admin)
-            ->get(route('safety.lototo.settings'))
-            ->assertOk()
-            ->assertSee('Add Position')
-            ->assertSee('Save Changes');
-
-        $this->actingAs($staff)
-            ->get(route('safety.lototo.settings'))
-            ->assertForbidden();
-    }
-
-    public function test_technician_positions_can_be_swapped_without_changing_supervisor_positions(): void
+    public function test_mtn_tr_board_shows_the_technician_saved_on_each_slot_and_their_status_moves_with_them(): void
     {
         $admin = $this->administrator();
-        $technicianOne = $this->employee('01');
-        $technicianTwo = $this->employee('02');
-        $supervisor = $this->employee('101');
-        $slotOne = $this->slot('technician', 1);
-        $slotTwo = $this->slot('technician', 2);
-        $supervisorSlot = $this->slot('supervisor', 1);
+        $first = $this->employee('22');
+        $duplicate = $this->employee('22');
+        $lastNumber = $this->employee('66');
+        $activity = tap($this->activity($lastNumber))->update(['board' => 'mtn_tr']);
 
-        $slotOne->update(['employee_id' => $technicianOne->id]);
-        $slotTwo->update(['employee_id' => $technicianTwo->id]);
-        $supervisorSlot->update(['employee_id' => $supervisor->id]);
+        $this->actingAs($admin);
+        $this->slot('technician', 22)->update(['employee_id' => $first->id]);
+        $this->slot('technician', 23)->update(['employee_id' => $duplicate->id]);
+        $this->slot('technician', 50)->update(['employee_id' => $lastNumber->id]);
 
-        $payload = $this->slotPayload('technician', 'employee_id');
-        $payload['slots'][$slotOne->id]['employee_id'] = $technicianTwo->id;
-        $payload['slots'][$slotTwo->id]['employee_id'] = $technicianOne->id;
+        // Both employees sharing LOTOTO 22 are drawn on their own slots; LOTOTO 66 sits on slot 50 with its IN status.
+        $this->assertSame([
+            22 => [$first->full_name.' LOTOTO 22, status OUT'],
+            23 => [$duplicate->full_name.' LOTOTO 22, status OUT'],
+            50 => [$lastNumber->full_name.' LOTOTO 66, status IN'],
+        ], $this->technicianCards());
 
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'technician'), $payload)
-            ->assertRedirect(route('safety.lototo.settings'));
+        // Moving the employee moves the card, with the same status, history link and nothing left behind.
+        $activity->update(['status' => 'completed', 'outcome' => 'finish', 'ended_at' => now()]);
+        $this->slot('technician', 50)->update(['employee_id' => null]);
+        $this->slot('technician', 2)->update(['employee_id' => $lastNumber->id]);
 
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $slotOne->id,
-            'employee_id' => $technicianTwo->id,
-        ]);
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $slotTwo->id,
-            'employee_id' => $technicianOne->id,
-        ]);
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $supervisorSlot->id,
-            'employee_id' => $supervisor->id,
-        ]);
-    }
-
-    public function test_supervisor_positions_can_be_swapped_without_changing_technician_positions(): void
-    {
-        $admin = $this->administrator();
-        $technician = $this->employee('01');
-        $supervisorOne = $this->employee('101');
-        $supervisorTwo = $this->employee('102');
-        $technicianSlot = $this->slot('technician', 1);
-        $supervisorSlotOne = $this->slot('supervisor', 1);
-        $supervisorSlotTwo = $this->slot('supervisor', 2);
-
-        $technicianSlot->update(['employee_id' => $technician->id]);
-        $supervisorSlotOne->update(['employee_id' => $supervisorOne->id]);
-        $supervisorSlotTwo->update(['employee_id' => $supervisorTwo->id]);
-
-        $payload = $this->slotPayload('supervisor', 'employee_id');
-        $payload['slots'][$supervisorSlotOne->id]['employee_id'] = $supervisorTwo->id;
-        $payload['slots'][$supervisorSlotTwo->id]['employee_id'] = $supervisorOne->id;
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'supervisor'), $payload)
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $supervisorSlotOne->id,
-            'employee_id' => $supervisorTwo->id,
-        ]);
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $supervisorSlotTwo->id,
-            'employee_id' => $supervisorOne->id,
-        ]);
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $technicianSlot->id,
-            'employee_id' => $technician->id,
-        ]);
-    }
-
-    public function test_empty_slot_and_new_position_do_not_shift_existing_positions(): void
-    {
-        $admin = $this->administrator();
-        $technicianInSlot50 = $this->employee('50');
-        $technicianInSlot51 = $this->employee('51');
-        $slot50 = $this->slot('technician', 50);
-        $slot51 = $this->slot('technician', 51);
-        $slot50->update(['employee_id' => $technicianInSlot50->id]);
-        $slot51->update(['employee_id' => $technicianInSlot51->id]);
-        $history = $this->activity($technicianInSlot50);
-        $history->update(['status' => 'completed', 'outcome' => 'finish', 'ended_at' => now()]);
-
-        $payload = $this->slotPayload('technician', 'employee_id');
-        $payload['slots'][$slot50->id]['employee_id'] = '';
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'technician'), $payload)
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot50->id, 'employee_id' => null]);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot51->id, 'employee_id' => $technicianInSlot51->id]);
-        $this->assertDatabaseHas('employees', ['id' => $technicianInSlot50->id]);
-        $this->assertDatabaseHas('lototo_activities', ['id' => $history->id, 'employee_id' => $technicianInSlot50->id]);
-
-        $this->actingAs($admin)
-            ->post(route('safety.lototo.settings.positions.store', 'technician'))
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', ['category' => 'technician', 'position' => 66]);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot51->id, 'position' => 51]);
-
-        $this->get(route('safety.lototo.index'))
-            ->assertOk()
-            ->assertSee('LOTOTO 50', false)
-            ->assertSee('LOTOTO 51', false)
-            ->assertSee('>66</span>', false)
-            ->assertSee('grid-column: 6; grid-row: 4;', false);
+        $cards = $this->technicianCards();
+        $this->assertSame([$lastNumber->full_name.' LOTOTO 66, status OUT'], $cards[2]);
+        $this->assertArrayNotHasKey(50, $cards);
+        $this->get(route('safety.lototo.boards.show', $this->board()))
+            ->assertSee('TECHNICIAN posisi 50 kosong')
+            ->assertSee(route('safety.lototo.show', ['employee' => $lastNumber, 'board' => $this->board()->id]), false);
     }
 
     public function test_board_has_indexed_supervisor_slots_and_fifteen_other_items_in_one_row(): void
@@ -231,127 +135,6 @@ class LototoBoardSettingsTest extends TestCase
         );
     }
 
-    public function test_administrators_can_edit_and_add_persistent_tool_slots(): void
-    {
-        $admin = $this->administrator();
-        $toolSlot = $this->slot('tool', 1);
-        $payload = $this->slotPayload('tool', 'tool_label');
-        $payload['slots'][$toolSlot->id]['tool_label'] = 'Impact Wrench';
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'tool'), $payload)
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $toolSlot->id,
-            'category' => 'tool',
-            'position' => 1,
-            'tool_label' => 'Impact Wrench',
-        ]);
-
-        $this->actingAs($admin)
-            ->post(route('safety.lototo.settings.positions.store', 'tool'))
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'category' => 'tool',
-            'position' => 16,
-            'tool_label' => null,
-        ]);
-        $this->get(route('safety.lototo.index'))
-            ->assertOk()
-            ->assertSee('Impact Wrench')
-            ->assertSee('Other posisi 16 kosong', false)
-            ->assertSee('grid-column: 1 / span 1; grid-row: 2;', false);
-    }
-
-    public function test_position_reordering_preserves_employee_assignments(): void
-    {
-        $admin = $this->administrator();
-        $employeeOne = $this->employee('101');
-        $employeeTwo = $this->employee('102');
-        $slotOne = $this->slot('supervisor', 1);
-        $slotTwo = $this->slot('supervisor', 2);
-        $slotOne->update(['employee_id' => $employeeOne->id]);
-        $slotTwo->update(['employee_id' => $employeeTwo->id]);
-        $payload = $this->slotPayload('supervisor', 'employee_id');
-        $payload['slots'][$slotOne->id]['position'] = 2;
-        $payload['slots'][$slotTwo->id]['position'] = 1;
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'supervisor'), $payload)
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slotOne->id, 'position' => 2, 'employee_id' => $employeeOne->id]);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slotTwo->id, 'position' => 1, 'employee_id' => $employeeTwo->id]);
-    }
-
-    public function test_technician_position_changes_are_rejected_until_legacy_mapping_is_verified(): void
-    {
-        $admin = $this->administrator();
-        $employee = $this->employee('01');
-        $slot = $this->slot('technician', 1);
-        $slot->update(['employee_id' => $employee->id]);
-        $payload = $this->slotPayload('technician', 'employee_id');
-        $payload['slots'][$slot->id]['position'] = 100;
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'technician'), $payload)
-            ->assertSessionHasErrors('slots');
-
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot->id, 'position' => 1, 'employee_id' => $employee->id]);
-    }
-
-    public function test_new_slot_can_be_created_at_an_explicit_unused_position(): void
-    {
-        $admin = $this->administrator();
-
-        $this->actingAs($admin)
-            ->post(route('safety.lototo.settings.positions.store', 'technician'), ['position' => 100])
-            ->assertRedirect(route('safety.lototo.settings'));
-
-        $this->assertDatabaseHas('lototo_board_slots', ['category' => 'technician', 'position' => 100]);
-        $this->actingAs($admin)
-            ->post(route('safety.lototo.settings.positions.store', 'technician'), ['position' => 100])
-            ->assertSessionHasErrors('position');
-    }
-
-    public function test_duplicate_positions_are_rejected_without_partial_updates(): void
-    {
-        $admin = $this->administrator();
-        $slotOne = $this->slot('technician', 1);
-        $slotTwo = $this->slot('technician', 2);
-        $payload = $this->slotPayload('technician', 'employee_id');
-        $payload['slots'][$slotTwo->id]['position'] = 1;
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'technician'), $payload)
-            ->assertSessionHasErrors('slots');
-
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slotOne->id, 'position' => 1]);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slotTwo->id, 'position' => 2]);
-    }
-
-    public function test_only_empty_slots_can_be_deleted_and_other_positions_do_not_move(): void
-    {
-        $admin = $this->administrator();
-        $employee = $this->employee('01');
-        $assigned = $this->slot('technician', 1);
-        $empty = $this->slot('supervisor', 1);
-        $assigned->update(['employee_id' => $employee->id]);
-
-        $this->actingAs($admin)
-            ->delete(route('safety.lototo.settings.positions.destroy', ['technician', $assigned]))
-            ->assertSessionHasErrors('slot');
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $assigned->id, 'employee_id' => $employee->id]);
-
-        $this->actingAs($admin)
-            ->delete(route('safety.lototo.settings.positions.destroy', ['supervisor', $empty]))
-            ->assertRedirect(route('safety.lototo.settings'));
-        $this->assertDatabaseMissing('lototo_board_slots', ['id' => $empty->id]);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $assigned->id, 'position' => 1]);
-    }
-
     public function test_non_admin_cannot_open_or_submit_spare_in_out_forms(): void
     {
         $staff = User::factory()->create();
@@ -376,61 +159,27 @@ class LototoBoardSettingsTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_employee_with_active_activity_cannot_be_unassigned_from_a_slot(): void
-    {
-        $admin = $this->administrator();
-        $employee = $this->employee('07');
-        $slot = $this->slot('technician', 1);
-        $slot->update(['employee_id' => $employee->id]);
-        $activity = $this->activity($employee);
-
-        $payload = $this->slotPayload('technician', 'employee_id');
-        $payload['slots'][$slot->id]['employee_id'] = '';
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'technician'), $payload)
-            ->assertSessionHasErrors('slots');
-
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $slot->id,
-            'employee_id' => $employee->id,
-        ]);
-        $this->assertDatabaseHas('lototo_activities', ['id' => $activity->id, 'status' => 'in_progress']);
-    }
-
-    public function test_spare_lock_with_active_activity_cannot_be_unassigned_from_a_slot(): void
-    {
-        $admin = $this->administrator();
-        $employee = $this->employee('07');
-        $spareLock = SpareLock::query()->where('code', 'SP-01')->firstOrFail();
-        $slot = $this->slot('spare', 1);
-        $activity = $this->activity($employee);
-        $activity->update(['spare_lock_id' => $spareLock->id]);
-        $spareLock->update(['current_activity_id' => $activity->id]);
-
-        $payload = $this->slotPayload('spare', 'spare_lock_id');
-        $payload['slots'][$slot->id]['spare_lock_id'] = '';
-
-        $this->actingAs($admin)
-            ->put(route('safety.lototo.settings.update', 'spare'), $payload)
-            ->assertSessionHasErrors('slots');
-
-        $this->assertDatabaseHas('lototo_board_slots', [
-            'id' => $slot->id,
-            'spare_lock_id' => $spareLock->id,
-        ]);
-        $this->assertDatabaseHas('lototo_activities', [
-            'id' => $activity->id,
-            'spare_lock_id' => $spareLock->id,
-        ]);
-    }
-
     private function administrator(): User
     {
         $user = User::factory()->create();
         $user->assignRole(RoleName::Administrator->value);
 
         return $user;
+    }
+
+    private function board(): LototoBoard
+    {
+        return LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail();
+    }
+
+    /** Technician cards on the board, keyed by the slot index printed on them. */
+    private function technicianCards(): array
+    {
+        $html = $this->get(route('safety.lototo.boards.show', $this->board()))->assertOk()->getContent();
+        preg_match('/lototo-technician-grid.*?<\/section>/s', $html, $grid);
+        preg_match_all('/aria-label="([^"]*LOTOTO \d+, status (?:IN|OUT)[^"]*)".*?lototo-position-index">(\d+)</s', $grid[0], $cards, PREG_SET_ORDER);
+
+        return collect($cards)->groupBy(fn ($card) => (int) $card[2])->map(fn ($group) => $group->pluck(1)->map(fn ($label) => html_entity_decode($label, ENT_QUOTES))->all())->all();
     }
 
     private function employee(string $lototoNumber): Employee
@@ -450,21 +199,6 @@ class LototoBoardSettingsTest extends TestCase
             ->firstOrFail();
     }
 
-    private function slotPayload(string $category, string $assignmentField): array
-    {
-        return [
-            'slots' => LototoBoardSlot::query()
-                ->where('category', $category)
-                ->get()
-                ->mapWithKeys(fn (LototoBoardSlot $slot) => [
-                    $slot->id => [
-                        $assignmentField => $slot->getAttribute($assignmentField) ?? '',
-                        'is_enabled' => $slot->is_enabled ? '1' : '0',
-                    ],
-                ])
-                ->all(),
-        ];
-    }
 
     private function activity(Employee $employee): LototoActivity
     {

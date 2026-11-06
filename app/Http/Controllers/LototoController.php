@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PermissionName;
+use App\Http\Middleware\AllowLototoQrForm;
 use App\Models\Employee;
 use App\Models\EmploymentStatus;
 use App\Models\LototoActivity;
@@ -12,6 +13,7 @@ use App\Models\SpareLock;
 use App\Notifications\LototoSafetyAlert;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
@@ -129,27 +131,29 @@ class LototoController extends Controller
             ->latest('started_at')
             ->get()
             ->groupBy('employee_id');
-        $boardSlots = LototoBoardSlot::query()
+        $allSlots = LototoBoardSlot::query()
             ->where('board_id', $board->id)
             ->with(['employee', 'spareLock.currentActivity.employee', 'tool.openActivity'])
             ->orderBy('position')
             ->get()
-            ->toBase()
-            ->groupBy('category');
+            ->toBase();
         $visibleEmployeeIds = $employees->modelKeys();
 
-        foreach ($boardSlots->only(['technician', 'supervisor'])->flatten() as $slot) {
+        // Visibility follows what a slot holds (its category), wherever its band is.
+        foreach ($allSlots->whereIn('category', ['technician', 'supervisor']) as $slot) {
             if (! in_array($slot->employee_id, $visibleEmployeeIds)) {
                 $slot->setRelation('employee', null);
             }
         }
 
-        foreach ($boardSlots->get('spare', collect()) as $slot) {
+        foreach ($allSlots->where('category', 'spare') as $slot) {
             $activityEmployee = $slot->spareLock?->currentActivity?->employee;
             if ($activityEmployee && ! in_array($activityEmployee->id, $visibleEmployeeIds)) {
                 $slot->spareLock->currentActivity->setRelation('employee', null);
             }
         }
+        // Bands draw slots by section (where a slot sits), not by category (what it holds).
+        $boardSlots = $allSlots->groupBy(fn ($slot) => \App\Support\LototoSlotGrid::sectionOf($slot));
 
         return view('safety.lototo.index', [
             'board' => $board,
@@ -177,7 +181,8 @@ class LototoController extends Controller
             'employee_id' => ['sometimes', 'nullable', 'integer'],
         ]);
         $board = $this->resolveBoard($request);
-        $canManageSafety = $request->user()->can(PermissionName::ManageSafety->value);
+        $isQrVisitor = AllowLototoQrForm::isQrVisitor($request);
+        $canManageSafety = ! $isQrVisitor && $request->user()->can(PermissionName::ManageSafety->value);
         $requestedLototoNumber = $filters['lototo_number'] ?? null;
         $spareLock = isset($filters['spare_lock'])
             ? SpareLock::query()
@@ -219,11 +224,11 @@ class LototoController extends Controller
         }
         if (! $canManageSafety) {
             if ($spareLock) {
-                abort_unless($this->isAuthorizedSpareTechnician($request, $activeActivity?->employee), 403);
+                abort_unless($this->isAuthorizedSpareTechnician($request, $board, $activeActivity?->employee), 403);
                 $requestedLototoNumber = $activeActivity->employee->lototo_number;
                 $requestedEmployee = $activeActivity->employee;
             } else {
-                $authenticatedEmployee = $request->user()->employee;
+                $authenticatedEmployee = $this->actingEmployee($request, $board);
                 abort_unless($authenticatedEmployee !== null, 403);
                 abort_unless((int) $authenticatedEmployee->business_unit_id === (int) $board->business_unit_id, 403);
                 abort_unless(
@@ -256,6 +261,10 @@ class LototoController extends Controller
                 ->get(),
             'allowOutstanding' => $board->is_active,
             'activeActivity' => $activeActivity,
+            // A QR visitor posts back under the same signed QR identity.
+            'formAction' => $isQrVisitor
+                ? AllowLototoQrForm::url('safety.lototo.form.store', Arr::except($request->query->all(), 'signature'))
+                : route('safety.lototo.form.store'),
         ]);
     }
 
@@ -264,7 +273,8 @@ class LototoController extends Controller
         $board = $this->resolveBoard($request);
         $risks = ['kesetrum', 'tertabrak', 'terjatuh', 'terjepit', 'terpukul', 'tertimpa', 'lainnya'];
         $isSpareMode = $request->input('lock_mode') === 'spare';
-        $canManageSafety = $request->user()->can(PermissionName::ManageSafety->value);
+        $isQrVisitor = AllowLototoQrForm::isQrVisitor($request);
+        $canManageSafety = ! $isQrVisitor && $request->user()->can(PermissionName::ManageSafety->value);
         if (! $board->is_active && $request->input('lock_status') !== 'out') {
             throw ValidationException::withMessages([
                 'lock_status' => 'Board nonaktif tidak menerima aktivitas IN baru. Aktivitas yang sudah berjalan hanya dapat diselesaikan dengan OUT Finish.',
@@ -330,12 +340,12 @@ class LototoController extends Controller
             ->firstOrFail();
 
         if (! $canManageSafety) {
-            abort_unless($request->user()->employee?->is($employee), 403);
+            abort_unless($this->actingEmployee($request, $board)?->is($employee), 403);
         }
         if ($isSpareMode
             && $data['lock_status'] === 'out'
             && ! $canManageSafety) {
-            abort_unless($this->isAuthorizedSpareTechnician($request, $employee), 403);
+            abort_unless($this->isAuthorizedSpareTechnician($request, $board, $employee), 403);
         }
         $data['lototo_board'] = $board->code;
 
@@ -379,25 +389,22 @@ class LototoController extends Controller
                         ]);
                     }
 
-                    $activeActivity = LototoActivity::query()
+                    // An outstanding personal activity that was never handed to a spare continues on this one.
+                    // Outstanding activities already handed over keep their personal record (spare_lock_id stays
+                    // empty) and must not be picked up again.
+                    $handoverFrom = LototoActivity::query()
                         ->where('employee_id', $employee->id)
                         ->where('status', 'completed')
                         ->where('outcome', 'outstanding')
                         ->whereNull('spare_lock_id')
                         ->lockForUpdate()
                         ->latest('ended_at')
-                        ->first();
+                        ->get()
+                        ->first(fn (LototoActivity $activity) => ! data_get($activity->out_details, 'spare_lock_code')
+                            && ! data_get($activity->out_details, 'spare_activity_id'));
 
-                    if ($activeActivity) {
-                        $outDetails = array_merge($activeActivity->out_details ?? [], [
-                            'spare_lock_code' => $spareLock->code,
-                            'spare_started_at' => now()->toISOString(),
-                        ]);
-
-                        $activeActivity->update([
-                            'spare_lock_id' => $spareLock->id,
-                            'out_details' => $outDetails,
-                        ]);
+                    if ($handoverFrom) {
+                        $activeActivity = $this->startHandoverSpare($handoverFrom, $spareLock);
                     } else {
                         $outDetails = [
                             'spare_lock_code' => $spareLock->code,
@@ -415,9 +422,8 @@ class LototoController extends Controller
                         ]);
 
                         $this->notifySupervisorIfNeeded($employee, $activeActivity, $data);
+                        $spareLock->update(['current_activity_id' => $activeActivity->id]);
                     }
-
-                    $spareLock->update(['current_activity_id' => $activeActivity->id]);
 
                     return $activeActivity;
                 }
@@ -504,28 +510,32 @@ class LototoController extends Controller
                         'spare_lock_id' => 'Gembok spare sudah tidak tersedia. Pilih gembok lain.',
                     ]);
                 }
-
-                $outDetails = array_merge($outDetails, [
-                    'spare_lock_code' => $spareLock->code,
-                    'spare_started_at' => now()->toISOString(),
-                ]);
             }
 
+            // The personal activity is closed and stays a personal record; an outstanding job continues on a
+            // separate spare record.
             $activeActivity->fill([
                 'outcome' => $data['outcome'],
                 'out_details' => $outDetails === [] ? null : $outDetails,
                 'status' => 'completed',
                 'ended_at' => now(),
-                'spare_lock_id' => $spareLock?->id,
             ])->save();
             if ($spareLock) {
-                $spareLock->update(['current_activity_id' => $activeActivity->id]);
+                $this->startHandoverSpare($activeActivity, $spareLock);
             }
 
             return $activeActivity;
         });
 
-        return ($isSpareMode ? $spareRedirect() : $redirect())->with(
+        // A QR visitor stays on a signed QR form. A finished spare is free again and its QR names nobody, so its
+        // holder lands on their own personal lock's QR form instead.
+        $response = $isQrVisitor
+            ? redirect()->to(AllowLototoQrForm::url('safety.lototo.form', $isSpareMode && $data['lock_status'] === 'out'
+                ? ['lototo_number' => $employee->lototo_number, 'employee_id' => $employee->id, 'board' => $board->id]
+                : Arr::except($request->query->all(), 'signature')))
+            : ($isSpareMode ? $spareRedirect() : $redirect());
+
+        return $response->with(
             'status',
             $data['lock_status'] === 'in'
                 ? ($isSpareMode
@@ -560,13 +570,71 @@ class LototoController extends Controller
         ];
     }
 
-    private function isAuthorizedSpareTechnician(Request $request, ?Employee $employee): bool
+    /**
+     * Starts the spare record that continues an outstanding personal activity on $spareLock. It carries the
+     * personal activity's checklist answers (shown again on the spare's OUT form) but none of its identity or
+     * supervisor follow-up, and both records point at each other by activity id in out_details.
+     */
+    private function startHandoverSpare(LototoActivity $personalActivity, SpareLock $spareLock): LototoActivity
     {
-        $authenticatedEmployee = $request->user()?->employee;
+        $startedAt = now();
+        $spareActivity = LototoActivity::query()->create([
+            ...$personalActivity->only([
+                'employee_id', 'board', 'location', 'activity', 'risks', 'other_risk', 'risk_controls',
+                'knows_procedure', 'follows_lototo', 'uses_ppe', 'safe_tools', 'safe_hands',
+            ]),
+            'spare_lock_id' => $spareLock->id,
+            'status' => 'in_progress',
+            'out_details' => [
+                'spare_lock_code' => $spareLock->code,
+                'spare_started_at' => $startedAt->toISOString(),
+                'handover_from_activity_id' => $personalActivity->id,
+            ],
+            'started_at' => $startedAt,
+        ]);
+        $personalActivity->update(['out_details' => array_merge($personalActivity->out_details ?? [], [
+            'spare_lock_code' => $spareLock->code,
+            'spare_started_at' => $startedAt->toISOString(),
+            'spare_activity_id' => $spareActivity->id,
+        ])]);
+        $spareLock->update(['current_activity_id' => $spareActivity->id]);
+
+        return $spareActivity;
+    }
+
+    private function isAuthorizedSpareTechnician(Request $request, LototoBoard $board, ?Employee $employee): bool
+    {
+        $authenticatedEmployee = $this->actingEmployee($request, $board);
 
         return $employee !== null
             && $authenticatedEmployee?->is($employee)
             && preg_match('/^\d{1,2}$/', trim((string) $employee->lototo_number)) === 1;
+    }
+
+    /**
+     * The employee the form acts for: the logged-in user's employee, or for a QR visitor the employee its signed
+     * QR identifies (the personal lock's owner, or whoever holds the spare lock now). The signed query decides,
+     * never the posted fields, and it must name the board the form works on.
+     */
+    private function actingEmployee(Request $request, LototoBoard $board): ?Employee
+    {
+        if (! AllowLototoQrForm::isQrVisitor($request)) {
+            return $request->user()?->employee;
+        }
+        $qr = $request->query->all();
+        if ((string) ($qr['board'] ?? '') !== (string) $board->id) {
+            return null;
+        }
+        if (isset($qr['spare_lock'])) {
+            return SpareLock::query()->where('board_id', $board->id)->where('code', $qr['spare_lock'])
+                ->first()?->currentActivity?->employee;
+        }
+
+        return Employee::query()
+            ->where('business_unit_id', $board->business_unit_id)
+            ->whereKey($qr['employee_id'] ?? null)
+            ->where('lototo_number', $qr['lototo_number'] ?? null)
+            ->first();
     }
 
     /**
@@ -664,7 +732,9 @@ class LototoController extends Controller
             'activities' => LototoActivity::query()
                 ->where('employee_id', $employee->id)
                 ->where('board', $board->code)
-                ->whereNull('spare_lock_id')
+                // Personal records. Outstanding activities saved before the spare got its own record carry the
+                // spare's id on the personal record itself; they are personal history too.
+                ->where(fn ($query) => $query->whereNull('spare_lock_id')->orWhere('outcome', 'outstanding'))
                 ->with('spareLock')
                 ->latest('started_at')
                 ->paginate(20),

@@ -6,13 +6,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['board_id', 'category', 'position', 'employee_id', 'spare_lock_id', 'tool_label', 'tool_id', 'tool_column_span', 'is_enabled'])]
+#[Fillable(['board_id', 'category', 'section', 'position', 'grid_row', 'grid_column', 'employee_id', 'spare_lock_id', 'tool_label', 'tool_id', 'tool_column_span', 'is_enabled'])]
 class LototoBoardSlot extends Model
 {
     protected function casts(): array
     {
         return [
             'position' => 'integer',
+            'grid_row' => 'integer',
+            'grid_column' => 'integer',
             'is_enabled' => 'boolean',
         ];
     }

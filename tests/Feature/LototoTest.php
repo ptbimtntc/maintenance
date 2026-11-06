@@ -6,6 +6,7 @@ use App\Enums\RoleName;
 use App\Models\BusinessUnit;
 use App\Models\Employee;
 use App\Models\EmploymentStatus;
+use App\Models\LototoActivity;
 use App\Models\LototoBoard;
 use App\Models\LototoBoardSlot;
 use App\Models\SpareLock;
@@ -105,27 +106,26 @@ class LototoTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole(RoleName::Administrator->value);
 
-        $response = $this->actingAs($user)->get(route('safety.lototo.index'));
+        $response = $this->actingAs($user)->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()));
 
+        // Each slot shows the employee saved on it, whatever their LOTOTO number.
         $response->assertOk()
-            ->assertSee('TECHNICIAN posisi 1 kosong', false)
-            ->assertSee('TECHNICIAN posisi 2 kosong', false)
-            ->assertSee('LOTOTO 03', false)
-            ->assertSee('LOTOTO 17', false)
+            ->assertSeeInOrder(['LOTOTO 03', '>01</span>', 'TECHNICIAN posisi 2 kosong', 'LOTOTO 17', '>03</span>'], false)
+            ->assertDontSee('TECHNICIAN posisi 1 kosong', false)
+            ->assertDontSee('TECHNICIAN posisi 3 kosong', false)
+            ->assertSee('TECHNICIAN posisi 17 kosong', false)
             ->assertSee('TECHNICIAN posisi 64 kosong', false)
-            ->assertSee('TECHNICIAN posisi 69 kosong', false)
-            ->assertDontSee('TECHNICIAN posisi 70 kosong', false)
-            ->assertSee('grid-column: 3; grid-row: 1;', false)
-            ->assertSee('grid-column: 17; grid-row: 1;', false);
+            ->assertSee('TECHNICIAN posisi 65 kosong', false)
+            ->assertDontSee('TECHNICIAN posisi 66 kosong', false);
 
         $content = $response->getContent();
         $technicianStart = strpos($content, 'class="lototo-grid lototo-technician-grid"');
-        $supervisorStart = strpos($content, 'class="lototo-main-group lototo-supervisor-group"');
         $this->assertNotFalse($technicianStart);
-        $this->assertNotFalse($supervisorStart);
+        $technicianEnd = strpos($content, '</section>', $technicianStart);
+        // The 65 Technician slots stored for the board, all drawn even though the highest LOTOTO number is 17.
         $this->assertSame(
-            69,
-            substr_count(substr($content, $technicianStart, $supervisorStart - $technicianStart), 'lototo-position-index'),
+            65,
+            substr_count(substr($content, $technicianStart, $technicianEnd - $technicianStart), 'lototo-position-index'),
         );
     }
 
@@ -256,7 +256,7 @@ class LototoTest extends TestCase
             ->assertSee('value="mtn_tr"', false);
     }
 
-    public function test_manage_safety_users_can_open_settings_and_get_qr_for_each_lock_type(): void
+    public function test_manage_safety_users_can_open_the_qr_code_page_and_get_qr_for_each_lock_type(): void
     {
         $businessUnit = $this->legacyBusinessUnit();
         $technician = Employee::factory()->create([
@@ -273,16 +273,17 @@ class LototoTest extends TestCase
         $manager->assignRole(RoleName::MaintenanceManager->value);
         $board = LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail();
 
+        $qr = fn (array $parameters) => e(\App\Http\Middleware\AllowLototoQrForm::url('safety.lototo.form', [...$parameters, 'board' => $board->id]));
         $this->actingAs($manager)
-            ->get(route('safety.lototo.settings'))
+            ->get(route('safety.lototo.qr-codes'))
             ->assertOk()
-            ->assertSee('Manage Boards')
+            ->assertSee('Manage Board')
             ->assertDontSee('Kelola Gembok Spare')
-            ->assertSee('data-qrcode="'.route('safety.lototo.form', ['lototo_number' => '07', 'employee_id' => $technician->id, 'board' => $board->id]).'"', false)
-            ->assertSee('data-qrcode="'.route('safety.lototo.form', ['lototo_number' => '101', 'employee_id' => $supervisor->id, 'board' => $board->id]).'"', false)
-            ->assertSee('data-qrcode="'.route('safety.lototo.form', ['spare_lock' => 'SP-02', 'board' => $board->id]).'"', false)
-            ->assertSee('data-identifier-label="LOTOTO"', false)
-            ->assertSee('data-identifier-label="KODE"', false);
+            ->assertSee('data-qrcode="'.$qr(['lototo_number' => '07', 'employee_id' => $technician->id]).'"', false)
+            ->assertSee('data-qrcode="'.$qr(['lototo_number' => '101', 'employee_id' => $supervisor->id]).'"', false)
+            ->assertSee('data-qrcode="'.$qr(['spare_lock' => 'SP-02']).'"', false)
+            ->assertSee('data-print-open="technician-'.$technician->id.'"', false)
+            ->assertSee('data-print-open="spare-'.SpareLock::query()->where('code', 'SP-02')->value('id').'"', false);
     }
 
     public function test_out_submission_reuses_in_answers_and_does_not_require_reentering_the_checklist(): void
@@ -326,7 +327,8 @@ class LototoTest extends TestCase
         $this->assertSame('Pump room', $activity->location);
         $this->assertSame('Replace valve', $activity->activity);
         $this->assertSame(['kesetrum', 'terjepit'], $activity->risks);
-        $this->assertSame($spareLock->id, $activity->spare_lock_id);
+        // The personal record stays personal; the spare continues on its own record.
+        $this->assertNull($activity->spare_lock_id);
         $this->assertSame('SP-01', data_get($activity->out_details, 'spare_lock_code'));
         $this->assertNotNull($activity->ended_at);
 
@@ -335,16 +337,18 @@ class LototoTest extends TestCase
         $this->actingAs($user)
             ->get(route('safety.lototo.show', $employee))
             ->assertOk()
-            ->assertSee('Belum ada aktivitas LOTOTO untuk karyawan ini')
-            ->assertDontSee('Pump room')
-            ->assertDontSee('CLOSE · OUTSTANDING');
+            ->assertDontSee('Belum ada aktivitas LOTOTO untuk karyawan ini')
+            ->assertSee('Pump room')
+            ->assertSee('CLOSE');
 
-        $this->assertSame(1, $employee->lototoActivities()->count());
-        $spareActivity = $activity->fresh();
+        $this->assertSame(2, $employee->lototoActivities()->count());
+        $spareActivity = LototoActivity::query()->whereKey(data_get($activity->out_details, 'spare_activity_id'))->firstOrFail();
+        $this->assertNotSame($activity->id, $spareActivity->id);
         $this->assertSame($spareLock->id, $spareActivity->spare_lock_id);
+        $this->assertSame($activity->id, data_get($spareActivity->out_details, 'handover_from_activity_id'));
+        $this->assertSame('Pump room', $spareActivity->location);
         $this->assertSame($spareActivity->id, $spareLock->fresh()->current_activity_id);
         $this->assertNotNull(data_get($spareActivity->out_details, 'spare_started_at'));
-        $this->assertSame(1, $employee->lototoActivities()->count());
 
         $this->get(route('safety.lototo.form', ['spare_lock' => 'SP-01']))
             ->assertOk()
@@ -362,48 +366,11 @@ class LototoTest extends TestCase
         ])->assertRedirect(route('safety.lototo.form', ['spare_lock' => 'SP-01']));
 
         $this->assertNotNull(data_get($spareActivity->fresh()->out_details, 'spare_ended_at'));
-        $this->assertSame(1, $employee->lototoActivities()->count());
+        $this->assertSame('completed', $spareActivity->fresh()->status);
+        $this->assertSame(2, $employee->lototoActivities()->count());
         $this->assertSame('completed', $activity->fresh()->status);
+        $this->assertSame('outstanding', $activity->fresh()->outcome);
         $this->assertNull($spareLock->fresh()->current_activity_id);
-    }
-
-    public function test_manage_safety_users_can_register_and_deactivate_spare_locks(): void
-    {
-        $this->legacyBusinessUnit();
-        $board = LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail();
-        $user = User::factory()->create();
-        $user->assignRole(RoleName::Administrator->value);
-
-        $this->actingAs($user)
-            ->get(route('safety.lototo.spare-locks.index', ['board' => $board->id]))
-            ->assertOk()
-            ->assertSee('Master Gembok Spare')
-            ->assertSee('data-qrcode="'.route('safety.lototo.form', ['spare_lock' => 'SP-01', 'board' => $board->id]).'"', false)
-            ->assertSee('Download QR');
-
-        $this->post(route('safety.lototo.spare-locks.store'), ['code' => 'sp-01', 'board_id' => $board->id])
-            ->assertRedirect(route('safety.lototo.spare-locks.index', ['board' => $board->id]));
-
-        $spareLock = SpareLock::query()->where('code', 'SP-01')->firstOrFail();
-        $this->assertTrue($spareLock->is_active);
-
-        $this->patch(route('safety.lototo.spare-locks.update', $spareLock), [
-            'code' => $spareLock->code,
-            'is_active' => '0',
-            'board_id' => $board->id,
-        ])->assertRedirect(route('safety.lototo.spare-locks.index', ['board' => $board->id]));
-
-        $this->assertFalse($spareLock->fresh()->is_active);
-    }
-
-    public function test_users_without_manage_safety_cannot_manage_spare_locks(): void
-    {
-        $user = User::factory()->create();
-        $user->assignRole(RoleName::MaintenanceStaff->value);
-
-        $this->actingAs($user)
-            ->get(route('safety.lototo.spare-locks.index'))
-            ->assertForbidden();
     }
 
     public function test_spare_lock_activity_page_is_scoped_to_the_selected_lock(): void
@@ -447,8 +414,9 @@ class LototoTest extends TestCase
         $personalActivity = $activity->fresh();
         $this->assertSame('completed', $personalActivity->status);
         $this->assertSame('outstanding', $personalActivity->outcome);
-        $this->assertSame($spareLock->id, $personalActivity->spare_lock_id);
-        $spareActivity = $personalActivity->fresh();
+        $this->assertNull($personalActivity->spare_lock_id);
+        $spareActivity = LototoActivity::query()->where('spare_lock_id', $spareLock->id)->sole();
+        $this->assertNotSame($personalActivity->id, $spareActivity->id);
         $this->assertSame($spareActivity->id, $spareLock->fresh()->current_activity_id);
         $this->assertNotNull(data_get($spareActivity->out_details, 'spare_started_at'));
 
@@ -491,7 +459,7 @@ class LototoTest extends TestCase
         ])->assertRedirect(route('safety.lototo.form', ['spare_lock' => 'SP-01']));
 
         $this->assertNotNull(data_get($spareActivity->fresh()->out_details, 'spare_ended_at'));
-        $this->assertSame(1, $employee->lototoActivities()->count());
+        $this->assertSame(2, $employee->lototoActivities()->count());
         $this->assertSame('completed', $activity->fresh()->status);
         $this->assertNull($spareLock->fresh()->current_activity_id);
 

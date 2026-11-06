@@ -10,6 +10,7 @@ use App\Models\LototoTool;
 use App\Models\LototoToolActivity;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -28,110 +29,107 @@ class LototoToolController extends Controller
     private const IMAGE_RULES = ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'mimetypes:image/jpeg,image/png,image/webp', 'max:2048'];
 
     private const MESSAGES = [
-        'code.regex' => 'Kode Tools hanya boleh berisi huruf, angka, tanda hubung, dan garis bawah.',
-        'code.unique' => 'Kode Tools sudah digunakan pada board ini.',
+        'name.required' => 'Nama Tools wajib diisi.',
         'image.mimes' => 'Gambar Tools harus berformat JPG, PNG, atau WEBP.',
         'image.mimetypes' => 'Gambar Tools harus berformat JPG, PNG, atau WEBP.',
         'image.max' => 'Ukuran gambar Tools maksimal 2 MB.',
         'location.required' => 'Lokasi wajib diisi untuk IN.',
     ];
 
-    public function store(Request $request): RedirectResponse
+    /**
+     * "Tambah Tools" in Edit Mode: a tool for the board with its name and, optionally, a picture; its code is the
+     * first unused TL-NN of the board. It is not placed on a slot; Edit Slot offers it. A name the board already
+     * has is refused, so saving the same form twice makes one tool.
+     */
+    public function store(Request $request, LototoBoard $board): JsonResponse
     {
-        $request->merge(['code' => strtoupper(trim((string) $request->input('code'))), 'name' => trim((string) $request->input('name'))]);
-        $board = $this->resolveBoard($request);
+        $this->authorizeManageSafety($request);
+        $request->merge(['name' => trim((string) $request->input('name'))]);
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('lototo_tools', 'code')->where('board_id', $board->id)],
             'name' => ['required', 'string', 'max:100'],
             'image' => self::IMAGE_RULES,
         ], self::MESSAGES);
 
         $imagePath = $this->storeImage($request->file('image'), $board);
         try {
-            $position = DB::transaction(function () use ($board, $data, $imagePath) {
+            $tool = DB::transaction(function () use ($board, $data, $imagePath) {
                 LototoBoard::query()->whereKey($board->id)->lockForUpdate()->firstOrFail();
+                $this->refuseDuplicateName($board, $data['name']);
+                $used = LototoTool::query()->where('board_id', $board->id)->pluck('code')->map(fn ($code) => strtoupper($code))->flip();
+                $number = 0;
+                do {
+                    $code = sprintf('TL-%02d', ++$number);
+                } while ($used->has($code));
 
-                $tool = LototoTool::query()->create([
+                return LototoTool::query()->create([
                     'board_id' => $board->id,
-                    'code' => $data['code'],
+                    'code' => $code,
                     'name' => $data['name'],
                     'image_path' => $imagePath,
                     'is_active' => true,
                 ]);
-
-                // The board's own Tools positions decide where it shows: the first empty, enabled position, or a new
-                // position after the last one (as Add Position does). Order and size are then set in the positions table.
-                $toolSlots = LototoBoardSlot::query()->where('board_id', $board->id)->where('category', 'tool')->orderBy('position')->lockForUpdate()->get();
-                $slot = $toolSlots->first(fn (LototoBoardSlot $slot) => $slot->is_enabled && ! $slot->tool_id && blank($slot->tool_label))
-                    ?? LototoBoardSlot::query()->create([
-                        'board_id' => $board->id,
-                        'category' => 'tool',
-                        'position' => (int) $toolSlots->max('position') + 1,
-                        'is_enabled' => true,
-                    ]);
-                $slot->update(['tool_id' => $tool->id, 'tool_label' => $tool->name]);
-
-                return $slot->position;
             });
         } catch (Throwable $exception) {
             $this->deleteImage($imagePath);
-            $this->rethrowDuplicateCode($exception);
+            throw $exception;
         }
 
-        return to_route('safety.lototo.settings', ['board' => $board->id, 'section' => 'tool'])
-            ->with('status', sprintf('Tools %s berhasil ditambahkan dan dipasang di posisi %02d. Urutan dan ukuran kolomnya dapat diatur pada tabel posisi Tools.', $data['code'], $position));
+        return response()->json([
+            'message' => "Tools {$tool->code} \"{$tool->name}\" dibuat. Pilih di popup Edit Slot untuk menempatkannya.",
+            'tool' => LototoBoardSettingsController::presentTool($tool->loadCount('activities'), null),
+        ], 201);
     }
 
-    public function update(Request $request, LototoTool $tool): RedirectResponse
+    /**
+     * "Edit" in the Tools popup: a new name and, optionally, a new picture (without one the old picture stays).
+     * Slots holding the tool show the new name; its history is untouched.
+     */
+    public function update(Request $request, LototoBoard $board, LototoTool $tool): JsonResponse
     {
-        $board = $this->resolveBoard($request);
+        $this->authorizeManageSafety($request);
         abort_unless((int) $tool->board_id === (int) $board->id, 404);
-        $request->merge(['code' => strtoupper(trim((string) $request->input('code'))), 'name' => trim((string) $request->input('name'))]);
+        $request->merge(['name' => trim((string) $request->input('name'))]);
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Za-z0-9_-]+$/', Rule::unique('lototo_tools', 'code')->where('board_id', $board->id)->ignore($tool->id)],
             'name' => ['required', 'string', 'max:100'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['required', 'boolean'],
-            'remove_image' => ['nullable', 'boolean'],
             'image' => self::IMAGE_RULES,
         ], self::MESSAGES);
 
         $newImagePath = $this->storeImage($request->file('image'), $board);
         try {
-            $oldImagePath = DB::transaction(function () use ($board, $tool, $data, $newImagePath) {
+            [$updated, $oldImagePath] = DB::transaction(function () use ($board, $tool, $data, $newImagePath) {
                 $locked = LototoTool::query()->where('board_id', $board->id)->whereKey($tool->id)->lockForUpdate()->firstOrFail();
-                if (! (bool) $data['is_active'] && $locked->openActivity()->exists()) {
-                    throw ValidationException::withMessages(['is_active' => "Tools {$locked->code} sedang IN sehingga tidak dapat dinonaktifkan. Selesaikan OUT terlebih dahulu."]);
-                }
-
-                $replacesImage = $newImagePath !== null || (bool) ($data['remove_image'] ?? false);
+                $this->refuseDuplicateName($board, $data['name'], $locked->id);
                 $previousImage = $locked->image_path;
                 $locked->update([
-                    'code' => $data['code'],
                     'name' => $data['name'],
-                    'location' => filled($data['location'] ?? null) ? trim($data['location']) : null,
-                    'is_active' => (bool) $data['is_active'],
-                    'image_path' => $replacesImage ? $newImagePath : $previousImage,
+                    'image_path' => $newImagePath ?? $previousImage,
                 ]);
-                // The board shows the slot label, so the linked slot follows the tool name.
+                // The board shows the slot label, so a slot holding the tool follows its name.
                 LototoBoardSlot::query()->where('board_id', $board->id)->where('tool_id', $locked->id)->update(['tool_label' => $locked->name]);
 
-                return $replacesImage ? $previousImage : null;
+                return [$locked, $newImagePath ? $previousImage : null];
             });
         } catch (Throwable $exception) {
             $this->deleteImage($newImagePath);
-            $this->rethrowDuplicateCode($exception);
+            throw $exception;
         }
-        // Only after the commit: the old file is no longer referenced by any row.
-        $this->deleteImage($oldImagePath);
+        // Only after the commit, and only when no other tool points at the same file.
+        $this->deleteUnusedImage($oldImagePath);
+        $slot = LototoBoardSlot::query()->where('board_id', $board->id)->where('tool_id', $updated->id)->first();
 
-        return to_route('safety.lototo.settings', ['board' => $board->id, 'section' => 'tool'])
-            ->with('status', "Tools {$data['code']} berhasil diperbarui.");
+        return response()->json([
+            'message' => "Tools {$updated->code} diperbarui.",
+            'tool' => LototoBoardSettingsController::presentTool($updated->loadCount('activities'), $slot ? LototoBoardSettingsController::categoryLabel($slot->category).' '.sprintf('%02d', $slot->position) : null),
+        ]);
     }
 
-    public function destroy(Request $request, LototoTool $tool): RedirectResponse
+    /**
+     * "Hapus" in the Tools popup. A tool that is IN, has history (kept with it) or still sits in a slot is refused
+     * with the reason; its picture goes only when no other tool uses it.
+     */
+    public function destroy(Request $request, LototoBoard $board, LototoTool $tool): JsonResponse
     {
-        $board = $this->resolveBoard($request);
+        $this->authorizeManageSafety($request);
         abort_unless((int) $tool->board_id === (int) $board->id, 404);
 
         $imagePath = DB::transaction(function () use ($board, $tool) {
@@ -140,19 +138,19 @@ class LototoToolController extends Controller
                 throw ValidationException::withMessages(['tool' => "Tools {$locked->code} sedang IN sehingga tidak dapat dihapus."]);
             }
             if ($locked->activities()->exists()) {
-                throw ValidationException::withMessages(['tool' => "Tools {$locked->code} memiliki riwayat penggunaan sehingga tidak dapat dihapus. Nonaktifkan Tools agar riwayat tetap tersimpan."]);
+                throw ValidationException::withMessages(['tool' => "Tools {$locked->code} memiliki riwayat penggunaan sehingga tidak dapat dihapus; riwayatnya tetap tersimpan."]);
             }
-
-            // The position stays on the board as an empty slot.
-            LototoBoardSlot::query()->where('board_id', $board->id)->where('tool_id', $locked->id)->update(['tool_id' => null, 'tool_label' => null]);
+            $slot = LototoBoardSlot::query()->where('board_id', $board->id)->where('tool_id', $locked->id)->first();
+            if ($slot) {
+                throw ValidationException::withMessages(['tool' => sprintf('Tools %s masih terpasang di slot %s %02d. Kosongkan slot itu lewat Edit Slot dan simpan, lalu hapus Tools-nya.', $locked->code, LototoBoardSettingsController::categoryLabel($slot->category), $slot->position)]);
+            }
             $locked->delete();
 
             return $locked->image_path;
         });
-        $this->deleteImage($imagePath);
+        $this->deleteUnusedImage($imagePath);
 
-        return to_route('safety.lototo.settings', ['board' => $board->id, 'section' => 'tool'])
-            ->with('status', "Tools {$tool->code} berhasil dihapus. Posisinya pada board kini kosong.");
+        return response()->json(['message' => "Tools {$tool->code} dihapus; QR {$tool->code} tidak berlaku lagi."]);
     }
 
     public function image(Request $request, LototoTool $tool): StreamedResponse
@@ -244,17 +242,13 @@ class LototoToolController extends Controller
         return to_route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $board->id])->with('status', $message);
     }
 
-    /**
-     * Two managers saving the same code at once both pass the unique rule; the database index on (board_id, code)
-     * then refuses the second one, which is reported like the validation error instead of a server error.
-     */
-    private function rethrowDuplicateCode(Throwable $exception): never
+    private function refuseDuplicateName(LototoBoard $board, string $name, ?int $exceptId = null): void
     {
-        if ($exception instanceof UniqueConstraintViolationException && str_contains($exception->getMessage(), 'lototo_tools')) {
-            throw ValidationException::withMessages(['code' => self::MESSAGES['code.unique']]);
+        $taken = LototoTool::query()->where('board_id', $board->id)->when($exceptId, fn ($query) => $query->whereKeyNot($exceptId))
+            ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])->value('code');
+        if ($taken) {
+            throw ValidationException::withMessages(['name' => "Tools \"{$name}\" sudah ada pada board ini ({$taken})."]);
         }
-
-        throw $exception;
     }
 
     /** The QR always carries the board; a tool is only reachable through the board that owns it. */
@@ -299,11 +293,16 @@ class LototoToolController extends Controller
         }
     }
 
-    private function resolveBoard(Request $request): LototoBoard
+    /** Deletes a tool picture that no tool references any more (a path is never shared today, this keeps it so). */
+    private function deleteUnusedImage(?string $path): void
     {
-        $requested = $request->input('board_id') ?? $request->query('board');
-        abort_unless(filled($requested), 404);
+        if ($path && ! LototoTool::query()->where('image_path', $path)->exists()) {
+            $this->deleteImage($path);
+        }
+    }
 
-        return LototoBoard::query()->where('id', $requested)->orWhere('code', $requested)->firstOrFail();
+    private function authorizeManageSafety(Request $request): void
+    {
+        abort_unless($request->user()?->can(PermissionName::ManageSafety->value), 403);
     }
 }

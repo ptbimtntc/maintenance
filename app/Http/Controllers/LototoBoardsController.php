@@ -11,9 +11,12 @@ use App\Models\LototoBoardSlot;
 use App\Models\LototoActivity;
 use App\Models\LototoTool;
 use App\Models\SpareLock;
+use App\Support\LototoSlotGrid;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -21,14 +24,6 @@ use Illuminate\View\View;
 
 class LototoBoardsController extends Controller
 {
-    // Generated codes are "{PREFIX}-NN" and must stay valid spare lock codes (letters, digits, - and _ only).
-    public const SPARE_PREFIX_RULES = ['nullable', 'string', 'max:20', 'regex:/^[A-Za-z0-9]+(?:[-_][A-Za-z0-9]+)*$/'];
-
-    public const SPARE_PREFIX_MESSAGES = [
-        'spare_code_prefix.regex' => 'Prefix kode Spare hanya boleh berisi huruf dan angka, boleh dipisah tanda hubung atau garis bawah (contoh: SP atau SPH).',
-        'spare_code_prefix.max' => 'Prefix kode Spare maksimal 20 karakter.',
-    ];
-
     public function index(Request $request): View
     {
         $this->authorizeManageSafety($request);
@@ -37,8 +32,19 @@ class LototoBoardsController extends Controller
             : null;
         $returnBoard ??= LototoBoard::query()->where('code', 'mtn_tr')->first();
 
+        $boards = LototoBoard::query()->with('businessUnit')->orderBy('division_name')->orderBy('id')->get();
+        // Activities still IN per board: deactivating such a board asks first (they can still be finished). Personal
+        // locks IN are in_progress activities; a spare lock is IN while it holds its current activity (outstanding).
+        $openIds = LototoActivity::query()->where('status', 'in_progress')->whereIn('board', $boards->pluck('code'))->pluck('board', 'id');
+        SpareLock::query()->whereIn('board_id', $boards->modelKeys())->whereNotNull('current_activity_id')->get(['board_id', 'current_activity_id'])
+            ->each(function (SpareLock $lock) use ($boards, $openIds) {
+                $openIds[$lock->current_activity_id] = $boards->firstWhere('id', $lock->board_id)->code;
+            });
+        $activeActivities = $openIds->countBy();
+
         return view('safety.lototo.boards.index', [
-            'boards' => LototoBoard::query()->with('businessUnit')->orderBy('division_name')->orderBy('id')->get(),
+            'boards' => $boards,
+            'activeActivities' => $activeActivities,
             'businessUnits' => BusinessUnit::query()->where('is_active', true)->orderBy('name')->get(),
             'returnBoard' => $returnBoard,
         ]);
@@ -50,15 +56,11 @@ class LototoBoardsController extends Controller
         $data = $request->validate([
             'division_name' => ['required', 'string', 'max:100'],
             'business_unit_id' => ['required', 'integer', Rule::exists('business_units', 'id')->where('is_active', true)],
-            'board_columns' => ['nullable', 'integer', Rule::in([10, 15, 20])],
-            'technician_columns' => ['nullable', 'integer', Rule::in([10, 15, 20])],
-            'supervisor_columns' => ['nullable', 'integer', Rule::in([10, 15, 20])],
-            'spare_lock_count' => ['nullable', 'integer', 'min:0', 'max:200'],
-            'spare_code_prefix' => self::SPARE_PREFIX_RULES,
-        ], self::SPARE_PREFIX_MESSAGES);
-        $boardColumns = (int) ($data['board_columns'] ?? $data['technician_columns'] ?? 20);
-        $spareSlotCount = (int) ($data['spare_lock_count'] ?? 20);
-        $sparePrefix = self::normalizeSparePrefix($data['spare_code_prefix'] ?? null);
+            'spare_lock_count' => ['required', 'integer', 'min:0', 'max:200'],
+        ]);
+        // New boards start with the standard 20 columns; Edit Mode on the board changes them.
+        $boardColumns = 20;
+        $spareSlotCount = (int) $data['spare_lock_count'];
 
         $divisionName = trim($data['division_name']);
         $businessUnit = BusinessUnit::query()->whereKey($data['business_unit_id'])->firstOrFail();
@@ -67,7 +69,26 @@ class LototoBoardsController extends Controller
             'division_name' => [Rule::unique('lototo_boards', 'division_name')->where('business_unit_id', $businessUnit->id)],
         ]);
 
-        $board = DB::transaction(function () use ($divisionName, $businessUnit, $spareSlotCount, $boardColumns, $sparePrefix) {
+        try {
+            $board = $this->createBoard($divisionName, $businessUnit, $spareSlotCount, $boardColumns);
+        } catch (UniqueConstraintViolationException) {
+            // Another admin took the same division or spare lock codes at the same moment; nothing was saved.
+            throw ValidationException::withMessages(['division_name' => 'Board atau kode gembok Spare yang sama baru saja dibuat oleh proses lain. Tidak ada data yang tersimpan; periksa daftar board lalu coba lagi.']);
+        }
+
+        $codes = SpareLock::query()->where('board_id', $board->id)->orderBy('code')->pluck('code');
+
+        return to_route('safety.lototo.boards.index')
+            ->with('status', $codes->isNotEmpty()
+                ? "Board LOTOTO {$board->division_name} berhasil dibuat dengan {$codes->count()} gembok Spare ({$codes->first()} s.d. {$codes->last()}). Cetak QR-nya dari tombol QR Code di board."
+                : "Board LOTOTO {$board->division_name} berhasil dibuat.")
+            ->with('created_board', $board->id);
+    }
+
+    /** Board, its starting slots and its spare locks in one transaction: all of it is saved or none. */
+    private function createBoard(string $divisionName, BusinessUnit $businessUnit, int $spareSlotCount, int $boardColumns): LototoBoard
+    {
+        return DB::transaction(function () use ($divisionName, $businessUnit, $spareSlotCount, $boardColumns) {
             // 30 characters, so the code also fits lototo_activities.board on databases without the widening migration.
             $code = 'board-'.Str::lower(Str::random(24));
             $board = LototoBoard::query()->create([
@@ -122,7 +143,8 @@ class LototoBoardsController extends Controller
                 ]);
             }
 
-            $board->provisionSpareLocks(range(1, $spareSlotCount), $sparePrefix);
+            // Spare locks with codes made from the division (DRAMIX-SP-001, ...), OUT (no activity), each on its own Spare slot.
+            $board->provisionSpareLocks($spareSlotCount > 0 ? range(1, $spareSlotCount) : []);
 
             foreach (range(1, 15) as $position) {
                 LototoBoardSlot::query()->create([
@@ -132,189 +154,41 @@ class LototoBoardsController extends Controller
                     'is_enabled' => true,
                 ]);
             }
+            LototoSlotGrid::sync($board, LototoSlotGrid::byNumber($board));
 
             return $board;
         });
-
-        return to_route('safety.lototo.boards.index')
-            ->with('status', $spareSlotCount > 0
-                ? "Board LOTOTO berhasil dibuat menggunakan Business Unit terpilih, dengan {$spareSlotCount} gembok Spare ({$sparePrefix}-01 dst.) yang siap dicetak QR-nya di Settings."
-                : 'Board LOTOTO berhasil dibuat menggunakan Business Unit terpilih.')
-            ->with('created_board', $board->id);
-    }
-
-    public function update(Request $request, LototoBoard $board): RedirectResponse
-    {
-        $this->authorizeManageSafety($request);
-        $request->merge(['division_name' => trim((string) $request->input('division_name'))]);
-        $data = $request->validate([
-            'division_name' => ['required', 'string', 'max:100', Rule::unique('lototo_boards', 'division_name')->where('business_unit_id', $request->input('business_unit_id'))->ignore($board->id)],
-            'business_unit_id' => ['required', 'integer', Rule::exists('business_units', 'id')],
-            'is_active' => ['required', 'boolean'],
-            'board_columns' => ['nullable', 'integer', Rule::in([10, 15, 20])],
-            'spare_lock_count' => ['nullable', 'integer', 'min:0', 'max:200'],
-            'spare_code_prefix' => self::SPARE_PREFIX_RULES,
-            'return_board' => ['nullable', 'integer', 'exists:lototo_boards,id'],
-        ], self::SPARE_PREFIX_MESSAGES);
-        $spareSlotCount = (int) ($data['spare_lock_count'] ?? $board->slots()->where('category', 'spare')->max('position'));
-        $sparePrefix = self::normalizeSparePrefix($data['spare_code_prefix'] ?? $board->defaultSparePrefix());
-
-        DB::transaction(function () use ($board, $data, $spareSlotCount, $sparePrefix) {
-            $lockedBoard = LototoBoard::query()->whereKey($board->id)->lockForUpdate()->firstOrFail();
-            $unitChanged = (int) $lockedBoard->business_unit_id !== (int) $data['business_unit_id'];
-            if ($unitChanged && (
-                $lockedBoard->slots()->where(function ($query) {
-                    $query->whereNotNull('employee_id')->orWhereNotNull('spare_lock_id');
-                })->exists()
-                || SpareLock::query()->where('board_id', $lockedBoard->id)->exists()
-                || LototoActivity::query()->where('board', $lockedBoard->code)->exists()
-            )) {
-                throw ValidationException::withMessages(['business_unit_id' => 'Business Unit tidak dapat diganti selama board memiliki assignment, gembok, atau histori LOTOTO. Buat board baru untuk unit tujuan.']);
-            }
-
-            $oldUnitName = $lockedBoard->businessUnit()->value('name');
-            $oldGeneratedTitle = mb_strtoupper($lockedBoard->division_name).' · '.$oldUnitName;
-            $newUnit = BusinessUnit::query()
-                ->whereKey($data['business_unit_id'])
-                ->when((bool) $data['is_active'] || $unitChanged, fn ($query) => $query->where('is_active', true))
-                ->lockForUpdate()
-                ->first();
-            if (! $newUnit) {
-                throw ValidationException::withMessages(['business_unit_id' => 'Business Unit harus aktif untuk board aktif atau saat mengganti Business Unit.']);
-            }
-
-            if (! $lockedBoard->is_active && (bool) $data['is_active']) {
-                $this->validateBoardConfiguration($lockedBoard, $newUnit);
-            }
-            $newTitle = $lockedBoard->title === $oldGeneratedTitle
-                ? mb_strtoupper($data['division_name']).' · '.$newUnit->name
-                : $lockedBoard->title;
-
-            $updateData = [
-                'division_name' => $data['division_name'],
-                'business_unit_id' => $data['business_unit_id'],
-                'title' => $newTitle,
-                'is_active' => (bool) $data['is_active'],
-            ];
-
-            if (isset($data['board_columns'])) {
-                $cols = (int) $data['board_columns'];
-                $updateData['layout'] = array_merge($lockedBoard->layout ?? [], [
-                    'board_columns' => $cols,
-                    'technician_columns' => $cols,
-                    'supervisor_columns' => $cols,
-                ]);
-            }
-
-            $lockedBoard->update($updateData);
-
-            $this->reconcileSpareSlots($lockedBoard, $spareSlotCount, $sparePrefix);
-        });
-
-        return to_route('safety.lototo.boards.index', array_filter(['board' => $data['return_board'] ?? null]))
-            ->with('status', $data['is_active'] ? 'Board LOTOTO berhasil diperbarui dan diaktifkan.' : 'Board LOTOTO berhasil diperbarui.');
     }
 
     /**
-     * Makes the board have exactly $slotCount Spare positions. Only positions that do not exist yet get a new
-     * slot and a new physical spare lock, so saving the same count again creates nothing. Removed positions take
-     * their lock with them only when that lock was never used; existing codes are never renamed.
+     * Active / Inactive from Manage Board. An inactive board takes no new LOTOTO activity, but activities that are
+     * IN can still be finished (OUT, Handover); nothing of the board is removed. Turning a board on checks its
+     * configuration first.
      */
-    private function reconcileSpareSlots(LototoBoard $board, int $slotCount, string $prefix): void
-    {
-        $slots = LototoBoardSlot::query()
-            ->where('board_id', $board->id)
-            ->where('category', 'spare')
-            ->lockForUpdate()
-            ->get()
-            ->keyBy('position');
-
-        $removedSlots = $slots->filter(fn (LototoBoardSlot $slot) => $slot->position > $slotCount)->sortBy('position');
-        $removedLocks = SpareLock::query()
-            ->where('board_id', $board->id)
-            ->whereKey($removedSlots->pluck('spare_lock_id')->filter())
-            ->withCount('activities')
-            ->lockForUpdate()
-            ->get();
-        $blockedLocks = $removedLocks->filter(fn (SpareLock $lock) => $lock->current_activity_id || $lock->activities_count > 0);
-        if ($blockedLocks->isNotEmpty()) {
-            throw ValidationException::withMessages([
-                'spare_lock_count' => 'Jumlah Spare tidak dapat dikurangi menjadi '.$slotCount.' karena gembok '.$blockedLocks->pluck('code')->implode(', ')
-                    .' sedang digunakan atau memiliki riwayat aktivitas. Gembok dan riwayatnya tetap tersimpan; pindahkan gembok tersebut ke posisi yang lebih kecil di Settings → Spare atau gunakan jumlah yang lebih besar.',
-            ]);
-        }
-
-        // Slots go first: lototo_board_slots.spare_lock_id references the locks being removed.
-        LototoBoardSlot::query()->whereKey($removedSlots->modelKeys())->delete();
-        SpareLock::query()->whereKey($removedLocks->modelKeys())->delete();
-
-        $newPositions = array_values(array_filter($slotCount > 0 ? range(1, $slotCount) : [], fn (int $position) => ! $slots->has($position)));
-        if ($newPositions !== [] && ! $board->is_active) {
-            throw ValidationException::withMessages([
-                'spare_lock_count' => 'Board nonaktif tidak dapat menerima gembok Spare baru. Aktifkan kembali board sebelum menambah jumlah Spare.',
-            ]);
-        }
-
-        $board->provisionSpareLocks($newPositions, $prefix);
-    }
-
-    public static function normalizeSparePrefix(?string $prefix): string
-    {
-        $prefix = strtoupper(trim((string) $prefix));
-
-        return $prefix === '' ? 'SP' : $prefix;
-    }
-
-    public function updatePresentation(Request $request, LototoBoard $board): RedirectResponse
+    public function updateStatus(Request $request, LototoBoard $board): RedirectResponse
     {
         $this->authorizeManageSafety($request);
-
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:160'],
-            'subtitle' => ['required', 'string', 'max:255'],
-            'section_order' => ['required', 'array', 'size:2'],
-            'section_order.*' => ['required', Rule::in(['other', 'spare']), 'distinct'],
-            'board_columns' => ['nullable', 'integer', Rule::in([10, 15, 20])],
-            'components' => ['required', 'array'],
-            'components.technician' => ['required', 'boolean'],
-            'components.supervisor' => ['required', 'boolean'],
-            'components.other' => ['required', 'boolean'],
-            'components.spare' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
+            'return_board' => ['nullable', 'integer', 'exists:lototo_boards,id'],
         ]);
 
-        $boardColumns = (int) ($data['board_columns'] ?? $board->layout['board_columns'] ?? $board->layout['technician_columns'] ?? 20);
+        DB::transaction(function () use ($board, $data) {
+            $lockedBoard = LototoBoard::query()->whereKey($board->id)->lockForUpdate()->firstOrFail();
+            if ((bool) $data['is_active'] && ! $lockedBoard->is_active) {
+                $unit = BusinessUnit::query()->whereKey($lockedBoard->business_unit_id)->where('is_active', true)->first();
+                if (! $unit) {
+                    throw ValidationException::withMessages(['is_active' => 'Business Unit board ini tidak aktif, sehingga board tidak dapat diaktifkan.']);
+                }
+                $this->validateBoardConfiguration($lockedBoard, $unit);
+            }
+            $lockedBoard->update(['is_active' => (bool) $data['is_active']]);
+        });
 
-        $layout = array_merge($board->layout ?? [], [
-            'section_order' => $data['section_order'],
-            'board_columns' => $boardColumns,
-            'technician_columns' => $boardColumns,
-            'supervisor_columns' => $boardColumns,
-        ]);
-
-        $board->update([
-            'title' => trim($data['title']),
-            'subtitle' => trim($data['subtitle']),
-            'layout' => $layout,
-            'component_settings' => $data['components'],
-        ]);
-
-        return to_route('safety.lototo.boards.edit', $board)
-            ->with('status', 'Tampilan board berhasil disimpan.');
-    }
-
-    public function edit(Request $request, LototoBoard $board): View
-    {
-        $this->authorizeManageSafety($request);
-
-        return view('safety.lototo.boards.edit', [
-            'board' => $board->load('businessUnit'),
-            'spareSlotCount' => (int) $board->slots()->where('category', 'spare')->max('position'),
-            'sparePrefix' => $board->defaultSparePrefix(),
-            'businessUnits' => BusinessUnit::query()
-                ->where(fn ($query) => $query->where('is_active', true)->orWhereKey($board->business_unit_id))
-                ->orderBy('name')
-                ->get(),
-        ]);
+        return to_route('safety.lototo.boards.index', array_filter(['board' => $data['return_board'] ?? null]))
+            ->with('status', $data['is_active']
+                ? "Board {$board->division_name} diaktifkan."
+                : "Board {$board->division_name} dinonaktifkan. Aktivitas yang masih IN tetap dapat diselesaikan (OUT / Handover).");
     }
 
     public function destroy(Request $request, LototoBoard $board): RedirectResponse
@@ -324,31 +198,43 @@ class LototoBoardsController extends Controller
             'return_board' => ['nullable', 'integer', 'exists:lototo_boards,id'],
         ])['return_board'] ?? null;
 
-        DB::transaction(function () use ($board) {
+        $toolImages = DB::transaction(function () use ($board) {
             $lockedBoard = LototoBoard::query()->whereKey($board->id)->lockForUpdate()->firstOrFail();
 
             if ($lockedBoard->code === 'mtn_tr') {
                 throw ValidationException::withMessages(['board' => 'Board LOTOTO legacy tidak dapat dihapus karena menjadi rujukan kompatibilitas.']);
             }
             if ($lockedBoard->is_active) {
-                throw ValidationException::withMessages(['board' => 'Nonaktifkan board melalui Edit Board sebelum menghapusnya.']);
+                throw ValidationException::withMessages(['board' => "Nonaktifkan board {$lockedBoard->division_name} terlebih dahulu sebelum menghapusnya."]);
             }
             if (LototoActivity::query()->where('board', $lockedBoard->code)->exists()) {
                 throw ValidationException::withMessages(['board' => "Board {$lockedBoard->division_name} memiliki histori aktivitas LOTOTO, sehingga tidak dapat dihapus. Biarkan board nonaktif agar histori tetap tersimpan."]);
             }
-            if (SpareLock::query()->where('board_id', $lockedBoard->id)->exists()) {
-                throw ValidationException::withMessages(['board' => "Board {$lockedBoard->division_name} masih memiliki Spare Lock terdaftar (beserta QR-nya), sehingga tidak dapat dihapus. Hapus gembok yang belum pernah digunakan di Settings → Spare terlebih dahulu, atau biarkan board nonaktif."]);
+            $spareLocks = SpareLock::query()->where('board_id', $lockedBoard->id)->withCount('activities')->lockForUpdate()->get();
+            $usedLocks = $spareLocks->filter(fn (SpareLock $lock) => $lock->current_activity_id || $lock->activities_count > 0);
+            if ($usedLocks->isNotEmpty()) {
+                throw ValidationException::withMessages(['board' => "Board {$lockedBoard->division_name} tidak dapat dihapus: gembok Spare {$usedLocks->pluck('code')->implode(', ')} sedang digunakan atau memiliki riwayat. Biarkan board nonaktif agar riwayat tetap tersimpan."]);
             }
-            if (LototoTool::query()->where('board_id', $lockedBoard->id)->exists()) {
-                throw ValidationException::withMessages(['board' => "Board {$lockedBoard->division_name} masih memiliki Tools terdaftar, sehingga tidak dapat dihapus. Biarkan board nonaktif."]);
+            $tools = LototoTool::query()->where('board_id', $lockedBoard->id)->withCount('activities')->lockForUpdate()->get();
+            $usedTools = $tools->filter(fn (LototoTool $tool) => $tool->activities_count > 0);
+            if ($usedTools->isNotEmpty()) {
+                throw ValidationException::withMessages(['board' => "Board {$lockedBoard->division_name} tidak dapat dihapus: Tools {$usedTools->pluck('code')->implode(', ')} memiliki riwayat penggunaan. Biarkan board nonaktif agar riwayat tetap tersimpan."]);
             }
 
-            // Only this board's slot configuration remains: positions, employee assignments and empty Other/Tools slots.
-            // Employees and other boards are untouched; slots must go first because lototo_board_slots.board_id is RESTRICT.
+            // Nothing of this board was ever used: its slots, then its never-used spare locks and tools (the slots
+            // reference them, lototo_board_slots.board_id is RESTRICT). Employees and other boards are untouched.
             $lockedBoard->slots()->lockForUpdate()->get();
             $lockedBoard->slots()->delete();
+            SpareLock::query()->whereKey($spareLocks->modelKeys())->delete();
+            LototoTool::query()->whereKey($tools->modelKeys())->delete();
             $lockedBoard->delete();
+
+            return $tools->pluck('image_path')->filter()->all();
         });
+        // Tool images only after the commit, when no row references them any more.
+        foreach ($toolImages as $imagePath) {
+            Storage::disk('local')->delete($imagePath);
+        }
 
         $fallbackBoardId = LototoBoard::query()->where('code', 'mtn_tr')->value('id');
         if ((int) $returnBoardId === (int) $board->id) {
@@ -356,7 +242,7 @@ class LototoBoardsController extends Controller
         }
 
         return to_route('safety.lototo.boards.index', array_filter(['board' => $returnBoardId]))
-            ->with('status', "Board {$board->division_name} berhasil dihapus beserta konfigurasi slotnya. Data karyawan dan board lain tidak berubah.");
+            ->with('status', "Board {$board->division_name} berhasil dihapus beserta konfigurasi slot, gembok Spare, dan Tools yang belum pernah digunakan. Data karyawan dan board lain tidak berubah.");
     }
 
     private function authorizeManageSafety(Request $request): void
@@ -366,14 +252,18 @@ class LototoBoardsController extends Controller
 
     private function validateBoardConfiguration(LototoBoard $board, BusinessUnit $businessUnit): void
     {
+        // Once slots have cells, a number may repeat in a category (a slot moved by Edit Mode keeps its number);
+        // two slots on one cell is what breaks the board.
+        [$columns, $label] = LototoSlotGrid::numbersMayRepeat() ? [['category', 'grid_row', 'grid_column'], 'letak (sel) slot'] : [['category', 'position'], 'nomor slot'];
         $hasDuplicatePositions = LototoBoardSlot::query()
             ->where('board_id', $board->id)
-            ->select('category', 'position')
-            ->groupBy('category', 'position')
+            ->when(LototoSlotGrid::numbersMayRepeat(), fn ($query) => $query->whereNotNull('grid_row'))
+            ->select($columns)
+            ->groupBy($columns)
             ->havingRaw('COUNT(*) > 1')
             ->exists();
         if ($hasDuplicatePositions) {
-            throw ValidationException::withMessages(['is_active' => 'Konfigurasi board memiliki nomor slot duplikat. Perbaiki posisi sebelum mengaktifkan kembali.']);
+            throw ValidationException::withMessages(['is_active' => "Konfigurasi board memiliki {$label} duplikat. Perbaiki posisi sebelum mengaktifkan kembali."]);
         }
 
         $slots = LototoBoardSlot::query()

@@ -15,9 +15,9 @@
         </span>
     </header>
     <div class="lototo-group-content min-w-0 flex-1">
-        <div class="lototo-grid lototo-technician-grid" style="--lototo-grid-rows: {{ $mainRows }};">
+        <div class="lototo-grid lototo-technician-grid" style="--lototo-grid-rows: {{ $mainRows }}; --lototo-section-columns: {{ $technicianColumns }};">
             @foreach ($technicianSlots as $slot)
-                <div style="grid-column: {{ (($slot->position - 1) % $technicianColumns) + 1 }}; grid-row: {{ intdiv($slot->position - 1, $technicianColumns) + 1 }};">
+                <div data-slot-category="technician" data-slot-position="{{ $slot->position }}" data-grid-row="{{ $slot->grid_row }}" data-grid-column="{{ $slot->grid_column }}" @if ($slot->id) data-slot-id="{{ $slot->id }}" @endif style="grid-column: {{ $slot->grid_column }}; grid-row: {{ $slot->grid_row }};">
                     @include('safety.lototo._employee-slot', [
                         'slot' => $slot,
                         'groupName' => 'TECHNICIAN',

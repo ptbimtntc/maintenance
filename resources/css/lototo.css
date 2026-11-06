@@ -1664,10 +1664,6 @@ main:has(.lototo-page) > div {
     z-index: 1;
 }
 
-[data-slot-row].lototo-slot-dragging {
-    opacity: .45;
-}
-
 .lototo-main-area .lototo-technician-group {
     background-color: #f0fdf4;
 }
@@ -1823,10 +1819,15 @@ main:has(.lototo-page) > div {
         grid-template-columns: var(--lototo-main-label-width) repeat(var(--lototo-board-columns), minmax(0, 1fr));
     }
 
+    /* A category may use fewer columns than the board (--lototo-section-columns): its slots keep the width of
+       one board column and its row ends early instead of stretching. */
     .lototo-technician-grid,
     .lototo-other-grid,
     .lototo-board-content > div.lototo-group .lototo-grid {
-        grid-template-columns: repeat(var(--lototo-board-columns), minmax(0, 1fr));
+        grid-template-columns: repeat(
+            var(--lototo-section-columns, var(--lototo-board-columns)),
+            calc((100% - (var(--lototo-board-columns) - 1) * var(--lototo-slot-gap)) / var(--lototo-board-columns))
+        );
     }
 
     /* Supervisor has its own column count but the same slot width as one board column (slot size model below). */
@@ -1860,6 +1861,326 @@ main:has(.lototo-page) > div {
     width: max-content;
     justify-self: end;
     grid-template-columns: 2.1rem auto;
+}
+
+/* Supervisor section below Spare: its label takes the Technician label track and its slots start at board
+   column 1, so they line up with the Technician columns above. */
+.lototo-board-content > .lototo-supervisor-area {
+    /* The main area's legacy row-based min-height would stretch Supervisor rows past their cards. */
+    min-height: 0;
+    border-color: #eab308;
+    background: #fefce8;
+}
+
+.lototo-board-content > .lototo-supervisor-area > .lototo-supervisor-group {
+    justify-self: start;
+    grid-template-columns: var(--lototo-main-label-width) auto;
+    border: 0;
+    background: transparent;
+}
+
+.lototo-supervisor-area .lototo-supervisor-grid {
+    padding: .12rem .1rem .2rem;
+}
+
+/* A board wider than 20 columns is wider than the page: scroll it instead of squeezing the slots. */
+.lototo-page.lototo-page--wide {
+    overflow-x: auto;
+}
+
+/* Edit Mode (lototo-board-editor.js). Editor elements are hidden with the hidden attribute, which has to win
+   over the grid/flex display of the board and of utility classes. */
+.lototo-page [hidden],
+[data-slot-dialog] [hidden] {
+    display: none !important;
+}
+
+.lototo-editor-button {
+    min-height: 2.25rem;
+    padding: 0 .75rem;
+    border: 1px solid #d4d4d4;
+    border-radius: .375rem;
+    background: #fff;
+    color: #262626;
+    font-size: .8rem;
+    font-weight: 600;
+}
+
+.lototo-editor-button:hover:not(:disabled) {
+    background: #f5f5f5;
+}
+
+.lototo-editor-button:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.lototo-editor-button--primary {
+    border-color: #1d4ed8;
+    background: #1d4ed8;
+    color: #fff;
+}
+
+.lototo-editor-button--primary:hover:not(:disabled) {
+    background: #1e40af;
+}
+
+.lototo-editor-button--danger {
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.lototo-editor-button--danger:hover:not(:disabled) {
+    background: #fef2f2;
+}
+
+/* Kelola Tools / Kelola Spare Lock popups (Edit Mode). */
+.lototo-manage-dialog {
+    width: min(40rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 1.25rem;
+    border: 0;
+    border-radius: .75rem;
+    background: #fff;
+    color: #262626;
+    font-size: .875rem;
+    box-shadow: 0 20px 40px rgb(0 0 0 / .25);
+}
+
+.lototo-manage-dialog::backdrop {
+    background: rgb(23 23 23 / .5);
+}
+
+.lototo-manage-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+
+.lototo-manage-head h2 {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.lototo-manage-subtitle {
+    margin-bottom: .5rem;
+    font-weight: 700;
+}
+
+.lototo-manage-note,
+.lototo-manage-hint,
+.lototo-manage-empty {
+    color: #525252;
+    font-size: .75rem;
+}
+
+.lototo-manage-message {
+    margin-bottom: .75rem;
+    padding: .5rem .75rem;
+    border: 1px solid #bfdbfe;
+    border-radius: .375rem;
+}
+
+.lototo-manage-message[data-type="error"] {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.lototo-manage-message[data-type="success"] {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #064e3b;
+}
+
+.lototo-manage-list {
+    margin: .75rem 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.lototo-manage-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem 0;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.lototo-manage-name {
+    flex: 1 1 12rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.lototo-manage-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .25rem;
+    margin-top: .25rem;
+}
+
+.lototo-manage-chip {
+    padding: .05rem .4rem;
+    border-radius: 999px;
+    background: #f5f5f5;
+    color: #404040;
+    font-size: .7rem;
+    font-weight: 600;
+}
+
+.lototo-manage-chip--in {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.lototo-manage-chip--slot {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.lototo-manage-thumb {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid #e5e5e5;
+    border-radius: .375rem;
+    object-fit: contain;
+    color: #a3a3a3;
+}
+
+.lototo-manage-field {
+    display: block;
+    margin-bottom: .75rem;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.lototo-manage-field input:not([type="file"]) {
+    display: block;
+    width: 100%;
+    min-height: 2.25rem;
+    margin-top: .25rem;
+    border-color: #d4d4d4;
+    border-radius: .375rem;
+    font-size: .875rem;
+}
+
+.lototo-manage-field input[type="file"] {
+    display: block;
+    max-width: 100%;
+    margin-top: .25rem;
+    font-weight: 400;
+}
+
+.lototo-manage-preview {
+    max-width: 10rem;
+    max-height: 10rem;
+    margin-bottom: .75rem;
+    border: 1px solid #e5e5e5;
+    border-radius: .375rem;
+    object-fit: contain;
+}
+
+.lototo-manage-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .5rem;
+}
+
+.lototo-editor-message {
+    padding: .5rem .75rem;
+    border: 1px solid #bfdbfe;
+    border-radius: .375rem;
+    background: #fff;
+}
+
+.lototo-editor-message[data-type="error"] {
+    border-color: #fecaca;
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.lototo-editor-message[data-type="success"] {
+    border-color: #a7f3d0;
+    background: #ecfdf5;
+    color: #064e3b;
+}
+
+.lototo-editor-message .lototo-editor-button {
+    margin-top: .4rem;
+}
+
+.lototo-page[data-editing] .lototo-editor-slot {
+    position: relative;
+    cursor: pointer;
+}
+
+.lototo-page[data-editing] .lototo-editor-slot:hover {
+    z-index: 5;
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+/* A save is running: the draft is frozen (lototo-board-editor.js), so slots no longer invite a click. */
+.lototo-page[data-saving] .lototo-editor-slot {
+    cursor: progress;
+}
+
+.lototo-page[data-saving] .lototo-editor-slot:not(.lototo-editor-slot--changed):hover {
+    outline: none;
+}
+
+.lototo-page[data-editing] .lototo-editor-slot--changed {
+    outline: 2px dashed #f59e0b;
+    outline-offset: 1px;
+}
+
+/* Same specificity as the ".lototo-card > :not(...)" rule that makes card children relative, and later. */
+.lototo-page[data-editing] .lototo-editor-slot > .lototo-editor-add,
+.lototo-page[data-editing] .lototo-card > .lototo-editor-add {
+    position: absolute;
+    z-index: 6;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    width: 1.6rem;
+    height: 1.6rem;
+    place-items: center;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    background: #2563eb;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.lototo-page[data-editing] .lototo-editor-slot > .lototo-editor-marker,
+.lototo-page[data-editing] .lototo-card > .lototo-editor-marker {
+    position: absolute;
+    z-index: 6;
+    right: 2px;
+    bottom: 2px;
+    left: 2px;
+    overflow: hidden;
+    padding: 1px 2px;
+    border-radius: 2px;
+    background: #f59e0b;
+    color: #1c1917;
+    font-size: 7px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Tools: image, IN badge and link state. The image never sizes the slot: it shrinks inside the fixed card. */
@@ -1905,4 +2226,437 @@ a.lototo-card:focus-visible {
 
 .lototo-other-grid .lototo-card.lototo-tool-card--inactive {
     opacity: .55;
+}
+
+/* A slot drawn in another category's band (_slot-card.blade.php: lototo-card--as-{category}) keeps the look of
+   its own category there. The selectors carry the board prefix so they win over the band rules above. */
+.lototo-board-content .lototo-card.lototo-card--as-technician,
+.lototo-board-content .lototo-card.lototo-card--as-supervisor,
+.lototo-board-content .lototo-card.lototo-card--as-spare {
+    --lototo-lock-stripe: #dc2626;
+    --lototo-lock-accent: #dc2626;
+    --lototo-lock-band: #b91c1c;
+    --lototo-lock-band-border: #fff;
+    --lototo-lock-band-text: #fff;
+    container-type: inline-size;
+    border-color: #a3a3a3;
+    background-color: #fff;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-supervisor.lototo-lock-card--supervisor,
+.lototo-board-content .lototo-card.lototo-card--as-supervisor.lototo-active-card--supervisor {
+    --lototo-lock-stripe: #eab308;
+    --lototo-lock-accent: #facc15;
+    --lototo-lock-band: #facc15;
+    --lototo-lock-band-border: #171717;
+    --lototo-lock-band-text: #171717;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-spare.lototo-lock-card--spare,
+.lototo-board-content .lototo-card.lototo-card--as-spare.lototo-active-card--spare {
+    --lototo-lock-stripe: #2563eb;
+    --lototo-lock-accent: #2563eb;
+    --lototo-lock-band: #1e3a8a;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-spare.lototo-spare-lock--inactive {
+    --lototo-lock-stripe: #a3a3a3;
+    --lototo-lock-accent: #737373;
+    --lototo-lock-band: #525252;
+}
+
+.lototo-board-content .lototo-card.lototo-lock-card.lototo-card--as-technician,
+.lototo-board-content .lototo-card.lototo-lock-card.lototo-card--as-supervisor,
+.lototo-board-content .lototo-card.lototo-lock-card.lototo-card--as-spare {
+    border: 2px solid #171717;
+    background: repeating-linear-gradient(135deg, var(--lototo-lock-stripe) 0 7px, #fff 7px 14px);
+}
+
+.lototo-board-content .lototo-card.lototo-active-card.lototo-card--as-technician::before {
+    background: repeating-linear-gradient(135deg, #dc2626 0 6px, #fff 6px 12px);
+}
+
+.lototo-board-content .lototo-card.lototo-active-card.lototo-card--as-supervisor::before {
+    background: repeating-linear-gradient(135deg, #facc15 0 6px, #fff 6px 12px);
+}
+
+.lototo-board-content .lototo-card.lototo-active-card.lototo-card--as-spare::before {
+    background: repeating-linear-gradient(135deg, #1683ca 0 6px, #fff 6px 12px);
+}
+
+/* Empty: dashed, tinted with the colour of its own category. */
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-technician,
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-supervisor,
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-spare,
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-tool {
+    border: 1px dashed #a8a29e;
+    background-image: none;
+}
+
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-technician { background-color: #dcfce7; }
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-supervisor { background-color: #fef9c3; }
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-spare { background-color: #dbeafe; }
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-tool { background-color: #ffedd5; }
+
+.lototo-board-content .lototo-card.lototo-empty-slot[class*="lototo-card--as-"]::before {
+    content: none;
+}
+
+/* A tool outside the Tools band. */
+.lototo-board-content .lototo-card.lototo-card--as-tool:not(.lototo-empty-slot) {
+    border-color: #fed7aa;
+    background-color: #ffedd5;
+    background-image: none;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool::before {
+    background: #fb923c;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool > svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-basis: 1.25rem;
+    color: #78716c;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool .lototo-tool-name {
+    font-size: 7px;
+    line-height: 1.15;
+    max-width: calc(100% - .25rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool > .lototo-tool-image {
+    position: relative;
+    z-index: 1;
+    display: block;
+    flex: 1 1 0;
+    width: 100%;
+    min-height: 0;
+    max-height: 2.4rem;
+    object-fit: contain;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool > .lototo-tool-status {
+    position: absolute;
+    z-index: 2;
+    top: 1px;
+    right: 1px;
+    padding: 0 3px;
+    border-radius: 2px;
+    background: #f59e0b;
+    color: #1c1917;
+    font-size: 7px;
+    font-weight: 900;
+    line-height: 10px;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool.lototo-tool-card--in {
+    border-color: #f59e0b;
+    background-color: #fef3c7;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool.lototo-tool-card--inactive {
+    opacity: .55;
+}
+
+/* Edit Mode: columns per row of one band, next to the board selector. */
+.lototo-editor-columns {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .5rem;
+    border: 1px solid #93c5fd;
+    border-radius: .375rem;
+    background: #eff6ff;
+    font-size: .75rem;
+}
+
+.lototo-editor-columns__field {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-weight: 600;
+}
+
+.lototo-editor-columns select {
+    min-height: 1.9rem;
+    padding: 0 1.6rem 0 .45rem;
+    border: 1px solid #d4d4d4;
+    border-radius: .3rem;
+    background-color: #fff;
+    font-size: .75rem;
+}
+
+.lototo-editor-columns select:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.lototo-editor-columns__note {
+    max-width: 22rem;
+    color: #525252;
+    font-size: .7rem;
+    line-height: 1.25;
+}
+
+/* Edit Mode: drag handle of a band below Technician, over the band's vertical label (no card sits there). */
+.lototo-page[data-editing] .lototo-supervisor-area,
+.lototo-page[data-editing] .lototo-spare-group,
+.lototo-page[data-editing] .lototo-other-group {
+    position: relative;
+}
+
+/* The label is turned 180deg, so its right padding is the strip on the left that holds the handle. */
+.lototo-page[data-editing] .lototo-supervisor-area .lototo-vertical-label,
+.lototo-page[data-editing] .lototo-spare-group .lototo-vertical-label,
+.lototo-page[data-editing] .lototo-other-group .lototo-vertical-label {
+    padding-right: 1.3rem;
+}
+
+.lototo-editor-drag {
+    position: absolute;
+    z-index: 7;
+    top: 2px;
+    left: 1px;
+    display: grid;
+    width: 1.2rem;
+    height: 1.2rem;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #1d4ed8;
+    border-radius: .25rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+    color: #1d4ed8;
+    cursor: grab;
+}
+
+.lototo-editor-drag:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+.lototo-editor-drag:disabled {
+    cursor: not-allowed;
+    opacity: .5;
+}
+
+.lototo-editor-drag > svg {
+    width: .85rem;
+    height: .85rem;
+}
+
+.lototo-page[data-editing] .lototo-band--dragging {
+    opacity: .5;
+}
+
+/* Edit Mode: "+" at the bottom right of a section (lototo-board-editor-preview.js addSlotButtons). It sits in a
+   strip below the grid, so it never covers a card, lock or danger tag; the grid keeps its own height above it
+   (a 100% grid would grow past the band and stretch the cards over the next band). */
+.lototo-page[data-editing] .lototo-group-content:has(> .lototo-editor-addstrip) {
+    display: flex;
+    flex-direction: column;
+}
+
+.lototo-page[data-editing] .lototo-group-content:has(> .lototo-editor-addstrip) > :is(.lototo-grid, .lototo-other-grid) {
+    flex: 1 1 auto;
+    height: auto;
+    min-height: 0;
+}
+
+.lototo-editor-addstrip {
+    display: flex;
+    justify-content: flex-end;
+    padding: 2px 3px;
+}
+
+.lototo-editor-addslot {
+    display: inline-grid;
+    width: 1.4rem;
+    height: 1.4rem;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #1d4ed8;
+    border-radius: 999px;
+    background: #1d4ed8;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+    color: #fff;
+    font-size: .95rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.lototo-editor-addslot:disabled,
+.lototo-page[data-editing] .lototo-editor-remove:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+.lototo-editor-addslot:focus-visible,
+.lototo-page[data-editing] .lototo-editor-remove:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 1px;
+}
+
+/* Edit Mode: remove button of one slot, a small chip in its top right corner (above the card's own layers). */
+.lototo-page[data-editing] .lototo-editor-slot > .lototo-editor-remove,
+.lototo-page[data-editing] .lototo-card > .lototo-editor-remove {
+    position: absolute;
+    z-index: 7;
+    top: 1px;
+    right: 1px;
+    display: grid;
+    width: .95rem;
+    height: .95rem;
+    place-items: center;
+    padding: 0;
+    border: 1px solid #fff;
+    border-radius: 999px;
+    background: #b91c1c;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 30%);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+/* QR print designs popup (_print-designs.blade.php, lototo-print.js). The previews are the print templates scaled
+   to the card; the printed size is the one written on each card. */
+.lototo-print-dialog {
+    width: min(1180px, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 0;
+    border: 0;
+    border-radius: .75rem;
+    box-shadow: 0 20px 50px rgb(0 0 0 / 30%);
+}
+
+.lototo-print-dialog::backdrop {
+    background: rgb(23 23 23 / 55%);
+}
+
+.lototo-print-dialog__panel {
+    display: flex;
+    max-height: calc(100vh - 2rem);
+    flex-direction: column;
+    gap: .75rem;
+    padding: 1rem;
+}
+
+.lototo-print-dialog__header,
+.lototo-print-dialog__tools,
+.lototo-print-dialog__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem .75rem;
+}
+
+.lototo-print-dialog__header {
+    justify-content: space-between;
+}
+
+.lototo-print-dialog__identity {
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+    font-size: .75rem;
+    font-weight: 600;
+    color: #404040;
+}
+
+.lototo-print-dialog__identity select {
+    min-height: 2.25rem;
+    min-width: 16rem;
+    border-color: #d4d4d4;
+    border-radius: .375rem;
+    font-size: .85rem;
+}
+
+.lototo-print-dialog__footer {
+    justify-content: flex-end;
+}
+
+.lototo-print-dialog__designs {
+    /* Only the designs scroll; the identity, the selection buttons and Download stay in view. */
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 2px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: .75rem;
+}
+
+.lototo-print-card {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .6rem;
+    border: 1px solid #d4d4d4;
+    border-radius: .5rem;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.lototo-print-card:has(input:checked) {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 1px #1d4ed8;
+    background: #eff6ff;
+}
+
+.lototo-print-card--unavailable {
+    cursor: not-allowed;
+    opacity: .6;
+}
+
+/* Desain 5 is the large two-sided tag: it gets the full width of the popup. */
+.lototo-print-card[data-print-design="5"] {
+    grid-column: 1 / -1;
+}
+
+.lototo-print-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+}
+
+.lototo-print-card__size {
+    margin-left: auto;
+    color: #525252;
+    font-size: .75rem;
+}
+
+.lototo-print-card__preview {
+    display: grid;
+    min-height: 120px;
+    place-items: center;
+    padding: .5rem;
+    border-radius: .375rem;
+    background: repeating-conic-gradient(#e5e5e5 0 25%, #f5f5f5 0 50%) 0 0 / 16px 16px;
+}
+
+/* The template keeps its proportions; only its on-screen size follows the card. */
+.lototo-print-card__preview svg {
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    max-height: 240px;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
+}
+
+.lototo-print-card[data-print-design="5"] .lototo-print-card__preview svg {
+    max-height: 420px;
+}
+
+.lototo-print-card__unavailable {
+    color: #525252;
+    font-size: .75rem;
 }

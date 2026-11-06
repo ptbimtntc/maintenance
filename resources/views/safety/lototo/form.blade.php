@@ -60,7 +60,7 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('safety.lototo.form.store') }}" class="space-y-5" aria-label="Formulir pemeriksaan LOTOTO">
+        <form method="POST" action="{{ $formAction }}" class="space-y-5" aria-label="Formulir pemeriksaan LOTOTO">
             @csrf
             <input type="hidden" name="board_id" value="{{ $board->id }}">
             @if ($requestedEmployee)

@@ -48,31 +48,38 @@ class LototoToolsTest extends TestCase
         $this->otherBoard = $this->makeBoard(BusinessUnit::factory()->create(['name' => 'Tire Cord']), 'TC');
     }
 
-    public function test_admin_creates_a_tool_with_image_in_the_first_empty_slot(): void
+    public function test_admin_creates_a_tool_with_image_without_placing_it_on_a_slot(): void
     {
         $this->tool($this->board, 'TL-01', 1);
-        LototoBoardSlot::query()->create(['board_id' => $this->board->id, 'category' => 'tool', 'position' => 2, 'is_enabled' => false]);
-        $slot = $this->toolSlot($this->board, 3);
-        $this->toolSlot($this->board, 4);
+        $empty = $this->toolSlot($this->board, 2);
 
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id, 'section' => 'tool']))
-            ->assertOk()->assertDontSee('name="slot_id"', false)->assertDontSee('placeholder="Opsional"', false);
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [
-            'board_id' => $this->board->id, 'code' => 'tl-16', 'name' => 'Impact Wrench', 'image' => $this->png(),
-        ])->assertSessionHasNoErrors()->assertRedirect(route('safety.lototo.settings', ['board' => $this->board->id, 'section' => 'tool']))
-            ->assertSessionHas('status', fn ($status) => str_contains($status, 'posisi 03'));
+        $response = $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => '  Impact Wrench ', 'image' => $this->png()], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('tool.code', 'TL-02')
+            ->assertJsonPath('tool.name', 'Impact Wrench')
+            ->assertJsonPath('tool.slot', null)
+            ->assertJsonPath('tool.in', false)
+            ->assertJsonPath('tool.history', false);
 
-        // Position 1 is taken and position 2 is disabled, so the tool goes to the first empty, enabled position.
-        $tool = LototoTool::query()->where('board_id', $this->board->id)->where('code', 'TL-16')->firstOrFail();
+        // The code is the first unused TL-NN; the tool is not put on the empty slot (Edit Slot places it).
+        $tool = LototoTool::query()->where('board_id', $this->board->id)->where('code', 'TL-02')->firstOrFail();
         $this->assertSame(['Impact Wrench', null, true], [$tool->name, $tool->location, $tool->is_active]);
         $this->assertStringStartsWith('lototo-tools/'.$this->board->id.'/', $tool->image_path);
         Storage::disk('local')->assertExists($tool->image_path);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot->id, 'tool_id' => $tool->id, 'tool_label' => 'Impact Wrench']);
+        $this->assertStringStartsWith(route('safety.lototo.tools.image', $tool, absolute: false).'?v=', $response->json('tool.image'));
+        $this->assertDatabaseHas('lototo_board_slots', ['id' => $empty->id, 'tool_id' => null, 'tool_label' => null]);
+        $this->assertSame(0, LototoBoardSlot::query()->where('tool_id', $tool->id)->count());
 
         $this->actingAs($this->admin)->get(route('safety.lototo.tools.image', $tool))->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id]))
+        $this->actingAs($this->admin)->get(route('safety.lototo.qr-codes', ['board' => $this->board->id]))
             ->assertOk()
             ->assertSee('data-qrcode="'.e(route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $this->board->id])).'"', false);
+
+        // The Edit Mode layout offers it in Edit Slot and in the Kelola Tools list.
+        $this->actingAs($this->admin)->getJson(route('safety.lototo.boards.layout', $this->board))->assertOk()
+            ->assertJsonFragment(['id' => $tool->id, 'code' => 'TL-02', 'name' => 'Impact Wrench'])
+            ->assertJsonPath('manage.tools.1.code', 'TL-02')
+            ->assertJsonPath('manage.tools.0.slot', 'Other / Tools 01');
     }
 
     public function test_full_flow_from_creating_a_tool_to_reading_its_history(): void
@@ -81,17 +88,14 @@ class LototoToolsTest extends TestCase
         $this->toolSlot($this->otherBoard, 5);
         $worker = $this->staffOf($this->unit);
 
-        // 1. Admin creates the tool with an image on position 05.
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [
-            'board_id' => $this->board->id, 'code' => 'TL-20', 'name' => 'Torque Wrench', 'image' => $this->png(),
-        ])->assertSessionHasNoErrors();
-        $tool = LototoTool::query()->where('code', 'TL-20')->firstOrFail();
+        // 1. Admin creates the tool with an image (Kelola Tools), then places it on position 05 (Edit Slot).
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'Torque Wrench', 'image' => $this->png()], ['Accept' => 'application/json'])->assertCreated();
+        $tool = LototoTool::query()->where('name', 'Torque Wrench')->firstOrFail();
+        $slot->update(['tool_id' => $tool->id, 'tool_label' => $tool->name]);
         $formUrl = route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $this->board->id]);
 
-        // 2. Settings lists it with its QR; the board shows it on position 05 with its image and link, as OUT.
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id, 'section' => 'tool']))
-            ->assertOk()->assertSee('TL-20 · Torque Wrench')->assertSee('OUT · di board')->assertSee('Posisi 05');
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id]))
+        // 2. The QR Code page has its QR; the board shows it on position 05 with its image and link, as OUT.
+        $this->actingAs($this->admin)->get(route('safety.lototo.qr-codes', ['board' => $this->board->id]))
             ->assertOk()->assertSee('data-qrcode="'.e($formUrl).'"', false);
         $board = $this->actingAs($worker)->get(route('safety.lototo.boards.show', $this->board))->assertOk()->getContent();
         $this->assertStringContainsString('aria-label="Other posisi 5 Torque Wrench"', $board);
@@ -106,7 +110,7 @@ class LototoToolsTest extends TestCase
             ->assertRedirect($formUrl)->assertSessionHas('status');
         $board = $this->actingAs($worker)->get(route('safety.lototo.boards.show', $this->board))->getContent();
         $this->assertStringContainsString('aria-label="Other posisi 5 Torque Wrench IN di Line 2 · Extruder"', $board);
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id, 'section' => 'tool']))->assertSee('IN · Line 2 · Extruder')->assertSee('Sedang IN');
+        $this->actingAs($this->admin)->getJson(route('safety.lototo.boards.layout', $this->board))->assertJsonPath('manage.tools.0.in', true);
 
         // 4. The worker does OUT; the tool is back on the board.
         $open = $tool->openActivity()->firstOrFail();
@@ -117,100 +121,108 @@ class LototoToolsTest extends TestCase
         $this->assertStringContainsString('aria-label="Other posisi 5 Torque Wrench"', $board);
         $this->assertStringNotContainsString('lototo-tool-status', $board);
 
-        // 5. History shows who did IN and OUT, where and when; the tool can no longer be deleted, only deactivated.
+        // 5. History shows who did IN and OUT, where and when; the tool can no longer be deleted.
         $this->actingAs($worker)->get($formUrl)->assertOk()
             ->assertSee('Line 2 · Extruder')->assertSee($worker->name)->assertSee($open->fresh()->ended_at->setTimezone('Asia/Jakarta')->format('d M Y H:i'));
         $this->assertDatabaseHas('lototo_tool_activities', ['id' => $open->id, 'status' => 'finished', 'started_by' => $worker->id, 'ended_by' => $worker->id, 'board_id' => $this->board->id]);
-        $this->actingAs($this->admin)->delete(route('safety.lototo.tools.destroy', $tool), ['board_id' => $this->board->id])->assertSessionHasErrors('tool');
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id, 'section' => 'tool']))->assertSee('Memiliki riwayat')->assertDontSee('data-tool-code="TL-20"', false);
+        $slot->update(['tool_id' => null, 'tool_label' => null]);
+        $this->actingAs($this->admin)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->board, $tool]))->assertUnprocessable()->assertJsonValidationErrors('tool');
+        $this->actingAs($this->admin)->getJson(route('safety.lototo.boards.layout', $this->board))->assertJsonPath('manage.tools.0.history', true);
+        $this->assertDatabaseHas('lototo_tools', ['id' => $tool->id]);
     }
 
     public function test_tool_validation_and_permissions(): void
     {
         LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-01', 'name' => 'Kunci']);
-        $foreignSlot = $this->toolSlot($this->otherBoard, 1);
-        $payload = ['board_id' => $this->board->id, 'name' => 'Obeng'];
+        $store = route('safety.lototo.boards.tools.store', $this->board);
+        $json = ['Accept' => 'application/json'];
 
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-01'])->assertSessionHasErrors('code');
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'board_id' => $this->otherBoard->id, 'code' => 'TL-01'])->assertSessionHasNoErrors();
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL 02'])->assertSessionHasErrors('code');
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-03', 'name' => ''])->assertSessionHasErrors('name');
+        // The same name (any case) on the same board is refused; on another board it is fine.
+        $this->actingAs($this->admin)->post($store, ['name' => 'kunci '], $json)->assertUnprocessable()->assertJsonValidationErrors('name');
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->otherBoard), ['name' => 'Kunci'], $json)->assertCreated()->assertJsonPath('tool.code', 'TL-01');
+        $this->actingAs($this->admin)->post($store, ['name' => '   '], $json)->assertUnprocessable()->assertJsonValidationErrors(['name' => 'Nama Tools wajib diisi.']);
+        $this->actingAs($this->admin)->post($store, ['name' => str_repeat('x', 101)], $json)->assertUnprocessable()->assertJsonValidationErrors('name');
         // Real uploads (not UploadedFile::fake(), which trusts the file name) so the content check is exercised.
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-05', 'image' => $this->upload('tool.png', 'not an image')])->assertSessionHasErrors('image');
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-06', 'image' => $this->png(2100 * 1024)])->assertSessionHasErrors('image');
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-07', 'image' => $this->upload('tool.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')])->assertSessionHasErrors('image');
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-08', 'image' => $this->upload('tool.php.png', '<?php echo 1;')])->assertSessionHasErrors('image');
+        $this->actingAs($this->admin)->post($store, ['name' => 'Obeng', 'image' => $this->upload('tool.png', 'not an image')], $json)->assertJsonValidationErrors('image');
+        $this->actingAs($this->admin)->post($store, ['name' => 'Obeng', 'image' => $this->png(2100 * 1024)], $json)->assertJsonValidationErrors('image');
+        $this->actingAs($this->admin)->post($store, ['name' => 'Obeng', 'image' => $this->upload('tool.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')], $json)->assertJsonValidationErrors('image');
+        $this->actingAs($this->admin)->post($store, ['name' => 'Obeng', 'image' => $this->upload('tool.php.png', '<?php echo 1;')], $json)->assertJsonValidationErrors('image');
 
         $this->assertSame(['TL-01'], LototoTool::query()->where('board_id', $this->board->id)->pluck('code')->all());
         $this->assertSame([], Storage::disk('local')->allFiles(), 'Rejected uploads must not leave files behind.');
-        // Only the accepted TL-01 of the other board was placed, on that board's own empty position; this board got no position.
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $foreignSlot->id, 'tool_id' => LototoTool::query()->where('board_id', $this->otherBoard->id)->value('id')]);
-        $this->assertSame(0, LototoBoardSlot::query()->where('board_id', $this->board->id)->count());
+        $this->assertSame(0, LototoBoardSlot::query()->whereIn('board_id', [$this->board->id, $this->otherBoard->id])->count(), 'New tools are never placed on a slot.');
 
         $staff = $this->staffOf($this->unit);
         $tool = LototoTool::query()->where('board_id', $this->board->id)->firstOrFail();
-        $this->actingAs($staff)->post(route('safety.lototo.tools.store'), [...$payload, 'code' => 'TL-09'])->assertForbidden();
-        $this->actingAs($staff)->patch(route('safety.lototo.tools.update', $tool), [...$payload, 'code' => 'TL-01', 'is_active' => 1])->assertForbidden();
-        $this->actingAs($staff)->delete(route('safety.lototo.tools.destroy', $tool), ['board_id' => $this->board->id])->assertForbidden();
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $tool), ['board_id' => $this->otherBoard->id, 'code' => 'X', 'name' => 'X', 'is_active' => 1])->assertNotFound();
-        $this->actingAs($this->admin)->delete(route('safety.lototo.tools.destroy', $tool), ['board_id' => $this->otherBoard->id])->assertNotFound();
+        $this->actingAs($staff)->post($store, ['name' => 'Obeng'], $json)->assertForbidden();
+        $this->actingAs($staff)->post(route('safety.lototo.boards.tools.update', [$this->board, $tool]), ['name' => 'X'], $json)->assertForbidden();
+        $this->actingAs($staff)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->board, $tool]))->assertForbidden();
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.update', [$this->otherBoard, $tool]), ['name' => 'X'], $json)->assertNotFound();
+        $this->actingAs($this->admin)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->otherBoard, $tool]))->assertNotFound();
         $this->assertDatabaseHas('lototo_tools', ['id' => $tool->id, 'code' => 'TL-01', 'name' => 'Kunci']);
     }
 
-    public function test_updating_a_tool_replaces_or_removes_its_image_without_orphan_files(): void
+    public function test_editing_a_tool_changes_its_name_and_image_and_keeps_the_old_image_when_none_is_given(): void
     {
         $slot = $this->toolSlot($this->board, 1);
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), ['board_id' => $this->board->id, 'code' => 'TL-01', 'name' => 'Kunci', 'image' => $this->png()]);
+        $json = ['Accept' => 'application/json'];
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'Kunci', 'image' => $this->png()], $json)->assertCreated();
         $tool = LototoTool::query()->firstOrFail();
+        $slot->update(['tool_id' => $tool->id, 'tool_label' => $tool->name]);
         $firstImage = $tool->image_path;
+        $update = route('safety.lototo.boards.tools.update', [$this->board, $tool]);
 
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $tool), [
-            'board_id' => $this->board->id, 'code' => 'tl-01a', 'name' => 'Kunci Pas', 'location' => 'Rak B', 'is_active' => 1, 'image' => $this->png(),
-        ])->assertSessionHasNoErrors();
+        // Name only: the image stays; the slot holding the tool shows the new name; the code does not change.
+        $this->actingAs($this->admin)->post($update, ['name' => 'Kunci Pas'], $json)->assertOk()
+            ->assertJsonPath('tool.name', 'Kunci Pas')->assertJsonPath('tool.code', 'TL-01')->assertJsonPath('tool.slot', 'Other / Tools 01');
         $tool->refresh();
-        $this->assertSame(['TL-01A', 'Kunci Pas', 'Rak B'], [$tool->code, $tool->name, $tool->location]);
+        $this->assertSame(['TL-01', 'Kunci Pas', $firstImage], [$tool->code, $tool->name, $tool->image_path]);
+        Storage::disk('local')->assertExists($firstImage);
+        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot->id, 'tool_id' => $tool->id, 'tool_label' => 'Kunci Pas', 'position' => 1]);
+
+        // A new image replaces the old file.
+        $this->actingAs($this->admin)->post($update, ['name' => 'Kunci Pas', 'image' => $this->png()], $json)->assertOk();
+        $tool->refresh();
         $this->assertNotSame($firstImage, $tool->image_path);
         Storage::disk('local')->assertMissing($firstImage);
         Storage::disk('local')->assertExists($tool->image_path);
-        $this->assertDatabaseHas('lototo_board_slots', ['id' => $slot->id, 'tool_id' => $tool->id, 'tool_label' => 'Kunci Pas', 'position' => 1]);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
 
-        // Deactivating keeps the image: the tool still exists and may be reactivated.
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $tool), ['board_id' => $this->board->id, 'code' => 'TL-01A', 'name' => 'Kunci Pas', 'is_active' => 0])->assertSessionHasNoErrors();
-        $this->assertFalse($tool->fresh()->is_active);
-        Storage::disk('local')->assertExists($tool->image_path);
-
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $tool), ['board_id' => $this->board->id, 'code' => 'TL-01A', 'name' => 'Kunci Pas', 'is_active' => 1, 'remove_image' => 1])->assertSessionHasNoErrors();
-        Storage::disk('local')->assertMissing($tool->image_path);
-        $this->assertNull($tool->fresh()->image_path);
-        $this->assertSame([], Storage::disk('local')->allFiles());
-
-        // A failed update (duplicate code) keeps the old data and leaves no new file.
+        // A failed edit (name of another tool, bad image) keeps the old data and leaves no new file.
         LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-02', 'name' => 'Obeng']);
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $tool), ['board_id' => $this->board->id, 'code' => 'TL-02', 'name' => 'X', 'is_active' => 1, 'image' => $this->png()])->assertSessionHasErrors('code');
-        $this->assertSame([], Storage::disk('local')->allFiles());
+        $this->actingAs($this->admin)->post($update, ['name' => 'OBENG', 'image' => $this->png()], $json)->assertUnprocessable()->assertJsonValidationErrors('name');
+        $this->actingAs($this->admin)->post($update, ['name' => 'Kunci Baru', 'image' => $this->upload('tool.png', 'not an image')], $json)->assertJsonValidationErrors('image');
+        $this->assertSame(['Kunci Pas', $tool->image_path], [$tool->fresh()->name, $tool->fresh()->image_path]);
+        $this->assertCount(1, Storage::disk('local')->allFiles());
     }
 
-    public function test_unused_tool_can_be_deleted_but_used_or_in_tools_cannot(): void
+    public function test_unused_tool_can_be_deleted_but_used_in_or_placed_tools_cannot(): void
     {
-        $unused = $this->tool($this->board, 'TL-01', 1);
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $unused), ['board_id' => $this->board->id, 'code' => 'TL-01', 'name' => 'Tool 1', 'is_active' => 1, 'image' => $this->png()]);
-        $unusedImage = $unused->fresh()->image_path;
-        $used = $this->tool($this->board, 'TL-02', 2);
+        $json = ['Accept' => 'application/json'];
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'Unused', 'image' => $this->png()], $json)->assertCreated();
+        $unused = LototoTool::query()->where('name', 'Unused')->firstOrFail();
+        $unusedImage = $unused->image_path;
+        $placed = $this->tool($this->board, 'TL-02', 2);
+        $used = LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-03', 'name' => 'Used']);
         $history = LototoToolActivity::query()->create(['tool_id' => $used->id, 'board_id' => $this->board->id, 'location' => 'Line A', 'status' => 'finished', 'started_by' => $this->admin->id, 'ended_by' => $this->admin->id, 'started_at' => now()->subHour(), 'ended_at' => now()]);
-        $inUse = $this->tool($this->board, 'TL-03', 3);
+        $inUse = LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-04', 'name' => 'In use']);
         $open = LototoToolActivity::query()->create(['tool_id' => $inUse->id, 'board_id' => $this->board->id, 'location' => 'Line B', 'status' => 'in_progress', 'started_by' => $this->admin->id, 'started_at' => now()]);
 
-        $this->actingAs($this->admin)->delete(route('safety.lototo.tools.destroy', $unused), ['board_id' => $this->board->id])->assertSessionHasNoErrors();
+        $this->actingAs($this->admin)->getJson(route('safety.lototo.boards.layout', $this->board))->assertOk()
+            ->assertJsonPath('manage.tools.1.slot', 'Other / Tools 02')
+            ->assertJsonPath('manage.tools.2.history', true)
+            ->assertJsonPath('manage.tools.3.in', true);
+
+        $this->actingAs($this->admin)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->board, $unused]))->assertOk();
         $this->assertDatabaseMissing('lototo_tools', ['id' => $unused->id]);
         Storage::disk('local')->assertMissing($unusedImage);
-        $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $this->board->id, 'category' => 'tool', 'position' => 1, 'tool_id' => null, 'tool_label' => null]);
 
-        foreach ([$used, $inUse] as $tool) {
-            $this->actingAs($this->admin)->delete(route('safety.lototo.tools.destroy', $tool), ['board_id' => $this->board->id])->assertSessionHasErrors('tool');
+        foreach ([[$placed, 'masih terpasang di slot Other / Tools 02'], [$used, 'memiliki riwayat'], [$inUse, 'sedang IN']] as [$tool, $reason]) {
+            $response = $this->actingAs($this->admin)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->board, $tool]))->assertUnprocessable();
+            $this->assertStringContainsString($reason, $response->json('errors.tool.0'));
             $this->assertDatabaseHas('lototo_tools', ['id' => $tool->id]);
         }
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $inUse), ['board_id' => $this->board->id, 'code' => 'TL-03', 'name' => 'Tool 3', 'is_active' => 0])->assertSessionHasErrors('is_active');
-        $this->assertTrue($inUse->fresh()->is_active);
+        $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $this->board->id, 'position' => 2, 'tool_id' => $placed->id]);
         $this->assertDatabaseHas('lototo_tool_activities', ['id' => $history->id]);
         $this->assertDatabaseHas('lototo_tool_activities', ['id' => $open->id, 'status' => 'in_progress']);
     }
@@ -318,26 +330,13 @@ class LototoToolsTest extends TestCase
         $this->get(route('safety.lototo.tools.image', $tool))->assertRedirect();
     }
 
-    public function test_a_new_tool_gets_a_new_last_position_when_every_position_is_taken(): void
-    {
-        $this->tool($this->board, 'TL-01', 1);
-        LototoBoardSlot::query()->create(['board_id' => $this->board->id, 'category' => 'tool', 'position' => 2, 'tool_label' => 'Legacy label', 'is_enabled' => true]);
-
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), ['board_id' => $this->board->id, 'code' => 'TL-02', 'name' => 'Obeng'])->assertSessionHasNoErrors();
-
-        $tool = LototoTool::query()->where('board_id', $this->board->id)->where('code', 'TL-02')->firstOrFail();
-        $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $this->board->id, 'category' => 'tool', 'position' => 3, 'tool_id' => $tool->id, 'tool_label' => 'Obeng', 'is_enabled' => true]);
-        $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $this->board->id, 'position' => 2, 'tool_label' => 'Legacy label', 'tool_id' => null]);
-        $this->assertStringContainsString('aria-label="Other posisi 3 Obeng"', $this->actingAs($this->admin)->get(route('safety.lototo.boards.show', $this->board))->getContent());
-    }
-
     public function test_the_same_tool_code_on_two_boards_always_resolves_to_the_tool_of_the_given_board(): void
     {
         $mine = $this->tool($this->board, 'TL-01', 1);
         $theirs = $this->tool($this->otherBoard, 'TL-01', 1);
 
         // Each board's QR and board link carry that board's own tool.
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->otherBoard->id]))->assertOk()
+        $this->actingAs($this->admin)->get(route('safety.lototo.qr-codes', ['board' => $this->otherBoard->id]))->assertOk()
             ->assertSee('data-qrcode="'.e(route('safety.lototo.tools.form', ['tool' => $theirs->id, 'board' => $this->otherBoard->id])).'"', false)
             ->assertDontSee(e(route('safety.lototo.tools.form', ['tool' => $mine->id, 'board' => $this->otherBoard->id])), false);
         $this->assertStringContainsString(
@@ -351,26 +350,19 @@ class LototoToolsTest extends TestCase
         $this->assertNull($mine->openActivity()->first());
         $this->actingAs($this->admin)->get(route('safety.lototo.tools.form', ['tool' => $theirs->id, 'board' => $this->board->id]))->assertNotFound();
         $this->actingAs($this->admin)->post(route('safety.lototo.tools.form.store', $mine), ['board_id' => $this->otherBoard->id, 'action' => 'in', 'location' => 'X'])->assertNotFound();
-        $this->actingAs($this->admin)->patch(route('safety.lototo.tools.update', $theirs), ['board_id' => $this->board->id, 'code' => 'TL-01', 'name' => 'X', 'is_active' => 1])->assertNotFound();
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.update', [$this->board, $theirs]), ['name' => 'X'], ['Accept' => 'application/json'])->assertNotFound();
         $this->assertSame(['Tool 1', 'Tool 1'], [$mine->fresh()->name, $theirs->fresh()->name]);
     }
 
-    public function test_a_code_taken_by_a_concurrent_request_is_reported_as_a_validation_error(): void
+    public function test_tool_codes_continue_after_the_highest_free_number_and_reuse_gaps(): void
     {
-        // Simulates a second manager saving the same code between this request's unique check and its insert.
-        LototoTool::creating(function (LototoTool $tool) {
-            if ($tool->code === 'TL-30' && ! LototoTool::query()->where('board_id', $tool->board_id)->where('code', 'TL-30')->exists()) {
-                LototoTool::withoutEvents(fn () => LototoTool::query()->create(['board_id' => $tool->board_id, 'code' => 'TL-30', 'name' => 'Pemenang']));
-            }
-        });
+        LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-01', 'name' => 'A']);
+        LototoTool::query()->create(['board_id' => $this->board->id, 'code' => 'TL-03', 'name' => 'C']);
+        $json = ['Accept' => 'application/json'];
 
-        $this->actingAs($this->admin)->post(route('safety.lototo.tools.store'), ['board_id' => $this->board->id, 'code' => 'TL-30', 'name' => 'Kalah', 'image' => $this->png()])
-            ->assertSessionHasErrors(['code' => 'Kode Tools sudah digunakan pada board ini.']);
-
-        // The simulated winner shares this request's transaction here, so only the loser's leftovers can be checked.
-        $this->assertFalse(LototoTool::query()->where('name', 'Kalah')->exists());
-        $this->assertSame(0, LototoBoardSlot::query()->where('board_id', $this->board->id)->count());
-        $this->assertSame([], Storage::disk('local')->allFiles());
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'B'], $json)->assertJsonPath('tool.code', 'TL-02');
+        $this->actingAs($this->admin)->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'D'], $json)->assertJsonPath('tool.code', 'TL-04');
+        $this->assertSame(['TL-01', 'TL-02', 'TL-03', 'TL-04'], LototoTool::query()->where('board_id', $this->board->id)->orderBy('code')->pluck('code')->all());
     }
 
     public function test_activity_times_are_stored_in_utc_and_shown_in_local_time(): void
@@ -383,15 +375,23 @@ class LototoToolsTest extends TestCase
         $this->assertSame('2026-10-29 03:05:00', $activity->fresh()->getRawOriginal('started_at'));
     }
 
-    public function test_board_buttons_are_named_settings_and_qr_code_and_keep_their_pages(): void
+    public function test_board_buttons_are_manage_board_and_qr_code(): void
     {
         $html = $this->actingAs($this->admin)->get(route('safety.lototo.boards.show', $this->board))->assertOk()->getContent();
-        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('safety.lototo.boards.edit', $this->board), '#').'" class="lototo-board-action">\s*<svg[^>]*>.*?</svg>\s*Settings\s*</a>#s', $html);
-        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('safety.lototo.settings', ['board' => $this->board->id]), '#').'" class="lototo-board-action">\s*<svg[^>]*>.*?</svg>\s*QR Code\s*</a>#s', $html);
-        $this->assertStringNotContainsString('Edit Board', $html);
+        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('safety.lototo.boards.index', ['board' => $this->board->id]), '#').'" class="lototo-board-action">\s*<svg[^>]*>.*?</svg>\s*Manage Board\s*</a>#s', $html);
+        $this->assertMatchesRegularExpression('#href="'.preg_quote(route('safety.lototo.qr-codes', ['board' => $this->board->id]), '#').'" class="lototo-board-action">\s*<svg[^>]*>.*?</svg>\s*QR Code\s*</a>#s', $html);
+        $this->assertDoesNotMatchRegularExpression('#class="lototo-board-action">\s*<svg[^>]*>.*?</svg>\s*Settings\s*</a>#s', $html);
+        // Edit Board is the inline Edit Mode button, not a link to another page; it has the Kelola popups.
+        $this->assertMatchesRegularExpression('#<button type="button" class="lototo-board-action" data-board-edit-start>\s*<svg[^>]*>.*?</svg>\s*Edit Board\s*</button>#s', $html);
+        $this->assertStringContainsString('data-editor-manage="tools"', $html);
+        $this->assertStringContainsString('data-editor-manage="spare"', $html);
+        $this->assertStringContainsString('data-tools-url="'.route('safety.lototo.boards.tools.store', $this->board).'"', $html);
+        $this->assertStringContainsString('data-spare-locks-url="'.route('safety.lototo.boards.spare-locks.store', $this->board).'"', $html);
 
+        $this->actingAs($this->admin)->get(route('safety.lototo.qr-codes', ['board' => $this->board->id]))->assertOk()->assertSee('QR Code · Maintenance');
         $staffHtml = $this->actingAs($this->staffOf($this->unit))->get(route('safety.lototo.boards.show', $this->board))->assertOk()->getContent();
         $this->assertStringNotContainsString('lototo-board-action"', $staffHtml);
+        $this->actingAs($this->staffOf($this->unit))->get(route('safety.lototo.qr-codes', ['board' => $this->board->id]))->assertForbidden();
     }
 
     public function test_board_shows_tool_image_status_and_keeps_old_slots(): void
@@ -425,9 +425,9 @@ class LototoToolsTest extends TestCase
         $this->actingAs($this->admin)->get(route('safety.lototo.form', ['spare_lock' => 'SPH-01', 'board' => $this->board->id]))
             ->assertOk()->assertSee('name="spare_lock_id" value="'.$lock->id.'"', false);
         $this->actingAs($this->admin)->get(route('safety.lototo.form', ['spare_lock' => 'SPH-01', 'board' => $this->otherBoard->id]))->assertNotFound();
-        $this->actingAs($this->admin)->get(route('safety.lototo.settings', ['board' => $this->board->id]))
+        $this->actingAs($this->admin)->get(route('safety.lototo.qr-codes', ['board' => $this->board->id]))
             ->assertOk()
-            ->assertSee('data-qrcode="'.e(route('safety.lototo.form', ['spare_lock' => 'SPH-01', 'board' => $this->board->id])).'"', false);
+            ->assertSee('data-qrcode="'.e(\App\Http\Middleware\AllowLototoQrForm::url('safety.lototo.form', ['spare_lock' => 'SPH-01', 'board' => $this->board->id])).'"', false);
     }
 
     private function png(int $paddedSize = 0): UploadedFile

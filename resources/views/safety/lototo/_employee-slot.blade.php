@@ -6,7 +6,7 @@
 @endphp
 
 @if (! $employee)
-    <div class="lototo-card lototo-empty-slot" aria-label="{{ $groupName }} posisi {{ $slot->position }} kosong">
+    <div @class(['lototo-card lototo-empty-slot', ($cardClass ?? null) => filled($cardClass ?? null)]) aria-label="{{ $groupName }} posisi {{ $slot->position }} kosong">
         <span class="lototo-position-index">{{ sprintf('%02d', $slot->position) }}</span>
     </div>
 @else
@@ -23,6 +23,7 @@
             'lototo-active-card--supervisor' => $activeActivity && $groupName === 'SUPERVISOR',
             'lototo-lock-card' => ! $activeActivity,
             'lototo-lock-card--supervisor' => ! $activeActivity && $groupName === 'SUPERVISOR',
+            ($cardClass ?? null) => filled($cardClass ?? null),
         ])
     >
         <span class="lototo-position-index">{{ sprintf('%02d', $slot->position) }}</span>
