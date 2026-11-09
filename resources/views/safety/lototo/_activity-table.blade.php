@@ -29,14 +29,14 @@
                     $isCurrentSpareActivity = $showTechnician && $activity->id === $currentSpareActivityId;
                     $spareStartedAt = data_get($activity->out_details, 'spare_started_at');
                     $spareEndedAt = data_get($activity->out_details, 'spare_ended_at');
-                    $startedAt = $showTechnician
-                        ? ($spareStartedAt ? \Illuminate\Support\Carbon::parse($spareStartedAt) : $activity->started_at)
-                        : $activity->started_at;
-                    $endedAt = $showTechnician
-                        ? ($spareEndedAt
-                            ? \Illuminate\Support\Carbon::parse($spareEndedAt)
-                            : ($isCurrentSpareActivity ? null : $activity->ended_at))
-                        : $activity->ended_at;
+                    $startedAt = $showTechnician && $spareStartedAt
+                        ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareStartedAt))
+                        : \App\Models\LototoActivity::localTimeFromUtc($activity->started_at);
+                    $endedAt = $showTechnician && $spareEndedAt
+                        ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareEndedAt))
+                        : ($isCurrentSpareActivity
+                            ? null
+                            : \App\Models\LototoActivity::localTimeFromUtc($activity->ended_at));
                     $durationMinutes = $startedAt && $endedAt
                         ? $startedAt->diffInMinutes($endedAt)
                         : null;
@@ -75,10 +75,10 @@
                         </span>
                     </td>
                     <td class="border border-neutral-200 px-2 py-3 font-semibold">
-                        {{ \App\Models\LototoActivity::localTime($startedAt)?->format('d M Y - H:i') ?? '-' }}
+                        {{ $startedAt?->format('d M Y - H:i') ?? '-' }}
                     </td>
                     <td class="border border-neutral-200 px-2 py-3 font-semibold">
-                        {{ \App\Models\LototoActivity::localTime($endedAt)?->format('d M Y - H:i') ?? '-' }}
+                        {{ $endedAt?->format('d M Y - H:i') ?? '-' }}
                     </td>
                     <td class="border border-neutral-200 px-2 py-3">
                         {{ $durationMinutes !== null ? number_format($durationMinutes / 60, 2).' h' : '-' }}

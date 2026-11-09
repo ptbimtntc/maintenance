@@ -6,6 +6,7 @@ use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 #[Fillable([
     'employee_id',
@@ -34,12 +35,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class LototoActivity extends Model
 {
-    /** Times are stored in UTC (config app.timezone); LOTOTO pages show them in the plant's local time. */
+    /** Activity timestamps are stored in UTC; LOTOTO pages show them in the plant's local time. */
     public const DISPLAY_TIMEZONE = 'Asia/Jakarta';
 
     public static function localTime(?CarbonInterface $time): ?CarbonInterface
     {
         return $time?->copy()->setTimezone(self::DISPLAY_TIMEZONE);
+    }
+
+    public static function localTimeFromUtc(?CarbonInterface $time): ?CarbonInterface
+    {
+        return $time
+            ? Carbon::parse($time->format('Y-m-d H:i:s.u'), 'UTC')->setTimezone(self::DISPLAY_TIMEZONE)
+            : null;
     }
 
     protected function casts(): array

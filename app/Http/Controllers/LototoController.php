@@ -408,7 +408,7 @@ class LototoController extends Controller
                     } else {
                         $outDetails = [
                             'spare_lock_code' => $spareLock->code,
-                            'spare_started_at' => now()->toISOString(),
+                            'spare_started_at' => now('UTC')->toISOString(),
                             'spare_only' => true,
                         ];
                         $activeActivity = LototoActivity::query()->create([
@@ -418,7 +418,7 @@ class LototoController extends Controller
                             'board' => $data['lototo_board'],
                             'status' => 'in_progress',
                             'out_details' => $outDetails,
-                            'started_at' => now(),
+                            'started_at' => now('UTC'),
                         ]);
 
                         $this->notifySupervisorIfNeeded($employee, $activeActivity, $data);
@@ -460,7 +460,7 @@ class LototoController extends Controller
                     'employee_id' => $employee->id,
                     'board' => $data['lototo_board'],
                     'status' => 'in_progress',
-                    'started_at' => now(),
+                    'started_at' => now('UTC'),
                 ]);
 
                 $this->notifySupervisorIfNeeded($employee, $activity, $data);
@@ -469,6 +469,12 @@ class LototoController extends Controller
             }
 
             if (! $activeActivity) {
+                if ($isSpareMode) {
+                    throw ValidationException::withMessages([
+                        'spare_lock_id' => 'Aktivitas IN untuk gembok spare ini tidak ditemukan atau sudah berubah.',
+                    ]);
+                }
+
                 throw ValidationException::withMessages([
                     'lock_status' => 'Tidak ditemukan aktivitas IN yang masih terbuka untuk nomor LOTOTO ini.',
                 ]);
@@ -482,12 +488,12 @@ class LototoController extends Controller
                 }
 
                 $outDetails = $activeActivity->out_details ?? [];
-                $outDetails['spare_ended_at'] = now()->toISOString();
+                $outDetails['spare_ended_at'] = now('UTC')->toISOString();
                 $update = ['out_details' => $outDetails];
                 if ($activeActivity->status === 'in_progress') {
                     $update['status'] = 'completed';
                     $update['outcome'] = 'finish';
-                    $update['ended_at'] = now();
+                    $update['ended_at'] = now('UTC');
                 }
                 $activeActivity->update($update);
                 $spareLock->update(['current_activity_id' => null]);
@@ -518,7 +524,7 @@ class LototoController extends Controller
                 'outcome' => $data['outcome'],
                 'out_details' => $outDetails === [] ? null : $outDetails,
                 'status' => 'completed',
-                'ended_at' => now(),
+                'ended_at' => now('UTC'),
             ])->save();
             if ($spareLock) {
                 $this->startHandoverSpare($activeActivity, $spareLock);
@@ -577,7 +583,7 @@ class LototoController extends Controller
      */
     private function startHandoverSpare(LototoActivity $personalActivity, SpareLock $spareLock): LototoActivity
     {
-        $startedAt = now();
+        $startedAt = now('UTC');
         $spareActivity = LototoActivity::query()->create([
             ...$personalActivity->only([
                 'employee_id', 'board', 'location', 'activity', 'risks', 'other_risk', 'risk_controls',
@@ -701,7 +707,7 @@ class LototoController extends Controller
             $lockedActivity->update([
                 'supervisor_follow_up' => $data['supervisor_follow_up'],
                 'supervisor_follow_up_by' => $request->user()->id,
-                'supervisor_follow_up_at' => now(),
+                'supervisor_follow_up_at' => now('UTC'),
                 'supervisor_follow_up_status' => 'completed',
             ]);
         });

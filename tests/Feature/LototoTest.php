@@ -66,7 +66,7 @@ class LototoTest extends TestCase
             'lototo_number' => '102',
         ]);
 
-        $response = $this->actingAs($user)->get(route('safety.lototo.index'));
+        $response = $this->actingAs($user)->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()));
 
         $response->assertOk();
         $response->assertViewHas('rows', fn ($rows) => $rows['TECHNICIAN']->count() === 1
@@ -77,7 +77,10 @@ class LototoTest extends TestCase
         $response->assertSee('OTHER');
         $response->assertSee('aria-label="Gembok spare SP-20"', false);
         $response->assertSee(route('safety.lototo.spare-locks.show', SpareLock::query()->where('code', 'SP-01')->firstOrFail()), false);
-        $this->assertSame(20, substr_count($response->getContent(), 'aria-label="Gembok spare '));
+        $spareLabels = [];
+        preg_match_all('/aria-label="Gembok spare ([^"]+)"/', $response->getContent(), $spareLabels);
+        $visibleSpareLabels = array_filter($spareLabels[1], fn (string $code) => $code !== '__KODE__');
+        $this->assertSame(20, count($visibleSpareLabels), implode(', ', $spareLabels[1]));
         $this->assertDatabaseCount('spare_locks', 20);
         $this->assertSame(15, substr_count($response->getContent(), '>Tool '));
     }
@@ -171,17 +174,19 @@ class LototoTest extends TestCase
             ->assertRedirect(route('safety.lototo.form', ['lototo_number' => '101']));
 
         $board = $this->actingAs($user)
-            ->get(route('safety.lototo.index'))
+            ->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()))
             ->assertOk()
             ->getContent();
 
         foreach ([$technician, $supervisor] as $employee) {
+            $cardUrl = route('safety.lototo.show', ['employee' => $employee, 'board' => LototoBoard::query()->where('code', 'mtn_tr')->value('id')]);
             preg_match(
-                '/<a href="'.preg_quote(route('safety.lototo.show', $employee), '/').'".*?<\/a>/s',
+                '/<a[^>]*aria-label="'.preg_quote($employee->full_name.' LOTOTO '.$employee->lototo_number.', status IN', '/').'".*?<\/a>/s',
                 $board,
                 $employeeCard,
             );
             $this->assertNotEmpty($employeeCard);
+            $this->assertStringContainsString('href="'.$cardUrl.'"', $employeeCard[0]);
             $this->assertStringContainsString('lototo-active-card', $employeeCard[0]);
             $this->assertStringContainsString('status IN', $employeeCard[0]);
             $this->assertStringContainsString('>IN</span>', $employeeCard[0]);
@@ -195,17 +200,19 @@ class LototoTest extends TestCase
             'outcome' => 'finish',
         ]))->assertRedirect(route('safety.lototo.form', ['lototo_number' => '101']));
 
-        $board = $this->get(route('safety.lototo.index'))
+        $board = $this->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()))
             ->assertOk()
             ->getContent();
 
         foreach ([$technician, $supervisor] as $employee) {
+            $cardUrl = route('safety.lototo.show', ['employee' => $employee, 'board' => LototoBoard::query()->where('code', 'mtn_tr')->value('id')]);
             preg_match(
-                '/<a href="'.preg_quote(route('safety.lototo.show', $employee), '/').'".*?<\/a>/s',
+                '/<a[^>]*aria-label="'.preg_quote($employee->full_name.' LOTOTO '.$employee->lototo_number.', status OUT', '/').'".*?<\/a>/s',
                 $board,
                 $employeeCard,
             );
             $this->assertNotEmpty($employeeCard);
+            $this->assertStringContainsString('href="'.$cardUrl.'"', $employeeCard[0]);
             $this->assertStringContainsString('lototo-lock-card', $employeeCard[0]);
             $this->assertStringNotContainsString('lototo-active-card', $employeeCard[0]);
         }
@@ -213,6 +220,7 @@ class LototoTest extends TestCase
 
     public function test_activity_form_is_separate_and_accepts_a_lototo_number_from_the_qr_url(): void
     {
+        $this->legacyBusinessUnit();
         $this->actingAs($this->lototoManager);
         SpareLock::query()->where('code', 'SP-02')->update(['is_active' => false]);
 
@@ -222,7 +230,7 @@ class LototoTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('value="07"', false);
-        $response->assertSee('MTN TR — Maintenance Tire Cord');
+        $response->assertSee('MAINTENANCE · TIRE CORD');
         $response->assertSee('name="lototo_board" value="mtn_tr"', false);
         $response->assertDontSee('Pilih board');
         $response->assertSee('Jari / tangan saya AMAN');
@@ -383,7 +391,7 @@ class LototoTest extends TestCase
         $this->actingAs($user)
             ->get(route('safety.lototo.spare-locks.show', $spareLock))
             ->assertOk()
-            ->assertSee('Gembok Spare SP-07')
+            ->assertSee('SP-07')
             ->assertSee('Form IN / Mulai')
             ->assertSee('Belum ada aktivitas yang tercatat untuk gembok spare SP-07');
     }
@@ -423,7 +431,8 @@ class LototoTest extends TestCase
         $user = User::factory()->create();
         $user->assignRole(RoleName::Administrator->value);
         $board = $this->actingAs($user)
-            ->get(route('safety.lototo.index'))
+            ->followingRedirects()
+            ->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()))
             ->assertOk()
             ->getContent();
         preg_match('/<a[^>]*aria-label="Gembok spare SP-01".*?<\/a>/s', $board, $spareCard);
@@ -463,7 +472,7 @@ class LototoTest extends TestCase
         $this->assertSame('completed', $activity->fresh()->status);
         $this->assertNull($spareLock->fresh()->current_activity_id);
 
-        $board = $this->get(route('safety.lototo.index'))
+        $board = $this->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()))
             ->assertOk()
             ->getContent();
         preg_match('/<a[^>]*aria-label="Gembok spare SP-01".*?<\/a>/s', $board, $spareCard);
@@ -549,7 +558,7 @@ class LototoTest extends TestCase
         $activity = LototoActivity::query()->create([
             'employee_id' => $ownerEmployee->id,
             'spare_lock_id' => $spareLock->id,
-            'board' => 'mtn_bpr',
+            'board' => 'mtn_tr',
             'location' => 'Pump room',
             'activity' => 'Replace valve',
             'risks' => ['terjepit'],
@@ -567,7 +576,7 @@ class LototoTest extends TestCase
         $supervisorActivity = LototoActivity::query()->create([
             'employee_id' => $supervisorEmployee->id,
             'spare_lock_id' => $supervisorSpareLock->id,
-            'board' => 'mtn_bpr',
+            'board' => 'mtn_tr',
             'location' => 'Pump room',
             'activity' => 'Supervisor activity',
             'risks' => ['terjepit'],
@@ -722,6 +731,7 @@ class LototoTest extends TestCase
             'lototo_number' => '07',
             'supervisor_id' => $supervisor->id,
         ]);
+        $this->assignEmployeeToBoardSlot($employee, 'technician');
 
         $this->post(route('safety.lototo.form.store'), $this->activityFormData('07', 'in', [
             'supervisor_feedback' => 'Susah sinyal di area mesin.',
@@ -740,7 +750,7 @@ class LototoTest extends TestCase
         $admin = User::factory()->create();
         $admin->assignRole(RoleName::Administrator->value);
         $this->actingAs($admin)
-            ->get(route('safety.lototo.index'))
+            ->get(route('safety.lototo.boards.show', LototoBoard::query()->where('code', 'mtn_tr')->firstOrFail()))
             ->assertOk()
             ->assertSee('LOTOTO follow-up required');
 

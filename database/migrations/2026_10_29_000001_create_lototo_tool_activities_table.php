@@ -17,9 +17,9 @@ return new class extends Migration
             $table->foreignId('board_id')->constrained('lototo_boards')->restrictOnDelete(); // bigint unsigned = lototo_boards.id
             $table->string('location', 255);
             $table->string('status', 20)->default('in_progress'); // in_progress = IN, finished = OUT
-            $table->integer('started_by');                        // int (signed) = users.id
+            $this->addReferencedIdColumn($table, 'started_by', 'users');
             $table->foreign('started_by')->references('id')->on('users')->restrictOnDelete();
-            $table->integer('ended_by')->nullable();
+            $this->addReferencedIdColumn($table, 'ended_by', 'users', nullable: true);
             $table->foreign('ended_by')->references('id')->on('users')->restrictOnDelete();
             $table->timestamp('started_at');
             $table->timestamp('ended_at')->nullable();
@@ -47,5 +47,29 @@ return new class extends Migration
         }
 
         Schema::drop('lototo_tool_activities');
+    }
+
+    private function addReferencedIdColumn(Blueprint $table, string $column, string $referencedTable, bool $nullable = false): void
+    {
+        $id = collect(Schema::getColumns($referencedTable))->firstWhere('name', 'id');
+        if (! $id) {
+            throw new RuntimeException("Could not inspect {$referencedTable}.id before creating its foreign key.");
+        }
+
+        $type = strtolower((string) $id['type']);
+        if (str_starts_with($type, 'bigint')) {
+            $definition = $table->bigInteger($column);
+        } elseif (str_starts_with($type, 'int')) {
+            $definition = $table->integer($column);
+        } else {
+            throw new RuntimeException("Unsupported {$referencedTable}.id type: {$type}.");
+        }
+
+        if (str_contains($type, 'unsigned')) {
+            $definition->unsigned();
+        }
+        if ($nullable) {
+            $definition->nullable();
+        }
     }
 };

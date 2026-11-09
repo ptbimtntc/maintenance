@@ -125,7 +125,10 @@ class LototoBoardLayoutTest extends TestCase
         $this->assertSame('Subtitle baru', $board->subtitle);
         $this->assertSame([12, 12, 12, 12, 12], [$board->layout['board_columns'], $board->layout['technician_columns'], $board->layout['supervisor_columns'], $board->layout['spare_columns'], $board->layout['tool_columns']]);
         $this->assertSame(['other', 'spare', 'supervisor'], $board->layout['section_order']);
-        $this->assertSame(['technician' => true, 'supervisor' => true, 'other' => false, 'spare' => true], $board->component_settings);
+        $this->assertSame(
+            ['other' => false, 'spare' => true, 'supervisor' => true, 'technician' => true],
+            collect($board->component_settings)->sortKeys()->all(),
+        );
         $this->assertSlot('spare', 1, ['spare_lock_id' => $this->spareTwo->id]);
         $this->assertSlot('spare', 2, ['spare_lock_id' => $this->spareOne->id]);
         $this->assertSlot('technician', 1, ['employee_id' => $this->technician->id]);

@@ -54,7 +54,7 @@
                     <dd class="mt-1">
                         @if ($openActivity)
                             <span class="inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-900" data-tool-status="in">IN</span>
-                            <span class="mt-1 block text-xs text-neutral-600">Di {{ $openActivity->location }} sejak {{ \App\Models\LototoActivity::localTime($openActivity->started_at)->format('d M Y H:i') }} oleh {{ $openActivity->startedBy?->name ?? 'pengguna' }}</span>
+                            <span class="mt-1 block text-xs text-neutral-600">Di {{ $openActivity->location }} sejak {{ \App\Models\LototoActivity::localTimeFromUtc($openActivity->started_at)->format('d M Y H:i') }} oleh {{ $openActivity->startedBy?->name ?? 'pengguna' }}</span>
                         @else
                             <span class="inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-800" data-tool-status="out">OUT</span>
                             <span class="mt-1 block text-xs text-neutral-600">{{ $tool->is_active ? 'Tools berada di board.' : 'Tools nonaktif.' }}</span>
@@ -109,8 +109,8 @@
                             @foreach ($activities as $activity)
                                 <tr>
                                     <td class="px-4 py-2">{{ $activity->location }}</td>
-                                    <td class="whitespace-nowrap px-4 py-2">{{ \App\Models\LototoActivity::localTime($activity->started_at)->format('d M Y H:i') }}<span class="block text-xs text-neutral-500">{{ $activity->startedBy?->name }}</span></td>
-                                    <td class="whitespace-nowrap px-4 py-2">{{ \App\Models\LototoActivity::localTime($activity->ended_at)?->format('d M Y H:i') ?? '—' }}<span class="block text-xs text-neutral-500">{{ $activity->endedBy?->name }}</span></td>
+                                    <td class="whitespace-nowrap px-4 py-2">{{ \App\Models\LototoActivity::localTimeFromUtc($activity->started_at)->format('d M Y H:i') }}<span class="block text-xs text-neutral-500">{{ $activity->startedBy?->name }}</span></td>
+                                    <td class="whitespace-nowrap px-4 py-2">{{ \App\Models\LototoActivity::localTimeFromUtc($activity->ended_at)?->format('d M Y H:i') ?? '—' }}<span class="block text-xs text-neutral-500">{{ $activity->endedBy?->name }}</span></td>
                                     <td class="px-4 py-2">{{ $activity->status === 'in_progress' ? 'IN' : 'OUT' }}</td>
                                 </tr>
                             @endforeach

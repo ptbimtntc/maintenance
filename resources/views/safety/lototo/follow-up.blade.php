@@ -127,7 +127,7 @@
                     <p class="mt-2 text-xs text-neutral-600">
                         {{ $activity->supervisorFollowUpBy?->name ?? 'Supervisor' }}
                         @if ($activity->supervisor_follow_up_at)
-                            · {{ \App\Models\LototoActivity::localTime($activity->supervisor_follow_up_at)->format('d M Y H:i') }}
+                            · {{ \App\Models\LototoActivity::localTimeFromUtc($activity->supervisor_follow_up_at)->format('d M Y H:i') }}
                         @endif
                     </p>
                 </div>

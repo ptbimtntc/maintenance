@@ -213,7 +213,7 @@ class LototoToolController extends Controller
                         'location' => trim($data['location']),
                         'status' => 'in_progress',
                         'started_by' => $user->id,
-                        'started_at' => now(),
+                        'started_at' => now('UTC'),
                     ]);
 
                     return "Tools {$locked->code} berstatus IN di ".trim($data['location']).'.';
@@ -225,7 +225,7 @@ class LototoToolController extends Controller
                 if (! $this->canFinish($request, $open)) {
                     abort(403, 'OUT hanya dapat dilakukan oleh pengguna yang melakukan IN atau pengguna dengan izin Manage Safety.');
                 }
-                $open->update(['status' => 'finished', 'ended_by' => $user->id, 'ended_at' => now()]);
+                $open->update(['status' => 'finished', 'ended_by' => $user->id, 'ended_at' => now('UTC')]);
 
                 return "Tools {$locked->code} berstatus OUT dan kembali ke board.";
             });

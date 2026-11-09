@@ -15,6 +15,7 @@ use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -123,7 +124,7 @@ class LototoToolsTest extends TestCase
 
         // 5. History shows who did IN and OUT, where and when; the tool can no longer be deleted.
         $this->actingAs($worker)->get($formUrl)->assertOk()
-            ->assertSee('Line 2 · Extruder')->assertSee($worker->name)->assertSee($open->fresh()->ended_at->setTimezone('Asia/Jakarta')->format('d M Y H:i'));
+            ->assertSee('Line 2 · Extruder')->assertSee($worker->name)->assertSee(\App\Models\LototoActivity::localTimeFromUtc($open->fresh()->ended_at)->format('d M Y H:i'));
         $this->assertDatabaseHas('lototo_tool_activities', ['id' => $open->id, 'status' => 'finished', 'started_by' => $worker->id, 'ended_by' => $worker->id, 'board_id' => $this->board->id]);
         $slot->update(['tool_id' => null, 'tool_label' => null]);
         $this->actingAs($this->admin)->deleteJson(route('safety.lototo.boards.tools.destroy', [$this->board, $tool]))->assertUnprocessable()->assertJsonValidationErrors('tool');
@@ -373,6 +374,34 @@ class LototoToolsTest extends TestCase
         $this->actingAs($this->admin)->get(route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $this->board->id]))
             ->assertOk()->assertSee('29 Oct 2026 10:05')->assertSee('30 Oct 2026 00:30')->assertDontSee('29 Oct 2026 03:05');
         $this->assertSame('2026-10-29 03:05:00', $activity->fresh()->getRawOriginal('started_at'));
+    }
+
+    public function test_tool_activity_timestamps_written_by_the_form_are_utc(): void
+    {
+        $this->travelTo(Carbon::parse('2026-10-29 03:05:00', 'UTC'));
+        $tool = $this->tool($this->board, 'TL-01', 1);
+
+        $this->actingAs($this->admin)
+            ->post(route('safety.lototo.tools.form.store', $tool), [
+                'board_id' => $this->board->id,
+                'action' => 'in',
+                'location' => 'Line A',
+            ])
+            ->assertRedirect(route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $this->board->id]));
+
+        $activity = $tool->activities()->sole();
+        $this->assertSame('2026-10-29 03:05:00', $activity->getRawOriginal('started_at'));
+
+        $this->travel(30)->minutes();
+        $this->actingAs($this->admin)
+            ->post(route('safety.lototo.tools.form.store', $tool), [
+                'board_id' => $this->board->id,
+                'action' => 'out',
+                'activity_id' => $activity->id,
+            ])
+            ->assertRedirect(route('safety.lototo.tools.form', ['tool' => $tool->id, 'board' => $this->board->id]));
+
+        $this->assertSame('2026-10-29 03:35:00', $activity->fresh()->getRawOriginal('ended_at'));
     }
 
     public function test_board_buttons_are_manage_board_and_qr_code(): void

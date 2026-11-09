@@ -335,7 +335,24 @@ Rencana pengembangan per karyawan: tujuan, gap kompetensi terkait, level saat in
 
 <!-- only:lototo -->
 ### LOTOTO
-Menu untuk pencatatan *Lock Out Tag Out*. **Saat ini masih placeholder** (modul dalam pengembangan); belum ada fitur yang bisa dipakai.
+Gunakan **Safety → LOTOTO** untuk membuka board. Pilih board aktif melalui daftar di bagian atas. Board menampilkan posisi **Technician**, **Supervisor**, **Spare**, dan **Other / Tools**, beserta status IN/OUT dan aktivitas yang terkait.
+
+**Mengelola board** *(izin Manage Safety)*
+1. Pilih **Manage Board** untuk membuka daftar board.
+2. **Add Board** meminta nama divisi, Business Unit, dan jumlah gembok Spare yang akan dibuat. Technician dan Supervisor diambil dari karyawan pada Business Unit tersebut.
+3. Gunakan **Set Inactive** untuk menghentikan IN baru; aktivitas yang masih IN tetap dapat diselesaikan. Board yang belum pernah dipakai dapat dihapus setelah dinonaktifkan.
+
+**Edit Mode**
+1. Pada board, pilih **Edit Board**. Perubahan layout menjadi draft sampai **Simpan Perubahan** dipilih; **Batal** membuang draft.
+2. Pilih slot untuk mengubah kategori, karyawan, gembok Spare, atau Tool. Tambahkan posisi dengan tombol **+** pada section; slot yang sedang digunakan tidak dapat dipindah atau dihapus.
+3. Atur judul, subtitle, komponen yang tampil, jumlah kolom, dan urutan section pada pengaturan board.
+4. **Kelola Tools** dan **Kelola Spare Lock** mengatur daftar aset board. Tools baru perlu ditempatkan ke slot **Other / Tools** melalui Edit Slot.
+
+**Pemeriksaan dan QR**
+- Pilih **QR Code** untuk melihat QR Technician, Supervisor, Spare Lock, dan Tools; **Download QR** menyediakan pilihan desain cetak. QR mengarahkan pemindai ke form LOTOTO untuk identitas tersebut.
+- Pada form pemeriksaan, isi informasi pekerjaan, risiko, pengendalian, dan konfirmasi keselamatan sebelum status IN. Saat OUT, pilih **Close / Finish** atau **Outstanding / Handover** bila tersedia. Handover mencatat aktivitas lanjutan pada Spare Lock yang dipilih.
+- QR Spare Lock dapat dipakai untuk memulai pemakaian mandiri dan untuk menyelesaikan statusnya. QR Tools mencatat lokasi saat IN dan mengembalikan Tools ke board saat OUT; riwayat penggunaan ditampilkan pada halaman Tools dengan waktu lokal.
+- Aktivitas Technician dan Supervisor tercatat pada halaman aktivitas masing-masing dengan waktu lokal. Supervisor yang diminta melakukan follow-up dapat mengisi hasilnya melalui halaman LOTOTO Follow-up.
 <!-- /only -->
 
 ---
@@ -454,6 +471,8 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-06 | Menjelaskan bahwa waktu aktivitas LOTOTO dan riwayat Tools ditampilkan dalam waktu lokal. |
+| 2026-11-06 | Mengganti keterangan LOTOTO yang sudah tidak sesuai dengan panduan board, Manage Board, Edit Mode, pemeriksaan, QR, Spare Lock, Tools, dan follow-up. |
 | 2026-11-05 | Logo aplikasi (sidebar, halaman login, laporan PDF) dan favicon diganti dengan logo perisai + topi toga. Tidak ada perubahan alur kerja. |
 | 2026-10-22 | Shift Comm: banner WARNING mesin bermasalah berulang kini bisa di-expand/collapse (default tertutup). |
 | 2026-10-22 | Help kini menyesuaikan isi dengan akun yang login (role, menu yang tersedia/disembunyikan, hak edit): tamu hanya melihat panduan tamu, Administrator melihat panduan Administrator, dan seterusnya. Bagian bernomor dihapus dari judul; ditambah bagian *Panduan Tamu* dan *Mengerjakan Kuis Training*. |

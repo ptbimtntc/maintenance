@@ -30,16 +30,30 @@ return new class extends Migration
 
     public function down(): void
     {
-        $indexes = collect(Schema::getIndexes('spare_locks'))->pluck('name');
+        $indexes = collect(Schema::getIndexes('spare_locks'));
         $hasSharedCodes = DB::table('spare_locks')->select('code')->groupBy('code')->havingRaw('COUNT(*) > 1')->exists();
-        Schema::table('spare_locks', function (Blueprint $table) use ($indexes, $hasSharedCodes) {
-            if (! $hasSharedCodes && ! $indexes->contains('spare_locks_code_unique')) {
+        $indexNames = $indexes->pluck('name');
+        if (! $hasSharedCodes && ! $indexNames->contains('spare_locks_code_unique')) {
+            Schema::table('spare_locks', function (Blueprint $table) {
                 $table->unique('code');
+            });
+        }
+
+        if (! $hasSharedCodes && $indexNames->contains('spare_locks_board_code_unique')) {
+            $hasBoardIdIndex = $indexes->contains(
+                fn (array $index) => ($index['columns'][0] ?? null) === 'board_id'
+                    && $index['name'] !== 'spare_locks_board_code_unique'
+            );
+            if (! $hasBoardIdIndex) {
+                Schema::table('spare_locks', function (Blueprint $table) {
+                    $table->index('board_id', 'spare_locks_board_id_index');
+                });
             }
-            if (! $hasSharedCodes && $indexes->contains('spare_locks_board_code_unique')) {
+
+            Schema::table('spare_locks', function (Blueprint $table) {
                 $table->dropUnique('spare_locks_board_code_unique');
-            }
-        });
+            });
+        }
 
         $boardCodes = DB::table('lototo_activities')->distinct()->pluck('board');
         if (! $boardCodes->contains(fn ($code) => mb_strlen((string) $code) > 30)) {

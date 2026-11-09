@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
             $table->string('category', 20);
             $table->unsignedInteger('position');
-            $table->integer('employee_id')->nullable();
+            $this->addReferencedIdColumn($table, 'employee_id', 'employees', nullable: true);
             $table->foreign('employee_id')->references('id')->on('employees')->nullOnDelete();
             $table->foreignId('spare_lock_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_enabled')->default(true);
@@ -87,5 +87,29 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('lototo_board_slots');
+    }
+
+    private function addReferencedIdColumn(Blueprint $table, string $column, string $referencedTable, bool $nullable = false): void
+    {
+        $id = collect(Schema::getColumns($referencedTable))->firstWhere('name', 'id');
+        if (! $id) {
+            throw new RuntimeException("Could not inspect {$referencedTable}.id before creating its foreign key.");
+        }
+
+        $type = strtolower((string) $id['type']);
+        if (str_starts_with($type, 'bigint')) {
+            $definition = $table->bigInteger($column);
+        } elseif (str_starts_with($type, 'int')) {
+            $definition = $table->integer($column);
+        } else {
+            throw new RuntimeException("Unsupported {$referencedTable}.id type: {$type}.");
+        }
+
+        if (str_contains($type, 'unsigned')) {
+            $definition->unsigned();
+        }
+        if ($nullable) {
+            $definition->nullable();
+        }
     }
 };

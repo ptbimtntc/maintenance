@@ -83,7 +83,7 @@ class LototoBoardSettingsTest extends TestCase
     {
         $admin = $this->administrator();
 
-        $response = $this->actingAs($admin)->get(route('safety.lototo.index'));
+        $response = $this->actingAs($admin)->get(route('safety.lototo.boards.show', $this->board()));
 
         $response->assertOk()
             ->assertSee('SUPERVISOR posisi 10 kosong', false)
@@ -91,11 +91,10 @@ class LototoBoardSettingsTest extends TestCase
             ->assertSee('Tool 15')
             ->assertSee('lototo-technician-grid', false)
             ->assertSee('lototo-supervisor-grid', false)
-            ->assertSee('grid-template-columns: repeat(20, minmax(0, 1fr))', false)
-            ->assertSee('grid-template-columns: 2rem repeat(20, minmax(0, 1fr))', false)
-            ->assertSee('grid-template-columns: 2rem repeat(10, minmax(0, 1fr))', false)
-            ->assertSee('grid-column: 11 / span 11', false)
-            ->assertSee('bg-yellow-400', false)
+            ->assertSee('--lototo-section-columns: 20;', false)
+            ->assertSee('--lototo-supervisor-columns: 10;', false)
+            ->assertSee('--lototo-board-columns: 20;', false)
+            ->assertSee('repeating-linear-gradient(135deg, #171717 0, #171717 7px, #facc15 7px, #facc15 14px)', false)
             ->assertSee('TECHNICIAN')
             ->assertSee('SUPERVISOR')
             ->assertSee('grid-column: 10; grid-row: 1;', false)
@@ -103,11 +102,11 @@ class LototoBoardSettingsTest extends TestCase
             ->assertSee('>01</span>', false)
             ->assertSee('>10</span>', false)
             ->assertSee('>15</span>', false)
-            ->assertSee('grid-column: 1 / span 2;', false)
-            ->assertSee('grid-column: 20 / span 1;', false);
+            ->assertSee('grid-column: 1 / span 1;', false)
+            ->assertSee('data-slot-category="tool" data-slot-position="15"', false);
         $this->assertSame(15, substr_count($response->getContent(), '>Tool '));
         $this->assertMatchesRegularExpression(
-            '/lototo-supervisor-group.*?grid-row: 4 \/ span 1;.*?lototo-supervisor-grid.*?grid-column: 10; grid-row: 1;.*?SUPERVISOR posisi 1 kosong/s',
+            '/lototo-supervisor-group.*?grid-row: 1 \/ span 1;.*?lototo-supervisor-grid.*?grid-column: 1; grid-row: 1;.*?SUPERVISOR posisi 1 kosong/s',
             $response->getContent(),
         );
         $this->assertMatchesRegularExpression(
@@ -116,29 +115,26 @@ class LototoBoardSettingsTest extends TestCase
         );
     }
 
-    public function test_board_keeps_fifteen_other_slots_visible_when_no_tool_slots_are_saved(): void
+    public function test_board_shows_empty_other_section_when_no_tool_slots_are_saved(): void
     {
         $admin = $this->administrator();
-        LototoBoardSlot::query()->where('category', 'tool')->delete();
+        LototoBoardSlot::query()->where('board_id', $this->board()->id)->where('category', 'tool')->delete();
 
-        $response = $this->actingAs($admin)->get(route('safety.lototo.index'));
+        $response = $this->actingAs($admin)->get(route('safety.lototo.boards.show', $this->board()));
 
         $response->assertOk()
-            ->assertSee('Other posisi 1 kosong', false)
-            ->assertSee('Other posisi 15 kosong', false)
-            ->assertSee('grid-column: 1 / span 2;', false)
-            ->assertSee('grid-column: 20 / span 1;', false);
-        $this->assertSame(15, substr_count($response->getContent(), 'aria-label="Other posisi '));
-        $this->assertMatchesRegularExpression(
-            '/aria-label="Other posisi 1 kosong".*?<svg class="h-4 w-4 shrink-0 text-stone-500"/s',
-            $response->getContent(),
-        );
+            ->assertSee('Belum ada data LOTOTO untuk bagian ini.');
     }
 
     public function test_non_admin_cannot_open_or_submit_spare_in_out_forms(): void
     {
         $staff = User::factory()->create();
         $staff->assignRole(RoleName::MaintenanceStaff->value);
+        Employee::factory()->forUser($staff)->create([
+            'business_unit_id' => $this->businessUnit->id,
+            'employment_status_id' => $this->activeStatus->id,
+            'lototo_number' => '01',
+        ]);
         $spareLock = SpareLock::query()->where('code', 'SP-01')->firstOrFail();
 
         $this->actingAs($staff)

@@ -153,7 +153,7 @@ class LototoHandoverRecordsTest extends TestCase
 
         $this->actingAs($otherUser)->get(route('safety.lototo.form', ['spare_lock' => 'SP-01', 'board' => $this->board->id]))->assertForbidden();
         // Under their own number they hold no activity on this spare, so the OUT is refused.
-        $this->actingAs($otherUser)->post(route('safety.lototo.form.store'), $this->spareOutData($other, $this->sp1))->assertSessionHasErrors('lock_status');
+        $this->actingAs($otherUser)->post(route('safety.lototo.form.store'), $this->spareOutData($other, $this->sp1))->assertSessionHasErrors('spare_lock_id');
         $this->actingAs($otherUser)->post(route('safety.lototo.form.store'), $this->spareOutData($this->technician, $this->sp1))->assertForbidden();
         $this->assertSame('in_progress', $spare->fresh()->status);
 

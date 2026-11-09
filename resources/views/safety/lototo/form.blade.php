@@ -111,7 +111,7 @@
                                 OUT — aktivitas mulai
                                 {{ $spareLock && data_get($activeActivity->out_details, 'spare_started_at')
                                     ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse(data_get($activeActivity->out_details, 'spare_started_at')))->format('d M Y H:i')
-                                    : \App\Models\LototoActivity::localTime($activeActivity->started_at)?->format('d M Y H:i') }}
+                                    : \App\Models\LototoActivity::localTimeFromUtc($activeActivity->started_at)?->format('d M Y H:i') }}
                             </p>
                         @else
                             @if ($spareLock)
