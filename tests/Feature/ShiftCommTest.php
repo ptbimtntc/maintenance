@@ -84,6 +84,42 @@ class ShiftCommTest extends TestCase
         $this->assertSame('261001101', $comm->comm_number);
     }
 
+    public function test_only_administrator_can_see_delete_button_and_destroy_shift_comm(): void
+    {
+        $author = $this->staff();
+        $admin = $this->staff(RoleName::Administrator->value);
+        $other = $this->staff();
+
+        $this->actingAs($author)->post(route('shift-comm.store'), $this->payload(['problem' => 'Test Delete']));
+        $comm = ShiftComm::firstOrFail();
+
+        // 1. Author can see Edit, but CANNOT see Delete button on show page
+        $authorShow = $this->actingAs($author)->get(route('shift-comm.show', $comm));
+        $authorShow->assertOk();
+        $authorShow->assertSee('Edit');
+        $authorShow->assertDontSee('>Delete</button>', false);
+
+        // Author cannot delete via DELETE request
+        $this->actingAs($author)->delete(route('shift-comm.destroy', $comm))->assertForbidden();
+
+        // 2. Other non-admin staff cannot see Edit or Delete, and cannot delete
+        $otherShow = $this->actingAs($other)->get(route('shift-comm.show', $comm));
+        $otherShow->assertOk();
+        $otherShow->assertDontSee('Edit');
+        $otherShow->assertDontSee('>Delete</button>', false);
+        $this->actingAs($other)->delete(route('shift-comm.destroy', $comm))->assertForbidden();
+
+        // 3. Administrator CAN see Delete button and delete the entry
+        $adminShow = $this->actingAs($admin)->get(route('shift-comm.show', $comm));
+        $adminShow->assertOk();
+        $adminShow->assertSee('Edit');
+        $adminShow->assertSee('>Delete</button>', false);
+
+        $this->actingAs($admin)->delete(route('shift-comm.destroy', $comm))
+            ->assertRedirect(route('shift-comm.index'));
+        $this->assertDatabaseMissing('shift_comms', ['id' => $comm->id]);
+    }
+
     public function test_construction_suggestions_come_from_history(): void
     {
         $user = $this->staff();

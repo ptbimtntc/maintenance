@@ -16,15 +16,17 @@ $fields = [
 
         <div class="flex items-center justify-between gap-3">
             <a href="{{ route('shift-comm.index') }}" class="text-sm text-neutral-600 hover:underline">&larr; All Shift Comm</a>
-            @can('update', $comm)
-                <div class="flex items-center gap-2 text-sm">
+            <div class="flex items-center gap-2 text-sm">
+                @can('update', $comm)
                     <a href="{{ route('shift-comm.edit', $comm) }}" class="rounded-md border border-neutral-300 px-3 py-1.5 text-neutral-700 hover:bg-neutral-50">Edit</a>
+                @endcan
+                @can('delete', $comm)
                     <form method="POST" action="{{ route('shift-comm.destroy', $comm) }}" data-confirm="Delete this Shift Comm entry?">
                         @csrf @method('DELETE')
                         <button type="submit" class="rounded-md border border-danger-300 px-3 py-1.5 text-danger-700 hover:bg-danger-50">Delete</button>
                     </form>
-                </div>
-            @endcan
+                @endcan
+            </div>
         </div>
 
         <div class="space-y-5 rounded-lg border border-neutral-200 bg-white p-6 shadow-md">

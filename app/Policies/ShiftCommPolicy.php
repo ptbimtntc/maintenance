@@ -25,8 +25,9 @@ class ShiftCommPolicy
             && ($user->id === $comm->created_by || $user->hasRole(RoleName::Administrator->value));
     }
 
+    /** Only an Administrator can delete an entry. */
     public function delete(User $user, ShiftComm $comm): bool
     {
-        return $this->update($user, $comm);
+        return $this->viewAny($user) && $user->hasRole(RoleName::Administrator->value);
     }
 }
