@@ -185,8 +185,8 @@ class ShiftCommTest extends TestCase
         foreach ([['M-001', '2026-09-20'], ['m001', '2026-09-25'], ['M 001', '2026-09-26'], ['M-001', '2026-09-28'], ['M-001', '2026-10-01']] as [$m, $d]) {
             $torsion($m, $d);
         }
-        // Only 3 torsion + non-torsion records: no warning.
-        foreach (['2026-09-26', '2026-09-27', '2026-09-28'] as $d) { $torsion('M-002', $d); }
+        // Only 2 torsion + non-torsion records: no warning.
+        foreach (['2026-09-27', '2026-09-28'] as $d) { $torsion('M-002', $d); }
         foreach (['2026-09-29', '2026-09-30'] as $d) { $torsion('M-002', $d, 0); }
         // 5 on another machine sorts first.
         foreach (['2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01'] as $d) { $torsion('M-003', $d); }
@@ -200,8 +200,19 @@ class ShiftCommTest extends TestCase
         $this->assertSame('2026-09-25', $warnings[1]['first']->toDateString());
         $this->assertSame('2026-10-01', $warnings[1]['last']->toDateString());
         $this->actingAs($user)->get(route('shift-comm.index'))
-            ->assertSee('Mesin M-001 telah mengalami Problem Torsion Shaft sebanyak 4 kali', false)
-            ->assertSee('dalam 7 hari terakhir', false);
+            ->assertSee('Peringatan Problem Berulang TS (Rolling 7 hari)')
+            ->assertSee('Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam 7 hari terakhir', false)
+            ->assertSee('• Mesin M-001 (4x Problem)', false)
+            ->assertSee('• Mesin M-003 (5x Problem)', false)
+            ->assertDontSee('M-002 (', false);
+    }
+
+    public function test_warning_component_hidden_when_no_repeated_problems(): void
+    {
+        $user = $this->staff();
+        $this->actingAs($user)->get(route('shift-comm.index'))
+            ->assertOk()
+            ->assertDontSee('Peringatan Problem Berulang TS');
     }
 
     public function test_repeat_warning_clears_when_next_shift_starts_without_a_new_torsion_record(): void

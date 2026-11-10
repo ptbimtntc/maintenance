@@ -144,7 +144,7 @@ Catatan komunikasi antar-shift (serah terima).
 3. Masukkan **Machine No.**; kolom **Machine Type** di sampingnya akan terisi otomatis secara read-only berdasarkan nomor/tipe mesin (dapat memilih saran mesin yang tersedia).
 4. Isi status dan catatan, lalu simpan.
 5. Entri dapat dibuka dan diedit oleh pembuatnya atau Administrator; tombol **Delete** hanya muncul dan dapat diakses oleh pengguna dengan role **Administrator**.
-6. Bila ada mesin dengan problem Torsion Shaft berulang (minimal 4 kali dalam rentang 7 hari terakhir), banner kuning **WARNING** muncul di atas halaman. Banner ini **tertutup secara default** (hanya menampilkan jumlah mesin); klik banner untuk membuka/menutup rincian per mesin.
+6. Bila ada mesin dengan problem Torsion Shaft berulang (minimal 3 kali dalam rentang rolling 7 hari terakhir), card notifikasi peringatan muncul tepat di atas kontrol filter. Card ini memiliki perilaku expand-collapse: default tertutup (collapsed) hanya menampilkan satu baris judul "⚠️ Peringatan Problem Berulang TS (Rolling 7 hari)" dengan ikon chevron. Ketika diklik/terbuka, menampilkan teks peringatan beserta rentang tanggal ([Tanggal Awal] s/d [Tanggal Akhir]) dan daftar nomor mesin beserta frekuensi kejadiannya (komponen otomatis tersembunyi jika tidak ada problem berulang).
 <!-- /only -->
 
 ---
@@ -473,6 +473,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-10 | Shift Comm: Memperbarui tampilan notifikasi warning problem berulang TS (posisi tepat di atas filter, default collapsed satu baris judul dengan chevron, expanded menampilkan ringkasan tanggal dan list nomor mesin serta jumlah kejadian). |
 | 2026-11-10 | Shift Comm: Menyesuaikan rentang waktu pengecekan (rolling window) problem Torsion Shaft berulang dari 30 hari menjadi 7 hari ke belakang. |
 | 2026-11-10 | Shift Comm: Tombol dan akses Delete pada detail entri kini dibatasi khusus untuk role Administrator saja. |
 | 2026-11-10 | Shift Comm: Menghilangkan opsi status "Selesai" pada input Estafet Torsion Shaft. |
