@@ -14,7 +14,12 @@ use App\Http\Controllers\EmployeeSkillChecklistController;
 use App\Http\Controllers\GuestSessionController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\JobDescriptionController;
+use App\Http\Controllers\LototoBoardSettingsController;
+use App\Http\Controllers\LototoBoardsController;
 use App\Http\Controllers\LototoController;
+use App\Http\Controllers\LototoToolController;
+use App\Http\Middleware\AllowLototoQrForm;
+use App\Http\Middleware\LogLototoFormAuthorization;
 use App\Http\Controllers\MasterDataController;
 use App\Http\Controllers\MenuVisibilityController;
 use App\Http\Controllers\NewsController;
@@ -33,6 +38,7 @@ use App\Http\Controllers\ShiftCommController;
 use App\Http\Controllers\SignatoryController;
 use App\Http\Controllers\SkillCatalogController;
 use App\Http\Controllers\SkillMatrixController;
+use App\Http\Controllers\SpareLockController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskPlanController;
 use App\Http\Controllers\TrainingCheckInController;
@@ -58,6 +64,15 @@ Route::get('/verify/{employee:employee_number}', [PublicCertificateController::c
 Route::get('/verify/certificates/{certificate}', [PublicCertificateController::class, 'detail'])->name('verify.certificate');
 Route::get('/verify/certificates/{certificate}/certificate', [PublicCertificateController::class, 'certificate'])->name('verify.certificate.print');
 Route::get('/verify/participants/{participant}', [PublicCertificateController::class, 'participant'])->name('verify.participant');
+
+// A lock's signed QR opens the form without a login; everyone else still needs auth, verified and ViewSafety.
+Route::middleware([AllowLototoQrForm::class, LogLototoFormAuthorization::class])->group(function () {
+    Route::get('/safety/lototo/form', [LototoController::class, 'form'])
+        ->name('safety.lototo.form');
+    Route::post('/safety/lototo/form', [LototoController::class, 'storeForm'])
+        ->middleware('throttle:20,1')
+        ->name('safety.lototo.form.store');
+});
 
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'guest-login');
@@ -350,7 +365,61 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSafety->value]
     ->prefix('safety')
     ->name('safety.')
     ->group(function () {
-        Route::get('/lototo', [LototoController::class, 'index'])->name('lototo.index');
+        Route::get('/lototo', [LototoController::class, 'index'])
+            ->name('lototo.index');
+        Route::get('/lototo/boards/{board}', [LototoController::class, 'board'])
+            ->name('lototo.boards.show');
+
+        Route::middleware('can:'.PermissionName::ManageSafety->value)->group(function () {
+            Route::get('/lototo/boards', [LototoBoardsController::class, 'index'])
+                ->name('lototo.boards.index');
+            Route::post('/lototo/boards', [LototoBoardsController::class, 'store'])
+                ->name('lototo.boards.store');
+            Route::patch('/lototo/boards/{board}/status', [LototoBoardsController::class, 'updateStatus'])
+                ->name('lototo.boards.status');
+            Route::delete('/lototo/boards/{board}', [LototoBoardsController::class, 'destroy'])
+                ->name('lototo.boards.destroy');
+            Route::get('/lototo/boards/{board}/layout', [LototoBoardSettingsController::class, 'layout'])
+                ->name('lototo.boards.layout');
+            Route::put('/lototo/boards/{board}/layout', [LototoBoardSettingsController::class, 'updateLayout'])
+                ->name('lototo.boards.layout.update');
+            // Kelola Tools / Kelola Spare Lock popups of Edit Mode (JSON). The picture is sent with POST (multipart).
+            Route::post('/lototo/boards/{board}/tools', [LototoToolController::class, 'store'])
+                ->name('lototo.boards.tools.store');
+            Route::post('/lototo/boards/{board}/tools/{tool}', [LototoToolController::class, 'update'])
+                ->name('lototo.boards.tools.update');
+            Route::delete('/lototo/boards/{board}/tools/{tool}', [LototoToolController::class, 'destroy'])
+                ->name('lototo.boards.tools.destroy');
+            Route::post('/lototo/boards/{board}/spare-locks', [SpareLockController::class, 'store'])
+                ->name('lototo.boards.spare-locks.store');
+            Route::delete('/lototo/boards/{board}/spare-locks/{spareLock}', [SpareLockController::class, 'destroy'])
+                ->name('lototo.boards.spare-locks.destroy');
+        });
+
+        // QR Code page and its print photos: Safety managers and the read-only Guest viewer (checked in the controller).
+        Route::get('/lototo/print/employees/{employee}/photo', [LototoBoardSettingsController::class, 'printPhoto'])
+            ->name('lototo.print.photo');
+        Route::get('/lototo/qr-codes', [LototoBoardSettingsController::class, 'qrCodes'])
+            ->name('lototo.qr-codes');
+
+        Route::get('/lototo/spare-lock/{spareLock}', [SpareLockController::class, 'show'])
+            ->name('lototo.spare-locks.show');
+
+        Route::get('/lototo/follow-up/{activity}', [LototoController::class, 'followUp'])
+            ->name('lototo.follow-up');
+        Route::post('/lototo/follow-up/{activity}', [LototoController::class, 'submitFollowUp'])
+            ->name('lototo.follow-up.store');
+
+        Route::get('/lototo/tools/{tool}/form', [LototoToolController::class, 'form'])
+            ->name('lototo.tools.form');
+        Route::post('/lototo/tools/{tool}/form', [LototoToolController::class, 'storeForm'])
+            ->middleware('throttle:20,1')
+            ->name('lototo.tools.form.store');
+        Route::get('/lototo/tools/{tool}/image', [LototoToolController::class, 'image'])
+            ->name('lototo.tools.image');
+
+        Route::get('/lototo/{employee}', [LototoController::class, 'show'])
+            ->name('lototo.show');
     });
 
 Route::middleware(['auth', 'verified'])->group(function () {

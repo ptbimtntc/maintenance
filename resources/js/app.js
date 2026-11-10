@@ -22,6 +22,10 @@ if (document.getElementById('task-board')) {
     import('./task-board');
 }
 
+if (document.querySelector('.lototo-page, .lototo-activity-page, .lototo-boards-page, .lototo-settings-page, [aria-label="Formulir pemeriksaan LOTOTO"]')) {
+    import('./lototo');
+}
+
 if (document.querySelector('trix-editor')) {
     import('./news-editor');
 }

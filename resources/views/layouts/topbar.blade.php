@@ -67,9 +67,18 @@
                             <form method="POST" action="{{ route('notifications.read', $notification->id) }}">
                                 @csrf
                                 <button type="submit" class="block w-full px-4 py-3 text-left text-sm hover:bg-neutral-100">
-                                    <span class="block font-medium text-neutral-800">{{ $notification->data['title'] ?? 'Notification' }}</span>
-                                    <span class="mt-0.5 block text-xs text-neutral-500">{{ $notification->data['message'] ?? '' }}</span>
-                                    <span class="mt-1 block text-xs text-neutral-400">{{ $notification->created_at->diffForHumans() }}</span>
+                                    <span class="flex items-start gap-2">
+                                        @if (($notification->data['type'] ?? null) === 'lototo_safety_alert')
+                                            <svg class="mt-0.5 h-5 w-5 shrink-0 text-amber-500" viewBox="0 0 24 24" fill="currentColor" role="img" aria-label="Safety follow-up required">
+                                                <path fill-rule="evenodd" d="M12 2.25c.55 0 1.06.294 1.334.771l9.04 15.75c.562.98-.146 2.204-1.272 2.204H2.898c-1.126 0-1.834-1.224-1.272-2.204l9.04-15.75A1.54 1.54 0 0 1 12 2.25Zm0 5.25a.75.75 0 0 0-.75.75v4.5a.75.75 0 0 0 1.5 0v-4.5a.75.75 0 0 0-.75-.75Zm0 9a1.125 1.125 0 1 0 0 2.25 1.125 1.125 0 0 0 0-2.25Z" clip-rule="evenodd" />
+                                            </svg>
+                                        @endif
+                                        <span class="min-w-0">
+                                            <span class="block font-medium text-neutral-800">{{ $notification->data['title'] ?? 'Notification' }}</span>
+                                            <span class="mt-0.5 block text-xs text-neutral-500">{{ $notification->data['message'] ?? '' }}</span>
+                                            <span class="mt-1 block text-xs text-neutral-400">{{ $notification->created_at->diffForHumans() }}</span>
+                                        </span>
+                                    </span>
                                 </button>
                             </form>
                         @empty

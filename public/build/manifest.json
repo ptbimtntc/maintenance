@@ -1,13 +1,17 @@
 {
-  "_es6-9h6EmC2H.js": {
-    "file": "assets/es6-9h6EmC2H.js",
+  "_es6-CrGhJUVq.js": {
+    "file": "assets/es6-CrGhJUVq.js",
     "name": "es6",
     "imports": [
-      "resources/js/app.js"
+      "_rolldown-runtime-W7wSyTde.js"
     ]
   },
+  "_rolldown-runtime-W7wSyTde.js": {
+    "file": "assets/rolldown-runtime-W7wSyTde.js",
+    "name": "rolldown-runtime"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-BWDJXMko.css",
+    "file": "assets/app-DARBl6c6.css",
     "name": "app",
     "names": [
       "app.css"
@@ -16,24 +20,64 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-BMWE-oUQ.js",
+    "file": "assets/app-4R9eYU7u.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
+    "imports": [
+      "_rolldown-runtime-W7wSyTde.js"
+    ],
     "dynamicImports": [
       "resources/js/face-login.js",
       "resources/js/training-checkin.js",
       "resources/js/task-board.js",
+      "resources/js/lototo.js",
       "resources/js/news-editor.js"
     ]
   },
   "resources/js/face-login.js": {
-    "file": "assets/face-login-DMdB8RNw.js",
+    "file": "assets/face-login-QqtgmKmO.js",
     "name": "face-login",
     "src": "resources/js/face-login.js",
     "isDynamicEntry": true,
     "imports": [
-      "_es6-9h6EmC2H.js"
+      "_es6-CrGhJUVq.js"
+    ]
+  },
+  "resources/js/lototo-board-editor.js": {
+    "file": "assets/lototo-board-editor-CErNpASQ.js",
+    "name": "lototo-board-editor",
+    "src": "resources/js/lototo-board-editor.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/lototo-form.js": {
+    "file": "assets/lototo-form-sSvQ_Rac.js",
+    "name": "lototo-form",
+    "src": "resources/js/lototo-form.js",
+    "isDynamicEntry": true
+  },
+  "resources/js/lototo-print.js": {
+    "file": "assets/lototo-print-DdFiQOdc.js",
+    "name": "lototo-print",
+    "src": "resources/js/lototo-print.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_rolldown-runtime-W7wSyTde.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/lototo.js": {
+    "file": "assets/lototo-a0V3yvUw.js",
+    "name": "lototo",
+    "src": "resources/js/lototo.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js"
+    ],
+    "dynamicImports": [
+      "resources/js/lototo-form.js",
+      "resources/js/lototo-board-editor.js",
+      "resources/js/lototo-print.js"
     ]
   },
   "resources/js/news-editor.js": {
@@ -52,12 +96,12 @@
     "isDynamicEntry": true
   },
   "resources/js/training-checkin.js": {
-    "file": "assets/training-checkin-BhcfTXt3.js",
+    "file": "assets/training-checkin-DEahKr-l.js",
     "name": "training-checkin",
     "src": "resources/js/training-checkin.js",
     "isDynamicEntry": true,
     "imports": [
-      "_es6-9h6EmC2H.js"
+      "_es6-CrGhJUVq.js"
     ]
   }
 }

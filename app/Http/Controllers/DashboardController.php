@@ -20,7 +20,7 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /** SQL expression for a 2-digit month number (MySQL/SQLite compatible). */
+    /** SQL expression for a 2-digit month number (MySQL, or SQLite for local dev). */
     private function monthExpr(string $column): string
     {
         if (DB::connection()->getDriverName() === 'sqlite') {

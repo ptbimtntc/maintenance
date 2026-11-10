@@ -25,4 +25,9 @@ class BusinessUnit extends Model
     {
         return $this->hasMany(Employee::class);
     }
+
+    public function lototoBoards(): HasMany
+    {
+        return $this->hasMany(LototoBoard::class);
+    }
 }
