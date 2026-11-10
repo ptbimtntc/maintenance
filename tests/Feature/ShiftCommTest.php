@@ -102,12 +102,18 @@ class ShiftCommTest extends TestCase
 
         $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 1]))
             ->assertSessionHasErrors('torsion_relay_status');
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 1, 'torsion_relay_status' => 'done']))
+            ->assertSessionHasErrors('torsion_relay_status');
         $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 1, 'torsion_relay_status' => 'next_shift']))
             ->assertSessionHasNoErrors();
-        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 0, 'torsion_relay_status' => 'done']))
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => 0, 'torsion_relay_status' => 'in_progress']))
             ->assertSessionHasNoErrors();
         $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['is_torsion_shaft' => null]))
             ->assertSessionHasErrors('is_torsion_shaft');
+
+        $this->actingAs($user)->get(route('shift-comm.create'))
+            ->assertOk()
+            ->assertDontSee('>Selesai<', false);
 
         $rows = ShiftComm::orderBy('id')->get();
         $this->assertSame('next_shift', $rows[0]->torsion_relay_status);
@@ -120,15 +126,15 @@ class ShiftCommTest extends TestCase
     {
         $user = $this->staff();
         $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-NO']));
-        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-DONE', 'is_torsion_shaft' => 1, 'torsion_relay_status' => 'done']));
+        $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-PROG', 'is_torsion_shaft' => 1, 'torsion_relay_status' => 'in_progress']));
         $this->actingAs($user)->post(route('shift-comm.store'), $this->payload(['machine_no' => 'M-NEXT', 'is_torsion_shaft' => 1, 'torsion_relay_status' => 'next_shift']));
 
         $this->actingAs($user)->get(route('shift-comm.index', ['torsion' => 1]))
-            ->assertSee('M-DONE')->assertSee('M-NEXT')->assertDontSee('M-NO');
+            ->assertSee('M-PROG')->assertSee('M-NEXT')->assertDontSee('M-NO');
         $this->actingAs($user)->get(route('shift-comm.index', ['torsion' => 0]))
-            ->assertSee('M-NO')->assertDontSee('M-DONE');
+            ->assertSee('M-NO')->assertDontSee('M-PROG');
         $this->actingAs($user)->get(route('shift-comm.index', ['relay' => 'next_shift']))
-            ->assertSee('M-NEXT')->assertDontSee('M-DONE')->assertDontSee('M-NO');
+            ->assertSee('M-NEXT')->assertDontSee('M-PROG')->assertDontSee('M-NO');
     }
 
     public function test_repeat_torsion_shaft_warning_rolls_30_days_from_latest_record(): void
@@ -136,7 +142,7 @@ class ShiftCommTest extends TestCase
         $user = $this->staff();
         $torsion = fn (string $machine, string $date, int $flag = 1) => ShiftComm::createNumbered([
             'comm_date' => $date, 'shift' => 1, 'team' => 'A', 'machine_no' => $machine, 'problem' => 'x',
-            'is_torsion_shaft' => $flag, 'torsion_relay_status' => $flag ? 'done' : null, 'created_by' => $user->id,
+            'is_torsion_shaft' => $flag, 'torsion_relay_status' => $flag ? 'in_progress' : null, 'created_by' => $user->id,
         ]);
 
         // M-001 / m001 / M 001 are one machine: 4 within 30 days of 2026-10-01 (the 2026-08-30 one is too old).
@@ -166,7 +172,7 @@ class ShiftCommTest extends TestCase
         foreach (['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01'] as $d) {
             ShiftComm::createNumbered([
                 'comm_date' => $d, 'shift' => 2, 'team' => 'A', 'machine_no' => 'M-9', 'problem' => 'x',
-                'is_torsion_shaft' => 1, 'torsion_relay_status' => 'done', 'created_by' => $user->id,
+                'is_torsion_shaft' => 1, 'torsion_relay_status' => 'in_progress', 'created_by' => $user->id,
             ]);
         }
 
@@ -178,7 +184,7 @@ class ShiftCommTest extends TestCase
         // A new Torsion Shaft record in that shift brings it back.
         ShiftComm::createNumbered([
             'comm_date' => '2026-10-02', 'shift' => 3, 'team' => 'B', 'machine_no' => 'm9', 'problem' => 'x',
-            'is_torsion_shaft' => 1, 'torsion_relay_status' => 'done', 'created_by' => $user->id,
+            'is_torsion_shaft' => 1, 'torsion_relay_status' => 'in_progress', 'created_by' => $user->id,
         ]);
         $this->assertCount(1, ShiftComm::repeatTorsionWarnings(Carbon::parse('2026-10-02 03:00')));
     }

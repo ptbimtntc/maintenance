@@ -41,18 +41,19 @@ class MachineSeeder extends Seeder
                 'machine_no' => $machineNo,
                 'func_location' => $funcLocation ?: null,
                 'machine_type' => $machineType,
+                'unit' => 'CB',
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
 
             if (count($batch) >= 200) {
-                Machine::upsert($batch, ['machine_no'], ['func_location', 'machine_type', 'updated_at']);
+                Machine::upsert($batch, ['unit', 'machine_no'], ['func_location', 'machine_type', 'updated_at']);
                 $batch = [];
             }
         }
 
         if (! empty($batch)) {
-            Machine::upsert($batch, ['machine_no'], ['func_location', 'machine_type', 'updated_at']);
+            Machine::upsert($batch, ['unit', 'machine_no'], ['func_location', 'machine_type', 'updated_at']);
         }
 
         fclose($handle);

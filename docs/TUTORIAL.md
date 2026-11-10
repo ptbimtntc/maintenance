@@ -473,6 +473,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-10 | Shift Comm: Menghilangkan opsi status "Selesai" pada input Estafet Torsion Shaft. |
 | 2026-11-10 | Menambahkan Machine Database C&B dan Machine Database WWD pada menu Master Data (lengkap dengan filter tipe mesin, pencarian, import/export XLSX, dan pemisahan unit C&B serta WWD). |
 | 2026-11-10 | Mengganti nama menu Organization pada sub People & Organization menjadi Master Data. |
 | 2026-11-06 | Shift Comm: menambahkan field Machine Type di samping Machine No. dengan auto-fill otomatis read-only berdasarkan nomor/tipe mesin. |

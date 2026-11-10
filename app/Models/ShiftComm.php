@@ -21,7 +21,6 @@ class ShiftComm extends Model
         'not_started' => 'Belum dikerjakan',
         'in_progress' => 'Sedang dikerjakan',
         'next_shift' => 'Estafet shift berikutnya',
-        'done' => 'Selesai',
     ];
 
     public const TEAMS = ['A', 'B', 'C', 'D', 'NS'];
@@ -137,7 +136,8 @@ class ShiftComm extends Model
 
     public function torsionRelayLabel(): ?string
     {
-        return self::TORSION_RELAY_STATUSES[$this->torsion_relay_status] ?? null;
+        return self::TORSION_RELAY_STATUSES[$this->torsion_relay_status]
+            ?? ($this->torsion_relay_status === 'done' ? 'Selesai' : null);
     }
 
     public function shiftName(): string
