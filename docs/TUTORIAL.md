@@ -201,7 +201,7 @@ Plant Manager (pemimpin tertinggi) **tidak muncul** di daftar Employees maupun t
 <!-- /only -->
 
 <!-- only:organization -->
-### Organization (Master Data)
+### Master Data
 Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, dan lain-lain.
 - **Create**, **Edit**, nonaktifkan, atau **Delete** data.
 - Tersedia **Import** dan **Export** per jenis data.
@@ -472,6 +472,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-10 | Mengganti nama menu Organization pada sub People & Organization menjadi Master Data. |
 | 2026-11-06 | Shift Comm: menambahkan field Machine Type di samping Machine No. dengan auto-fill otomatis read-only berdasarkan nomor/tipe mesin. |
 | 2026-11-06 | Menjelaskan bahwa waktu aktivitas LOTOTO dan riwayat Tools ditampilkan dalam waktu lokal. |
 | 2026-11-06 | Mengganti keterangan LOTOTO yang sudah tidak sesuai dengan panduan board, Manage Board, Edit Mode, pemeriksaan, QR, Spare Lock, Tools, dan follow-up. |

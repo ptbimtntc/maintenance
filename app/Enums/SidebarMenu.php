@@ -45,7 +45,7 @@ enum SidebarMenu: string
             self::OrganizationChart => 'Organization Chart',
             self::QrCodes => 'QR Codes',
             self::PlantManager => 'Plant Manager',
-            self::Organization => 'Organization',
+            self::Organization => 'Master Data',
             self::Overtime => 'Overtime',
             self::JobDescriptions => 'Job Descriptions',
             self::Skills => 'Skills & Competencies',
