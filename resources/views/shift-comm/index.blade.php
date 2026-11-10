@@ -14,7 +14,7 @@
                 </button>
                 <div x-show="open" x-cloak class="space-y-2 border-t border-warning-300 px-4 py-3">
                     @foreach ($repeatWarnings as $warning)
-                        <p>Mesin {{ $warning['machine'] }} telah mengalami Problem Torsion Shaft sebanyak {{ $warning['count'] }} kali dalam 30 hari terakhir ({{ $warning['first']->format('d M Y') }} s/d {{ $warning['last']->format('d M Y') }}). Mesin ini terindikasi mengalami problem berulang dan perlu dilakukan pengecekan/tindakan lanjutan.</p>
+                        <p>Mesin {{ $warning['machine'] }} telah mengalami Problem Torsion Shaft sebanyak {{ $warning['count'] }} kali dalam {{ \App\Models\ShiftComm::REPEAT_WINDOW_DAYS }} hari terakhir ({{ $warning['first']->format('d M Y') }} s/d {{ $warning['last']->format('d M Y') }}). Mesin ini terindikasi mengalami problem berulang dan perlu dilakukan pengecekan/tindakan lanjutan.</p>
                     @endforeach
                 </div>
             </div>

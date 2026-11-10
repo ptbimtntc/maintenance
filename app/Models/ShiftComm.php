@@ -166,11 +166,11 @@ class ShiftComm extends Model
     /** Repeat-problem threshold: this many Torsion Shaft problems on one machine within the window. */
     public const REPEAT_THRESHOLD = 4;
 
-    public const REPEAT_WINDOW_DAYS = 30;
+    public const REPEAT_WINDOW_DAYS = 7;
 
     /**
      * Machines with repeated Torsion Shaft problems, most problems first. Per
-     * machine the window rolls back 30 days from its latest record; machine
+     * machine the window rolls back 7 days from its latest record; machine
      * numbers match regardless of case, spaces and hyphens ("M-001" = "m001").
      * A warning clears once a shift after the machine's latest Torsion Shaft
      * record has started without a new Torsion Shaft record for it.

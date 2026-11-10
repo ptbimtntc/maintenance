@@ -173,7 +173,7 @@ class ShiftCommTest extends TestCase
             ->assertSee('M-NEXT')->assertDontSee('M-PROG')->assertDontSee('M-NO');
     }
 
-    public function test_repeat_torsion_shaft_warning_rolls_30_days_from_latest_record(): void
+    public function test_repeat_torsion_shaft_warning_rolls_7_days_from_latest_record(): void
     {
         $user = $this->staff();
         $torsion = fn (string $machine, string $date, int $flag = 1) => ShiftComm::createNumbered([
@@ -181,13 +181,13 @@ class ShiftCommTest extends TestCase
             'is_torsion_shaft' => $flag, 'torsion_relay_status' => $flag ? 'in_progress' : null, 'created_by' => $user->id,
         ]);
 
-        // M-001 / m001 / M 001 are one machine: 4 within 30 days of 2026-10-01 (the 2026-08-30 one is too old).
-        foreach ([['M-001', '2026-08-30'], ['m001', '2026-09-05'], ['M 001', '2026-09-20'], ['M-001', '2026-09-28'], ['M-001', '2026-10-01']] as [$m, $d]) {
+        // M-001 / m001 / M 001 are one machine: 4 within 7 days of 2026-10-01 (the 2026-09-20 one is too old).
+        foreach ([['M-001', '2026-09-20'], ['m001', '2026-09-25'], ['M 001', '2026-09-26'], ['M-001', '2026-09-28'], ['M-001', '2026-10-01']] as [$m, $d]) {
             $torsion($m, $d);
         }
         // Only 3 torsion + non-torsion records: no warning.
-        foreach (['2026-09-01', '2026-09-02', '2026-09-03'] as $d) { $torsion('M-002', $d); }
-        foreach (['2026-09-04', '2026-09-05'] as $d) { $torsion('M-002', $d, 0); }
+        foreach (['2026-09-26', '2026-09-27', '2026-09-28'] as $d) { $torsion('M-002', $d); }
+        foreach (['2026-09-29', '2026-09-30'] as $d) { $torsion('M-002', $d, 0); }
         // 5 on another machine sorts first.
         foreach (['2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01'] as $d) { $torsion('M-003', $d); }
 
@@ -197,9 +197,11 @@ class ShiftCommTest extends TestCase
         $this->assertCount(2, $warnings);
         $this->assertSame(['M-003', 5], [$warnings[0]['machine'], $warnings[0]['count']]);
         $this->assertSame(['M-001', 4], [$warnings[1]['machine'], $warnings[1]['count']]);
-        $this->assertSame('2026-09-05', $warnings[1]['first']->toDateString());
+        $this->assertSame('2026-09-25', $warnings[1]['first']->toDateString());
         $this->assertSame('2026-10-01', $warnings[1]['last']->toDateString());
-        $this->actingAs($user)->get(route('shift-comm.index'))->assertSee('Mesin M-001 telah mengalami Problem Torsion Shaft sebanyak 4 kali', false);
+        $this->actingAs($user)->get(route('shift-comm.index'))
+            ->assertSee('Mesin M-001 telah mengalami Problem Torsion Shaft sebanyak 4 kali', false)
+            ->assertSee('dalam 7 hari terakhir', false);
     }
 
     public function test_repeat_warning_clears_when_next_shift_starts_without_a_new_torsion_record(): void
