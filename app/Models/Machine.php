@@ -15,10 +15,14 @@ class Machine extends Model
      */
     public static function lookupCatalog(): array
     {
-        return static::query()
-            ->orderBy('machine_no')
-            ->pluck('machine_type', 'machine_no')
-            ->all();
+        try {
+            return static::query()
+                ->orderBy('machine_no')
+                ->pluck('machine_type', 'machine_no')
+                ->all();
+        } catch (\Throwable) {
+            return [];
+        }
     }
 }
 
