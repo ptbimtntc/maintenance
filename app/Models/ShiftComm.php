@@ -164,7 +164,7 @@ class ShiftComm extends Model
     }
 
     /** Repeat-problem threshold: this many Torsion Shaft problems on one machine within the window. */
-    public const REPEAT_THRESHOLD = 3;
+    public const REPEAT_THRESHOLD = 4;
 
     public const REPEAT_WINDOW_DAYS = 7;
 

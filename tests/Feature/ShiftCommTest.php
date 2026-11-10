@@ -185,8 +185,8 @@ class ShiftCommTest extends TestCase
         foreach ([['M-001', '2026-09-20'], ['m001', '2026-09-25'], ['M 001', '2026-09-26'], ['M-001', '2026-09-28'], ['M-001', '2026-10-01']] as [$m, $d]) {
             $torsion($m, $d);
         }
-        // Only 2 torsion + non-torsion records: no warning.
-        foreach (['2026-09-27', '2026-09-28'] as $d) { $torsion('M-002', $d); }
+        // Only 3 torsion + non-torsion records: no warning.
+        foreach (['2026-09-26', '2026-09-27', '2026-09-28'] as $d) { $torsion('M-002', $d); }
         foreach (['2026-09-29', '2026-09-30'] as $d) { $torsion('M-002', $d, 0); }
         // 5 on another machine sorts first.
         foreach (['2026-09-27', '2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01'] as $d) { $torsion('M-003', $d); }
