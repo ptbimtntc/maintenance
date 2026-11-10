@@ -135,3 +135,4 @@ $hasFilters = filled($search) || filled($machineTypeFilter);
         @endif
     </div>
 </x-app-layout>
+

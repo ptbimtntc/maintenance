@@ -19,3 +19,4 @@ class MachineWwd extends Machine
         });
     }
 }
+
