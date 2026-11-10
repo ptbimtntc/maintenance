@@ -202,9 +202,10 @@ Plant Manager (pemimpin tertinggi) **tidak muncul** di daftar Employees maupun t
 
 <!-- only:organization -->
 ### Master Data
-Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, dan lain-lain.
+Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, machine database (Machine Database C&B dan Machine Database WWD), dan lain-lain.
 - **Create**, **Edit**, nonaktifkan, atau **Delete** data.
-- Tersedia **Import** dan **Export** per jenis data.
+- Khusus Machine Database: dapat mencari berdasarkan nomor mesin, functional location, atau tipe mesin, memfilter berdasarkan tipe mesin, serta input Machine Type dilengkapi saran otomatis dari tipe mesin yang sudah ada.
+- Tersedia **Import** dan **Export** XLSX per jenis data.
 <!-- /only -->
 
 <!-- only:overtime -->
@@ -472,6 +473,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-10 | Menambahkan Machine Database C&B dan Machine Database WWD pada menu Master Data (lengkap dengan filter tipe mesin, pencarian, import/export XLSX, dan pemisahan unit C&B serta WWD). |
 | 2026-11-10 | Mengganti nama menu Organization pada sub People & Organization menjadi Master Data. |
 | 2026-11-06 | Shift Comm: menambahkan field Machine Type di samping Machine No. dengan auto-fill otomatis read-only berdasarkan nomor/tipe mesin. |
 | 2026-11-06 | Menjelaskan bahwa waktu aktivitas LOTOTO dan riwayat Tools ditampilkan dalam waktu lokal. |

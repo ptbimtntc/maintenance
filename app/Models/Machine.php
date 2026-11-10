@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['machine_no', 'func_location', 'machine_type'])]
+#[Fillable(['machine_no', 'func_location', 'machine_type', 'unit'])]
 class Machine extends Model
 {
+    public const UNITS = [
+        'CB' => 'C&B',
+        'WWD' => 'WWD',
+    ];
     /**
      * Cached lookup dictionary: machine_no => machine_type.
      *

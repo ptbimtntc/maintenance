@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\RoleName;
 use App\Models\Department;
+use App\Models\Machine;
+use App\Models\MachineCb;
+use App\Models\MachineWwd;
 use App\Models\Position;
 use App\Models\User;
 use Database\Seeders\RolesAndPermissionsSeeder;
@@ -196,5 +199,135 @@ class MasterDataManagementTest extends TestCase
         ]);
 
         $storeResponse->assertRedirect(route('organization.index', ['skills', 'from' => 'skills']));
+    }
+
+    public function test_administrator_can_view_machine_cb_and_wwd_on_landing_page(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        Machine::create(['machine_no' => '50-TD01', 'func_location' => 'LOC1', 'machine_type' => 'Strander', 'unit' => 'CB']);
+        Machine::create(['machine_no' => '60-WD01', 'func_location' => 'LOC2', 'machine_type' => 'Drawing', 'unit' => 'WWD']);
+
+        $response = $this->actingAs($admin)->get(route('organization.landing'));
+
+        $response->assertOk();
+        $response->assertSee('Machine Database C&amp;B', false);
+        $response->assertSee('Machine Database WWD', false);
+    }
+
+    public function test_administrator_can_view_and_filter_machines_cb(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        Machine::create(['machine_no' => '50-TD01', 'func_location' => 'LOC1', 'machine_type' => 'Strander', 'unit' => 'CB']);
+        Machine::create(['machine_no' => '50-TD02', 'func_location' => 'LOC2', 'machine_type' => 'Buncher', 'unit' => 'CB']);
+        Machine::create(['machine_no' => '60-WD01', 'func_location' => 'LOC3', 'machine_type' => 'Drawing', 'unit' => 'WWD']);
+
+        $response = $this->actingAs($admin)->get(route('organization.index', 'machines-cb'));
+
+        $response->assertOk();
+        $response->assertSee('50-TD01');
+        $response->assertSee('50-TD02');
+        $response->assertDontSee('60-WD01');
+
+        $filteredResponse = $this->actingAs($admin)->get(route('organization.index', ['machines-cb', 'machine_type' => 'Strander']));
+        $filteredResponse->assertOk();
+        $filteredResponse->assertSee('50-TD01');
+        $filteredResponse->assertDontSee('50-TD02');
+    }
+
+    public function test_administrator_can_create_machine_in_cb(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->post(route('organization.store', 'machines-cb'), [
+            'machine_no' => '50-NEW01',
+            'func_location' => 'ID01-01',
+            'machine_type' => 'New Strander',
+        ]);
+
+        $response->assertRedirect(route('organization.index', 'machines-cb'));
+        $this->assertDatabaseHas('machines', [
+            'machine_no' => '50-NEW01',
+            'func_location' => 'ID01-01',
+            'machine_type' => 'New Strander',
+            'unit' => 'CB',
+        ]);
+    }
+
+    public function test_administrator_can_create_machine_in_wwd(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $response = $this->actingAs($admin)->post(route('organization.store', 'machines-wwd'), [
+            'machine_no' => '60-WWD01',
+            'func_location' => 'ID01-02',
+            'machine_type' => 'Wet Drawing',
+        ]);
+
+        $response->assertRedirect(route('organization.index', 'machines-wwd'));
+        $this->assertDatabaseHas('machines', [
+            'machine_no' => '60-WWD01',
+            'func_location' => 'ID01-02',
+            'machine_type' => 'Wet Drawing',
+            'unit' => 'WWD',
+        ]);
+    }
+
+    public function test_duplicate_machine_no_in_same_unit_is_rejected_but_allowed_across_different_units(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        Machine::create(['machine_no' => 'SHARED01', 'func_location' => 'LOC1', 'machine_type' => 'Type A', 'unit' => 'CB']);
+
+        // Same machine_no in CB -> rejected
+        $response = $this->actingAs($admin)->post(route('organization.store', 'machines-cb'), [
+            'machine_no' => 'SHARED01',
+            'machine_type' => 'Type B',
+        ]);
+        $response->assertSessionHasErrors('machine_no');
+
+        // Same machine_no in WWD -> allowed
+        $responseWwd = $this->actingAs($admin)->post(route('organization.store', 'machines-wwd'), [
+            'machine_no' => 'SHARED01',
+            'machine_type' => 'Type WWD',
+        ]);
+        $responseWwd->assertRedirect(route('organization.index', 'machines-wwd'));
+        $this->assertDatabaseHas('machines', [
+            'machine_no' => 'SHARED01',
+            'machine_type' => 'Type WWD',
+            'unit' => 'WWD',
+        ]);
+    }
+
+    public function test_administrator_can_update_and_delete_machine(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $machine = Machine::create(['machine_no' => '50-OLD', 'func_location' => 'LOC1', 'machine_type' => 'Type A', 'unit' => 'CB']);
+
+        $updateResponse = $this->actingAs($admin)->put(route('organization.update', ['machines-cb', $machine->id]), [
+            'machine_no' => '50-UPDATED',
+            'func_location' => 'LOC1-UPDATED',
+            'machine_type' => 'Type A Updated',
+        ]);
+
+        $updateResponse->assertRedirect(route('organization.index', 'machines-cb'));
+        $this->assertDatabaseHas('machines', [
+            'id' => $machine->id,
+            'machine_no' => '50-UPDATED',
+            'func_location' => 'LOC1-UPDATED',
+            'machine_type' => 'Type A Updated',
+        ]);
+
+        $deleteResponse = $this->actingAs($admin)->delete(route('organization.destroy', ['machines-cb', $machine->id]));
+        $deleteResponse->assertRedirect(route('organization.index', 'machines-cb'));
+        $this->assertDatabaseMissing('machines', ['id' => $machine->id]);
     }
 }
