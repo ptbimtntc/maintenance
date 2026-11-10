@@ -26,7 +26,7 @@ $palette = [
                         <a href="{{ route('organization.index', $slug) }}"
                            class="group flex items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 transition {{ $c['hover'] }}">
                             <span class="truncate text-sm font-medium text-neutral-800">{{ $config['label'] }}</span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold {{ $c['chip'] }}">{{ $config['model']::count() }}</span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold {{ $c['chip'] }}">{{ rescue(fn () => $config['model']::count(), 0, false) }}</span>
                         </a>
                     @endforeach
                 </div>

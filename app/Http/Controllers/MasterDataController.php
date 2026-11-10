@@ -69,6 +69,19 @@ class MasterDataController extends Controller
         $model = $config['model'];
 
         if ($this->isMachineType($type)) {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('machines')) {
+                return view('organization.machines.index', [
+                    'type' => $type,
+                    'config' => $config,
+                    'records' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25),
+                    'search' => '',
+                    'machineTypeFilter' => '',
+                    'availableMachineTypes' => collect(),
+                    'from' => $this->originFor($request),
+                    'migrationPending' => true,
+                ]);
+            }
+
             $search = trim((string) $request->query('q', ''));
             $machineTypeFilter = trim((string) $request->query('machine_type', ''));
 
@@ -85,12 +98,16 @@ class MasterDataController extends Controller
                 ->paginate(25)
                 ->withQueryString();
 
-            $availableMachineTypes = $model::query()
-                ->whereNotNull('machine_type')
-                ->where('machine_type', '!=', '')
-                ->distinct()
-                ->orderBy('machine_type')
-                ->pluck('machine_type');
+            $availableMachineTypes = rescue(
+                fn () => $model::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
 
             return view('organization.machines.index', [
                 'type' => $type,
@@ -100,6 +117,7 @@ class MasterDataController extends Controller
                 'machineTypeFilter' => $machineTypeFilter,
                 'availableMachineTypes' => $availableMachineTypes,
                 'from' => $this->originFor($request),
+                'migrationPending' => false,
             ]);
         }
 
@@ -121,12 +139,16 @@ class MasterDataController extends Controller
         $config = $this->configFor($type);
 
         if ($this->isMachineType($type)) {
-            $availableMachineTypes = $config['model']::query()
-                ->whereNotNull('machine_type')
-                ->where('machine_type', '!=', '')
-                ->distinct()
-                ->orderBy('machine_type')
-                ->pluck('machine_type');
+            $availableMachineTypes = rescue(
+                fn () => $config['model']::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
 
             return view('organization.machines.form', [
                 'type' => $type,
@@ -181,12 +203,16 @@ class MasterDataController extends Controller
         $record = $config['model']::findOrFail($id);
 
         if ($this->isMachineType($type)) {
-            $availableMachineTypes = $config['model']::query()
-                ->whereNotNull('machine_type')
-                ->where('machine_type', '!=', '')
-                ->distinct()
-                ->orderBy('machine_type')
-                ->pluck('machine_type');
+            $availableMachineTypes = rescue(
+                fn () => $config['model']::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
 
             return view('organization.machines.form', [
                 'type' => $type,

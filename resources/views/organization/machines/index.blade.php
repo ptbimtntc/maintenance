@@ -40,6 +40,21 @@ $hasFilters = filled($search) || filled($machineTypeFilter);
             </div>
         </div>
 
+        @if ($migrationPending ?? false)
+            <div class="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800">
+                <div class="flex items-center gap-2 font-semibold">
+                    <svg class="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    Tabel database belum dimigrasi di server hosting
+                </div>
+                <p class="mt-1">Tabel <code>machines</code> belum ditemukan di database server. Silakan jalankan perintah migrasi berikut di terminal/SSH hosting Anda:</p>
+                <div class="mt-2 rounded bg-neutral-900 px-3 py-2 font-mono text-xs text-white">
+                    php artisan migrate --force
+                </div>
+            </div>
+        @endif
+
         @if (session('status'))
             <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
