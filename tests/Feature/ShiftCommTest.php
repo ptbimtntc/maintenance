@@ -215,6 +215,24 @@ class ShiftCommTest extends TestCase
             ->assertDontSee('Peringatan Problem Berulang TS');
     }
 
+    public function test_dynamic_rolling_days_setting_reflected_in_view(): void
+    {
+        $user = $this->staff();
+        \App\Models\Setting::set('shift_comm_repeat_window_days', '14');
+
+        foreach (['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01'] as $d) {
+            ShiftComm::createNumbered([
+                'comm_date' => $d, 'shift' => 1, 'team' => 'A', 'machine_no' => 'M-DYN', 'problem' => 'x',
+                'is_torsion_shaft' => 1, 'torsion_relay_status' => 'in_progress', 'created_by' => $user->id,
+            ]);
+        }
+
+        $this->travelTo('2026-10-01 10:00');
+        $this->actingAs($user)->get(route('shift-comm.index'))
+            ->assertSee('Peringatan Problem Berulang TS (Rolling 14 hari)')
+            ->assertSee('dalam 14 hari terakhir', false);
+    }
+
     public function test_repeat_warning_clears_when_next_shift_starts_without_a_new_torsion_record(): void
     {
         $user = $this->staff();

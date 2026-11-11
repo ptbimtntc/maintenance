@@ -168,9 +168,19 @@ class ShiftComm extends Model
 
     public const REPEAT_WINDOW_DAYS = 7;
 
+    public static function repeatWindowDays(): int
+    {
+        return Setting::getInt('shift_comm_repeat_window_days', self::REPEAT_WINDOW_DAYS);
+    }
+
+    public static function repeatThreshold(): int
+    {
+        return Setting::getInt('shift_comm_repeat_threshold', self::REPEAT_THRESHOLD);
+    }
+
     /**
      * Machines with repeated Torsion Shaft problems, most problems first. Per
-     * machine the window rolls back 7 days from its latest record; machine
+     * machine the window rolls back N days from its latest record; machine
      * numbers match regardless of case, spaces and hyphens ("M-001" = "m001").
      * A warning clears once a shift after the machine's latest Torsion Shaft
      * record has started without a new Torsion Shaft record for it.
@@ -181,6 +191,8 @@ class ShiftComm extends Model
     {
         $now ??= now();
         $currentSlot = self::shiftSlot($now->toDateString(), self::defaultShiftFor($now));
+        $windowDays = self::repeatWindowDays();
+        $threshold = self::repeatThreshold();
 
         return static::query()
             ->where('is_torsion_shaft', true)
@@ -188,9 +200,9 @@ class ShiftComm extends Model
             ->orderBy('shift')
             ->get(['machine_no', 'comm_date', 'shift'])
             ->groupBy(fn (self $c) => strtoupper(preg_replace('/[^[:alnum:]]/u', '', $c->machine_no)))
-            ->map(function ($records) {
+            ->map(function ($records) use ($windowDays) {
                 $last = $records->last()->comm_date;
-                $inWindow = $records->filter(fn (self $c) => $c->comm_date->gte($last->copy()->subDays(self::REPEAT_WINDOW_DAYS)));
+                $inWindow = $records->filter(fn (self $c) => $c->comm_date->gte($last->copy()->subDays($windowDays)));
 
                 return [
                     'machine' => $records->last()->machine_no,
@@ -200,7 +212,7 @@ class ShiftComm extends Model
                     'slot' => self::shiftSlot($last->toDateString(), $records->last()->shift),
                 ];
             })
-            ->filter(fn (array $w) => $w['count'] >= self::REPEAT_THRESHOLD && $w['slot'] >= $currentSlot)
+            ->filter(fn (array $w) => $w['count'] >= $threshold && $w['slot'] >= $currentSlot)
             ->sortByDesc('count')
             ->values()
             ->all();

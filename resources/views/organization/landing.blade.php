@@ -23,10 +23,10 @@ $palette = [
 
                 <div class="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
                     @foreach ($items as $slug => $config)
-                        <a href="{{ route('organization.index', $slug) }}"
+                        <a href="{{ $config['url'] ?? route('organization.index', $slug) }}"
                            class="group flex items-center justify-between gap-2 rounded-md border border-neutral-200 bg-white px-3 py-2 transition {{ $c['hover'] }}">
                             <span class="truncate text-sm font-medium text-neutral-800">{{ $config['label'] }}</span>
-                            <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold {{ $c['chip'] }}">{{ rescue(fn () => $config['model']::count(), 0, false) }}</span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold {{ $c['chip'] }}">{{ $config['badge'] ?? rescue(fn () => $config['model']::count(), 0, false) }}</span>
                         </a>
                     @endforeach
                 </div>

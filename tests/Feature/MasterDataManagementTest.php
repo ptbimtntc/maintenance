@@ -330,4 +330,29 @@ class MasterDataManagementTest extends TestCase
         $deleteResponse->assertRedirect(route('organization.index', 'machines-cb'));
         $this->assertDatabaseMissing('machines', ['id' => $machine->id]);
     }
+
+    public function test_administrator_can_view_and_update_shift_comm_parameters(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $landing = $this->actingAs($admin)->get(route('organization.landing'));
+        $landing->assertOk();
+        $landing->assertSee('Shift Comm Parameters');
+        $landing->assertSee('7 Hari');
+
+        $viewResponse = $this->actingAs($admin)->get(route('organization.shift-comm-settings'));
+        $viewResponse->assertOk();
+        $viewResponse->assertSee('Rolling Days Problem Berulang TS (Hari)');
+        $viewResponse->assertSee('Threshold Kejadian Problem Berulang TS (Kali)');
+
+        $updateResponse = $this->actingAs($admin)->put(route('organization.shift-comm-settings.update'), [
+            'shift_comm_repeat_window_days' => 14,
+            'shift_comm_repeat_threshold' => 5,
+        ]);
+
+        $updateResponse->assertRedirect(route('organization.shift-comm-settings'));
+        $this->assertSame(14, \App\Models\ShiftComm::repeatWindowDays());
+        $this->assertSame(5, \App\Models\ShiftComm::repeatThreshold());
+    }
 }

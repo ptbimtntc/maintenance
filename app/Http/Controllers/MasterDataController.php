@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsSpreadsheet;
+use App\Models\Setting;
+use App\Models\ShiftComm;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -34,6 +36,7 @@ class MasterDataController extends Controller
         'Skills & Competency' => ['skill-categories', 'skills', 'competency-levels'],
         'Training & Certification' => ['training-categories', 'training-types', 'training-providers', 'certificate-types'],
         'Machine & Equipment' => ['machines-cb', 'machines-wwd'],
+        'Parameters & Configuration' => ['shift-comm-parameters'],
     ];
 
     private function isMachineType(string $type): bool
@@ -44,6 +47,11 @@ class MasterDataController extends Controller
     public function landing(): View
     {
         $types = Config::get('master_data');
+        $types['shift-comm-parameters'] = [
+            'label' => 'Shift Comm Parameters',
+            'url' => route('organization.shift-comm-settings'),
+            'badge' => ShiftComm::repeatWindowDays().' Hari',
+        ];
         $groups = [];
 
         foreach (self::LANDING_GROUPS as $title => $slugs) {
@@ -61,6 +69,27 @@ class MasterDataController extends Controller
         }
 
         return view('organization.landing', ['groups' => $groups]);
+    }
+
+    public function shiftCommSettings(): View
+    {
+        return view('organization.shift-comm-settings', [
+            'repeatWindowDays' => ShiftComm::repeatWindowDays(),
+            'repeatThreshold' => ShiftComm::repeatThreshold(),
+        ]);
+    }
+
+    public function updateShiftCommSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'shift_comm_repeat_window_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'shift_comm_repeat_threshold' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        Setting::set('shift_comm_repeat_window_days', (string) $data['shift_comm_repeat_window_days']);
+        Setting::set('shift_comm_repeat_threshold', (string) $data['shift_comm_repeat_threshold']);
+
+        return redirect()->route('organization.shift-comm-settings')->with('status', 'Parameter Shift Comm berhasil diperbarui.');
     }
 
     public function index(string $type, Request $request): View

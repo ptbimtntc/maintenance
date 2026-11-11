@@ -8,12 +8,13 @@
 
         @if (count($repeatWarnings) > 0)
             @php
-                $warningStart = collect($repeatWarnings)->min('first')?->format('d M Y') ?? now()->subDays(\App\Models\ShiftComm::REPEAT_WINDOW_DAYS)->format('d M Y');
+                $rollingDays = \App\Models\ShiftComm::repeatWindowDays();
+                $warningStart = collect($repeatWarnings)->min('first')?->format('d M Y') ?? now()->subDays($rollingDays)->format('d M Y');
                 $warningEnd = collect($repeatWarnings)->max('last')?->format('d M Y') ?? now()->format('d M Y');
             @endphp
             <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click="open = !open" :aria-expanded="open" class="flex w-full items-center justify-between gap-2 rounded-md border border-warning-300 bg-warning-50 px-4 py-2.5 text-left text-sm font-semibold text-warning-800 hover:bg-warning-100/70 transition shadow-sm">
-                    <span>⚠️ Peringatan Problem Berulang TS (Rolling 7 hari)</span>
+                    <span>⚠️ Peringatan Problem Berulang TS (Rolling {{ $rollingDays }} hari)</span>
                     <svg class="h-4 w-4 shrink-0 transition-transform duration-200" :class="open && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div x-show="open"
@@ -25,7 +26,7 @@
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      x-cloak
                      class="absolute left-0 right-0 z-50 mt-1.5 space-y-2 rounded-md border border-warning-300 bg-white p-4 text-sm text-neutral-800 shadow-xl ring-1 ring-black/5">
-                    <p class="text-neutral-700">Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam 7 hari terakhir ({{ $warningStart }} s/d {{ $warningEnd }}) dan perlu dilakukan pengecekan/tindakan lanjutan.</p>
+                    <p class="text-neutral-700">Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam {{ $rollingDays }} hari terakhir ({{ $warningStart }} s/d {{ $warningEnd }}) dan perlu dilakukan pengecekan/tindakan lanjutan.</p>
                     <ul class="space-y-1 font-semibold text-warning-900">
                         @foreach ($repeatWarnings as $warning)
                             <li>• Mesin {{ $warning['machine'] }} ({{ $warning['count'] }}x Problem)</li>
