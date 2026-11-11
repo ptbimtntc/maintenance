@@ -144,7 +144,7 @@ Catatan komunikasi antar-shift (serah terima).
 3. Masukkan **Machine No.**; kolom **Machine Type** di sampingnya akan terisi otomatis secara read-only berdasarkan nomor/tipe mesin (dapat memilih saran mesin yang tersedia).
 4. Isi status dan catatan, lalu simpan.
 5. Entri dapat dibuka dan diedit oleh pembuatnya atau Administrator; tombol **Delete** hanya muncul dan dapat diakses oleh pengguna dengan role **Administrator**.
-6. Bila ada mesin dengan problem Torsion Shaft berulang (ambang batas kejadian dan rentang rolling days dapat diatur dinamis di Master Data, default: minimal 4 kali dalam rentang rolling 7 hari terakhir), bar notifikasi peringatan muncul tepat di atas kontrol filter sebagai komponen dropdown overlay. Ketika diklik, panel rincian terbuka melayang di atas konten (overlay) tanpa menggeser tata letak halaman. Di dalamnya, setiap nomor mesin bersifat interaktif (dapat diklik): ketika salah satu nomor mesin diklik, sistem langsung menyaring dan menampilkan rincian record laporan problem mesin tersebut pada tabel utama Shift Comm (dengan filter nomor mesin dan kategori Torsion Shaft aktif). Komponen ini otomatis tersembunyi jika tidak ada problem berulang.
+6. Bila ada mesin dengan problem Torsion Shaft berulang (ambang batas kejadian dan rentang rolling days dapat diatur dinamis di Master Data, default: minimal 4 kali dalam rentang rolling 7 hari terakhir), bar notifikasi peringatan muncul tepat di atas kontrol filter sebagai komponen dropdown overlay. Ketika diklik, panel rincian terbuka melayang di atas konten (overlay) tanpa menggeser tata letak halaman. Di dalamnya, pesan utama menampilkan peringatan umum dan daftar setiap nomor mesin yang bermasalah disertai rentang tanggal kejadian aktualnya masing-masing ([Tanggal Awal] s/d [Tanggal Akhir]). Setiap nomor mesin dapat diklik untuk langsung menyaring dan menampilkan rincian record laporan problem mesin tersebut pada tabel utama Shift Comm (dengan filter nomor mesin dan kategori Torsion Shaft aktif). Komponen ini otomatis tersembunyi jika tidak ada problem berulang.
 <!-- /only -->
 
 ---
@@ -473,6 +473,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-11 | Shift Comm: Memindahkan rentang tanggal kejadian dari kalimat pesan utama ke samping masing-masing nomor mesin pada daftar problem berulang. |
 | 2026-11-11 | Shift Comm: Menyesuaikan interaktivitas notifikasi warning — mengklik nomor mesin kini langsung menyaring dan menampilkan rincian laporan problem pada tabel utama. |
 | 2026-11-11 | Master Data: Menambahkan menu dan form konfigurasi parameter Shift Comm (Rolling Days dan Repeat Threshold problem berulang TS) yang dapat diatur secara dinamis melalui antarmuka. |
 | 2026-11-10 | Shift Comm: Mengubah notifikasi warning problem berulang Torsion Shaft menjadi komponen dropdown overlay agar tidak menggeser layout saat dibuka. |

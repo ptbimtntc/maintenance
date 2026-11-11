@@ -206,6 +206,7 @@ class ShiftCommTest extends TestCase
             ->assertSee('Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam 7 hari terakhir', false)
             ->assertSee('• Mesin M-001 (4x Problem)', false)
             ->assertSee('• Mesin M-003 (5x Problem)', false)
+            ->assertSee('(25 Sep 2026 s/d 01 Oct 2026)')
             ->assertSee('Lihat di tabel')
             ->assertDontSee('M-002 (', false);
 

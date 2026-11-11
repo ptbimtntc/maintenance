@@ -9,8 +9,6 @@
         @if (count($repeatWarnings) > 0)
             @php
                 $rollingDays = \App\Models\ShiftComm::repeatWindowDays();
-                $warningStart = collect($repeatWarnings)->min('first')?->format('d M Y') ?? now()->subDays($rollingDays)->format('d M Y');
-                $warningEnd = collect($repeatWarnings)->max('last')?->format('d M Y') ?? now()->format('d M Y');
             @endphp
             <div x-data="{ open: false }" @click.outside="open = false" @keydown.escape.window="open = false" class="relative">
                 <button type="button" @click="open = !open" :aria-expanded="open" class="flex w-full items-center justify-between gap-2 rounded-md border border-warning-300 bg-warning-50 px-4 py-2.5 text-left text-sm font-semibold text-warning-800 hover:bg-warning-100/70 transition shadow-sm">
@@ -27,7 +25,7 @@
                      x-cloak
                      class="absolute left-0 right-0 z-50 mt-1.5 space-y-3 rounded-md border border-warning-300 bg-white p-4 text-sm text-neutral-800 shadow-xl ring-1 ring-black/5">
                     <p class="text-neutral-700">
-                        Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam {{ $rollingDays }} hari terakhir ({{ $warningStart }} s/d {{ $warningEnd }}) dan perlu dilakukan pengecekan/tindakan lanjutan.
+                        Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam {{ $rollingDays }} hari terakhir dan perlu dilakukan pengecekan/tindakan lanjutan.
                         <span class="block mt-0.5 text-xs text-neutral-500">Klik pada nomor mesin untuk langsung melihat daftar rincian record laporan problem di tabel utama.</span>
                     </p>
 
@@ -35,8 +33,9 @@
                         @foreach ($repeatWarnings as $warning)
                             <li>
                                 <a href="{{ route('shift-comm.index', ['q' => $warning['machine'], 'torsion' => '1']) }}"
-                                   class="group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-sm font-semibold text-warning-900 hover:bg-warning-100 hover:text-brand-700 transition">
+                                   class="group inline-flex flex-wrap items-center gap-2 rounded-md px-2.5 py-1 text-sm font-semibold text-warning-900 hover:bg-warning-100 hover:text-brand-700 transition">
                                     <span>• Mesin {{ $warning['machine'] }} ({{ $warning['count'] }}x Problem)</span>
+                                    <span class="text-xs font-normal text-neutral-600">({{ $warning['first']->format('d M Y') }} s/d {{ $warning['last']->format('d M Y') }})</span>
                                     <span class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 group-hover:underline">
                                         Lihat di tabel &rarr;
                                     </span>
