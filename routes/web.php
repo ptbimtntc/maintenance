@@ -74,6 +74,15 @@ Route::middleware([AllowLototoQrForm::class, LogLototoFormAuthorization::class])
         ->name('safety.lototo.form.store');
 });
 
+// The link of a LOTOTO follow-up email: the Supervisor Feedback page of one activity for one supervisor, without a
+// login. The signed, expiring link is checked in the controller (LototoFollowUpLink); anything else gets a 403.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/safety/lototo/follow-up/{activity}/respond', [LototoController::class, 'respond'])
+        ->name('safety.lototo.follow-up.respond');
+    Route::post('/safety/lototo/follow-up/{activity}/respond', [LototoController::class, 'submitRespond'])
+        ->name('safety.lototo.follow-up.respond.store');
+});
+
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'guest-login');
 });

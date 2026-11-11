@@ -28,22 +28,23 @@
                 <img
                     src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
                     alt=""
-                    class="h-16 w-16 shrink-0 border border-neutral-400 object-cover"
+                    class="h-12 w-12 shrink-0 border border-neutral-400 object-cover sm:h-16 sm:w-16"
                 >
             @else
-                <div class="flex h-16 w-16 shrink-0 items-center justify-center border border-neutral-400 bg-neutral-200 text-lg font-bold text-neutral-700">
+                <div class="flex h-12 w-12 shrink-0 items-center sm:h-16 sm:w-16 justify-center border border-neutral-400 bg-neutral-200 text-lg font-bold text-neutral-700">
                     {{ $initials }}
                 </div>
             @endif
 
-            <div class="grid min-w-0 grid-cols-2 overflow-hidden border border-neutral-400 bg-white text-center sm:min-w-[270px]">
+            <div class="grid min-w-0 flex-1 grid-cols-[3fr_2fr] overflow-hidden sm:grid-cols-2 border border-neutral-400 bg-white text-center sm:min-w-[270px] sm:flex-initial">
                 <div class="border-r border-neutral-400 px-3 py-1">
                     <p class="text-xl font-black leading-tight">{{ $employee->lototo_number ?: '-' }}</p>
-                    <p class="truncate text-sm font-bold uppercase">{{ $employee->preferred_name ?: $employee->full_name }}</p>
+                    <p class="break-words text-[13px] font-bold uppercase leading-tight sm:truncate sm:text-sm">{{ $employee->preferred_name ?: $employee->full_name }}</p>
                 </div>
                 <div class="flex flex-col justify-center px-3 py-1">
                     <p class="truncate text-xs font-semibold text-neutral-600">{{ $employee->employee_number }}</p>
                     <p class="text-xs font-medium">{{ $isSupervisor ? 'SUPERVISOR' : 'TEKNISI' }}</p>
+                    <p class="mt-0.5 text-xs font-bold sm:hidden">{{ $activities->total() }} aktivitas</p>
                 </div>
             </div>
 

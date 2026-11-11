@@ -2660,3 +2660,325 @@ a.lototo-card:focus-visible {
     color: #525252;
     font-size: .75rem;
 }
+
+/* Section colours: each band gets a soft background in its own identity colour.
+   Technician = red, Spare = blue, Supervisor = yellow, Other / Tools = orange.
+   Selectors name the section class itself (Spare and Other are both div.lototo-group), so no band takes another
+   band's colour, in normal view and in Edit Mode alike. Cards, locks, QR, borders and status colours are unchanged. */
+.lototo-page .lototo-board-content > .lototo-main-area,
+.lototo-page .lototo-main-area .lototo-technician-group {
+    background-color: #fff1f2;
+}
+
+/* The Technician band's own frame was green; the bottom divider keeps its neutral colour. */
+.lototo-page .lototo-board-content > .lototo-main-area {
+    border-top-color: #fecdd3;
+    border-right-color: #fecdd3;
+    border-left-color: #fecdd3;
+}
+
+.lototo-page .lototo-vertical-label--technician {
+    border-right-color: #b91c1c;
+    background: #dc2626;
+    color: #fff;
+}
+
+.lototo-page .lototo-technician-group .lototo-card.lototo-empty-slot,
+.lototo-page .lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-technician {
+    background-color: #ffe4e6;
+}
+
+.lototo-page .lototo-board-content > .lototo-spare-group,
+.lototo-page .lototo-board-content > .lototo-spare-group .lototo-grid {
+    background-color: #eaf4fe;
+}
+
+.lototo-page .lototo-board-content > .lototo-supervisor-area,
+.lototo-page .lototo-board-content > .lototo-supervisor-area > .lototo-supervisor-group,
+.lototo-page .lototo-main-area .lototo-supervisor-group {
+    background-color: #fefbe3;
+}
+
+.lototo-page .lototo-board-content > .lototo-other-group,
+.lototo-page .lototo-board-content > .lototo-other-group .lototo-group-content,
+.lototo-page .lototo-board-content > .lototo-other-group .lototo-other-grid {
+    border-color: #fed7aa;
+    background-color: #fff7ed;
+}
+
+/* Tools with a photo: the photo fills the whole card (object-fit: cover, no stretching, no padding), so it follows
+   the card size set by the board columns and the screen width. The slot number, the IN badge and the tool name
+   sit on top of it; the name gets its own strip at the bottom so the photo never covers it. Cards without a photo
+   (no .lototo-tool-image) keep the placeholder icon and are not matched by these rules. */
+.lototo-board-content .lototo-other-grid .lototo-card:has(> .lototo-tool-image),
+.lototo-board-content .lototo-card.lototo-card--as-tool:has(> .lototo-tool-image) {
+    position: relative;
+    padding: 0;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card:has(> .lototo-tool-image)::before,
+.lototo-board-content .lototo-card.lototo-card--as-tool:has(> .lototo-tool-image)::before {
+    content: none;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card > .lototo-tool-image,
+.lototo-board-content .lototo-card.lototo-card--as-tool > .lototo-tool-image {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+    flex: none;
+    object-fit: cover;
+    object-position: center;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card:has(> .lototo-tool-image) > .lototo-tool-name,
+.lototo-board-content .lototo-card.lototo-card--as-tool:has(> .lototo-tool-image) > .lototo-tool-name {
+    position: absolute;
+    z-index: 3;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    max-width: none;
+    padding: 2px 3px;
+    background: rgba(255, 255, 255, .9);
+    color: #292524;
+    text-align: center;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card:has(> .lototo-tool-image) > .lototo-tool-status,
+.lototo-board-content .lototo-card.lototo-card--as-tool:has(> .lototo-tool-image) > .lototo-tool-status {
+    position: absolute;
+    z-index: 4;
+    top: 2px;
+    right: 2px;
+}
+
+/* LOTOTO number on a lock card: a red marker with white text (the card itself keeps its colours). No vertical
+   padding, so the plate and the card keep their height. */
+.lototo-card .lototo-lock-plate .lototo-number {
+    display: inline-block;
+    max-width: 100%;
+    padding: 0 .3em;
+    border-radius: 3px;
+    background: #dc2626;
+    color: #fff;
+}
+
+/* LOCKOUT STATION header, after the reference image: a short, wide black strip with a yellow-black hazard stripe along
+   its top and bottom edge, the title and the board title (yellow) left-aligned, and the red danger badge on the right.
+   Only the header: the bands and cards below keep their size and place. */
+.lototo-board-content > .lototo-board-heading {
+    position: relative;
+    display: flex;
+    min-height: 0;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem 1.25rem;
+    padding: .62rem 1.4rem;
+    border: 0;
+    border-bottom: 0;
+    background: #0a0a0a;
+    color: #fff;
+    text-align: left;
+}
+
+.lototo-board-heading::before,
+.lototo-board-heading::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: .4rem;
+    background: repeating-linear-gradient(135deg, #171717 0, #171717 7px, #facc15 7px, #facc15 14px);
+}
+
+.lototo-board-heading::before {
+    top: 0;
+}
+
+.lototo-board-heading::after {
+    bottom: 0;
+}
+
+.lototo-board-heading > .lototo-station-text {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+.lototo-board-heading .lototo-station-label {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(1.45rem, 2.5vw, 1.85rem);
+    font-weight: 900;
+    letter-spacing: .01em;
+    line-height: 1.02;
+}
+
+.lototo-board-heading .lototo-station-title {
+    margin: .1rem 0 0;
+    color: #facc15;
+    font-size: clamp(.78rem, 1.2vw, .95rem);
+    font-weight: 800;
+    letter-spacing: .015em;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+/* The subtitle is not part of the reference strip: it is read aloud, and shown while the board is edited. */
+.lototo-board-heading .lototo-station-subtitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.lototo-page[data-editing] .lototo-board-heading .lototo-station-subtitle {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: .25rem 0 0;
+    overflow: visible;
+    clip: auto;
+    color: #a3a3a3;
+    font-size: .7rem;
+    line-height: 1.2;
+    white-space: normal;
+}
+
+/* The badge: red, rounded, a warning triangle on the left, the warning in white bold and a tiny line under it. */
+.lototo-board-heading .lototo-danger-badge {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: .45rem;
+    margin: 0;
+    padding: .3rem .7rem .3rem .45rem;
+    border-radius: .3rem;
+    background: #c72920;
+    color: #fff;
+    text-align: left;
+}
+
+.lototo-board-heading .lototo-danger-badge__icon {
+    width: 1.5rem;
+    height: 1.35rem;
+    flex: 0 0 auto;
+}
+
+.lototo-board-heading .lototo-danger-badge__text {
+    display: block;
+    min-width: 0;
+}
+
+.lototo-board-heading .lototo-danger-badge__title {
+    display: block;
+    font-size: clamp(.68rem, 1.05vw, .82rem);
+    font-weight: 800;
+    letter-spacing: .01em;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.lototo-board-heading .lototo-danger-badge__note {
+    display: block;
+    margin-top: .1rem;
+    font-size: .46rem;
+    line-height: 1.15;
+    opacity: .95;
+}
+
+/* Below 900 px the board is a 1000 px canvas the page scrolls sideways (.lototo-page). The title and the badge are
+   stacked and stay pinned to the visible left edge, so they are on screen without scrolling. */
+@media (max-width: 900px) {
+    .lototo-board-content > .lototo-board-heading {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 1rem .75rem;
+    }
+
+    .lototo-board-heading > .lototo-station-text,
+    .lototo-board-heading .lototo-danger-badge {
+        position: sticky;
+        left: .75rem;
+        flex: none;
+        max-width: calc(100vw - 3.5rem);
+    }
+
+    .lototo-board-heading > .lototo-station-text {
+        width: calc(100vw - 3.5rem);
+    }
+
+    .lototo-board-heading .lototo-danger-badge__title {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 640px) {
+    .lototo-board-heading .lototo-station-label {
+        font-size: 1.5rem;
+    }
+}
+
+/* Other / Tools: the whole section is green: label, area, grid, slots, tool cards and their stripe. The amber IN
+   status of a tool (border and badge) is a status colour and stays. */
+.lototo-board-content .lototo-vertical-label--other {
+    background: #15803d;
+    color: #fff;
+}
+
+.lototo-board-content .lototo-section-heading--other {
+    border-bottom-color: #166534;
+    background: #15803d;
+    color: #fff;
+}
+
+.lototo-page .lototo-board-content > .lototo-other-group,
+.lototo-page .lototo-board-content > .lototo-other-group .lototo-group-content,
+.lototo-page .lototo-board-content > .lototo-other-group .lototo-other-grid {
+    border-color: #4ade80;
+    background-color: #f0fdf4;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card:not(.lototo-tool-card--in) {
+    border-color: #4ade80;
+    background-color: #dcfce7;
+}
+
+.lototo-board-content .lototo-other-group .lototo-card::before {
+    background: #16a34a;
+}
+
+.lototo-board-content .lototo-other-grid .lototo-card:not(.lototo-tool-card--in) > svg,
+.lototo-board-content .lototo-card.lototo-card--as-tool:not(.lototo-tool-card--in) > svg {
+    color: #15803d;
+}
+
+/* A tool or an empty slot drawn in another band keeps the tool look, in green too. */
+.lototo-board-content .lototo-card.lototo-empty-slot.lototo-card--as-tool {
+    background-color: #dcfce7;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool:not(.lototo-empty-slot):not(.lototo-tool-card--in) {
+    border-color: #4ade80;
+    background-color: #dcfce7;
+}
+
+.lototo-board-content .lototo-card.lototo-card--as-tool::before {
+    background: #16a34a;
+}
+
+/* A tool that is IN keeps its original status look, stripe included. */
+.lototo-board-content .lototo-other-group .lototo-card.lototo-tool-card--in::before,
+.lototo-board-content .lototo-card.lototo-card--as-tool.lototo-tool-card--in::before {
+    background: #fb923c;
+}

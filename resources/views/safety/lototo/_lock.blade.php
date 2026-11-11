@@ -16,7 +16,8 @@
         @if ($in)
             <span class="lototo-lock-danger lototo-lock-danger--in"><span>IN</span>@if ($employee && filled($code ?? null)) · {{ $code }}@endif</span>
         @else
-            <span class="lototo-lock-danger">{{ $band ?? 'DANGER' }}</span>
+            {{-- The Technician band keeps its DANGER tag; other bands name themselves (supervisor, spare). --}}
+            <span class="lototo-lock-danger">{{ ($band ?? 'technician') === 'technician' ? 'DANGER' : $band }}</span>
         @endif
         <span class="lototo-lock-plate">
             @if ($employee)

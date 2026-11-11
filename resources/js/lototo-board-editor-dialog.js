@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_LABELS, DraftError, assignmentField, isEmpty, pad } from './lototo-board-draft';
+import { CATEGORIES, CATEGORY_LABELS, DraftError, assignmentField, pad } from './lototo-board-draft';
 
 const MODAL = 'lototo-slot-editor';
 
@@ -34,7 +34,7 @@ export function createSlotDialog(form, { getOptions, isBusy }) {
         const band = CATEGORY_LABELS[slot.section ?? current.category];
         // Without stored cells (database not migrated yet) the board still draws a slot in its category's band.
         const text = slot.grid_row
-            ? `Slot tetap di posisinya (pita ${band}, baris ${slot.grid_row} kolom ${slot.grid_column}); isinya menjadi ${CATEGORY_LABELS[target]}. Nomor ${pad(slot.position)} tetap.`
+            ? `Slot tetap di pita ${band} dan urutannya; isinya menjadi ${CATEGORY_LABELS[target]}. Nomor ${pad(slot.position)} tetap; letak slot sesudahnya disesuaikan otomatis.`
             : `Nomor ${pad(slot.position)} tetap; setelah disimpan slot tampil di pita ${CATEGORY_LABELS[target]} karena letak slot belum tersimpan di database.`;
         moveNote.textContent = target === current.category ? '' : text;
         moveNote.hidden = target === current.category;
@@ -152,14 +152,13 @@ export function createSlotDialog(form, { getOptions, isBusy }) {
             current = { draft, key, category: found.category, slot: found.slot, apply, remove, original, isNew };
             const { slot, category } = found;
             const locked = Boolean(slot.locked);
-            const canChangeCategory = !locked && (isNew || (original.category !== 'technician' && isEmpty(original)));
+            // Every slot, Technician included, may change category in any band, unless something on it is IN.
+            const canChangeCategory = !locked;
 
             form.querySelector('[data-slot-dialog-title]').textContent = `${isNew ? 'Tambah' : 'Edit'} slot ${CATEGORY_LABELS[category]} ${pad(slot.position)}`;
             form.querySelector('[data-slot-dialog-locked]').hidden = !locked;
             fields.category.value = category;
             fields.category.disabled = !canChangeCategory;
-            // Only the Technician band holds Technician slots.
-            fields.category.querySelector('option[value="technician"]').disabled = (slot.section ?? category) !== 'technician';
             fillAssignments(category);
             fields.employee.value = slot.employee_id ?? '';
             fields.spare.value = slot.spare_lock_id ?? '';

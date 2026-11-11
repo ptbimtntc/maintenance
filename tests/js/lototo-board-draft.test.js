@@ -86,17 +86,21 @@ test('one employee or spare lock goes to one position only, and positions stay u
     assert.deepEqual(toPayload(draft).slots.technician.map((s) => s.employee_id), [null, 11]);
 });
 
-test('only empty saved slots outside Technician change category', () => {
+test('any saved slot changes category, Technician and filled ones included, unless something on it is IN', () => {
     const source = layout();
     const draft = createDraft(source);
     const saved = savedSlots(source);
 
-    assert.throws(() => updateSlot(draft, saved, '2', { category: 'tool', position: 2 }), /bukan posisi Technician/);
-    assert.throws(() => updateSlot(draft, saved, '5', { category: 'tool', position: 2 }), DraftError);
-    updateSlot(draft, saved, '4', { category: 'tool', position: 2, tool_id: 42, tool_column_span: 2 });
+    // An empty Technician slot becomes a tool slot, in its own band.
+    updateSlot(draft, saved, '2', { category: 'tool', position: 2, tool_id: 42 });
+    // A spare slot holding lock 31 becomes a Technician slot: the lock is released from the slot (it stays a record).
+    updateSlot(draft, saved, '6', { category: 'technician', position: 2, employee_id: null });
+    // Supervisor 1 has LOTOTO IN: refused.
+    assert.throws(() => updateSlot(draft, saved, '3', { category: 'tool', position: 3 }), /aktivitas LOTOTO aktif/);
     const payload = toPayload(draft);
-    assert.deepEqual(payload.slots.supervisor.map((s) => s.id), [3]);
-    assert.deepEqual(payload.slots.tool.find((s) => s.id === 4), slot(4, 2, { tool_id: 42, tool_label: 'Gerinda', tool_column_span: 2, section: 'supervisor' }));
+    assert.deepEqual(payload.slots.tool.find((s) => s.id === 2), slot(2, 2, { tool_id: 42, tool_label: 'Gerinda', section: 'technician' }));
+    assert.deepEqual(payload.slots.technician.find((s) => s.id === 6), slot(6, 2, { section: 'spare' }));
+    assert.deepEqual(payload.slots.spare.map((s) => s.id), [5]);
 });
 
 test('a category change keeps the slot position number and its enabled state', () => {
@@ -161,51 +165,74 @@ function cellLayout() {
     return source;
 }
 
-test('with cells, a category change keeps the slot in its band, cell and number', () => {
+const cellsOf = (draft) => Object.fromEntries(Object.values(toPayload(draft).slots).flat().map((s) => [s.id, `${s.grid_row}:${s.grid_column}`]));
+
+test('with cells, a category change keeps the slot in its band, order and number; the band closes its gaps', () => {
     const source = cellLayout();
     const draft = createDraft(source);
 
-    // Supervisor 4 (1:2) becomes a tool; 1:2 in the Tools band is covered by Tools 1, but the slot does not go there.
+    // Supervisor 4 (1:2) becomes a tool; it stays at 1:2 of the Supervisor band, not in the Tools band.
     updateSlot(draft, savedSlots(source), '4', { category: 'tool', tool_id: 42 });
     const changed = toPayload(draft).slots.tool.find((s) => s.id === 4);
     assert.deepEqual([changed.section, changed.grid_row, changed.grid_column, changed.position], ['supervisor', 1, 2, 2]);
-    // Nothing else changed.
+    // Automatic layout: Supervisor 10 closes the gap at 1:4; every other slot keeps its cell and content.
     assert.deepEqual(toPayload(draft).slots.tool.filter((s) => s.id !== 4), source.slots.tool);
-    assert.deepEqual(toPayload(draft).slots.supervisor, source.slots.supervisor.filter((s) => s.id !== 4));
+    assert.deepEqual(toPayload(draft).slots.supervisor, source.slots.supervisor.filter((s) => s.id !== 4).map((s) => (s.id === 10 ? { ...s, grid_column: 4 } : s)));
 });
 
-test('with cells, a wider tool over a neighbour, past the band edge, or a Technician change is refused and changes nothing', () => {
+test('with cells, a wider tool pushes the slots after it along and a narrower one lets them close up', () => {
     const source = cellLayout();
     const draft = createDraft(source);
     const saved = savedSlots(source);
-    const before = JSON.stringify(toPayload(draft));
 
-    // Supervisor 4 on 1:2 as a two-column tool would cover Supervisor 9 on 1:3.
-    assert.throws(() => updateSlot(draft, saved, '4', { category: 'tool', tool_id: 43, tool_column_span: 2 }), /pita Supervisor bertabrakan dengan Supervisor 09/);
-    // Supervisor 10 on 1:5 as a two-column tool would leave the five-column band.
-    assert.throws(() => updateSlot(draft, saved, '10', { category: 'tool', tool_id: 43, tool_column_span: 2 }), /melewati batas pita Supervisor \(5 kolom\)/);
-    // Tools 1 widened to three columns would cover Tools 7 (slot 8) on 1:3.
-    assert.throws(() => updateSlot(draft, saved, '7', { tool_id: 41, tool_column_span: 3 }), /bertabrakan dengan Other \/ Tools 07/);
+    // Supervisor 4 (1:2) as a two-column tool takes 1:2-1:3: Supervisor 9 and 10 move along, nothing is refused.
+    updateSlot(draft, saved, '4', { category: 'tool', tool_id: 43, tool_column_span: 2 });
+    assert.deepEqual([cellsOf(draft)[4], cellsOf(draft)[9], cellsOf(draft)[10]], ['1:2', '1:4', '1:5']);
+    // Tools 1 (slot 7, two columns at 1:1) widened to three: Tools 7 (slot 8) moves from 1:3 to 1:4; back to one: 1:2.
+    updateSlot(draft, saved, '7', { tool_id: 41, tool_column_span: 3 });
+    assert.deepEqual([cellsOf(draft)[7], cellsOf(draft)[8]], ['1:1', '1:4']);
+    updateSlot(draft, saved, '7', { tool_id: 41, tool_column_span: 1 });
+    assert.deepEqual([cellsOf(draft)[7], cellsOf(draft)[8]], ['1:1', '1:2']);
+    // Supervisor 10 (now 1:5, the band's last column) as a two-column tool does not fit there: it starts row 2.
+    updateSlot(draft, saved, '10', { category: 'tool', tool_id: 42, tool_column_span: 2 });
+    assert.equal(cellsOf(draft)[10], '2:1');
+    // Numbers, order and ids never change; the Supervisor band never overlaps.
+    assert.deepEqual(Object.values(toPayload(draft).slots).flat().filter((s) => s.section === 'supervisor').map((s) => [s.id, s.position]).sort((a, b) => a[0] - b[0]), [[3, 1], [4, 2], [9, 9], [10, 10]]);
     // One tool record in one slot only.
     assert.throws(() => updateSlot(draft, saved, '8', { tool_id: 41 }), /sudah ditempatkan pada posisi 1/);
-    // Outside the Technician band nothing becomes a Technician slot.
-    assert.throws(() => updateSlot(draft, saved, '4', { category: 'technician', employee_id: null }), /hanya berada di pita Technician/);
+    // A span wider than the whole band is refused.
+    draft.column_limits = { min: 1, max: 30 };
+    setColumns(draft, 2);
+    const before = JSON.stringify(toPayload(draft));
+    assert.throws(() => updateSlot(draft, saved, '7', { tool_id: 41, tool_column_span: 3 }), /tidak muat pada pita Other \/ Tools \(2 kolom\)/);
     assert.equal(JSON.stringify(toPayload(draft)), before);
 });
 
-test('with cells, new slots get a number of their own and the given or first free cell of their band', () => {
+test('with cells, a slot in any band may become a Technician slot', () => {
+    const source = cellLayout();
+    const draft = createDraft(source);
+
+    updateSlot(draft, savedSlots(source), '4', { category: 'technician', employee_id: null });
+    const changed = toPayload(draft).slots.technician.find((s) => s.id === 4);
+    assert.deepEqual([changed.section, changed.grid_row, changed.grid_column, changed.position], ['supervisor', 1, 2, 2]);
+});
+
+test('with cells, new slots get a number of their own and join the end of their packed band', () => {
     const draft = createDraft(cellLayout());
 
     const first = addSlot(draft, 'tool');
     assert.deepEqual([first.position, first.section, first.grid_row, first.grid_column], [8, 'tool', 1, 4]);
+    // A given cell only says where it goes in the reading order: the band is packed, Supervisor 10 closes the gap
+    // at 1:4 and Supervisor 11 follows it.
     const given = addSlot(draft, 'supervisor', 11, { row: 3, column: 2 });
-    assert.deepEqual([given.grid_row, given.grid_column], [3, 2]);
-    assert.throws(() => addSlot(draft, 'supervisor', 12, { row: 3, column: 2 }), /sudah ditempati/);
-    // The section "+" : an empty slot in the first free cell, reading row by row (Supervisor 1:4 is free).
+    assert.deepEqual([given.grid_row, given.grid_column], [1, 5]);
+    assert.equal(cellsOf(draft)[10], '1:4');
+    assert.throws(() => addSlot(draft, 'supervisor', 11), /sudah ada/);
+    // The section "+": an empty slot after the last one.
     const spare = addSlot(draft, 'spare', undefined, null, 'spare');
     assert.deepEqual([spare.position, spare.grid_row, spare.grid_column, spare.spare_lock_id], [3, 1, 3, null]);
     const supervisor = addSlot(draft, 'supervisor', undefined, null, 'supervisor');
-    assert.deepEqual([supervisor.position, supervisor.grid_row, supervisor.grid_column], [12, 1, 4]);
+    assert.deepEqual([supervisor.position, supervisor.grid_row, supervisor.grid_column], [12, 2, 1]);
 });
 
 test('a new column count packs every band in reading order, keeping ids, numbers, content and order', () => {
@@ -238,24 +265,27 @@ test('the reading-order packing (same rule as LototoSlotGrid::reflow)', () => {
     assert.deepEqual(Object.fromEntries([...cells].map(([key, cell]) => [key, `${cell.row}:${cell.column}`])), { a: '1:1', b: '1:2', c: '2:1', new: '2:2' });
 });
 
-test('a slot can be removed: its cell stays empty, nothing else moves; Technician and IN slots stay', () => {
+test('a slot of any category can be removed and the slots after it close up; IN slots stay', () => {
     const source = cellLayout();
     const draft = createDraft(source);
-    const before = toPayload(draft).slots;
 
     removeSlot(draft, '9');
     const payload = toPayload(draft);
     assert.deepEqual(payload.removed, [9]);
     assert.equal(payload.slots.supervisor.some((s) => s.id === 9), false);
-    assert.deepEqual(payload.slots.supervisor, before.supervisor.filter((s) => s.id !== 9));
+    // Supervisor 10 closes up from 1:5 to 1:3; numbers stay.
+    assert.deepEqual(payload.slots.supervisor.map((s) => [s.id, s.position, `${s.grid_row}:${s.grid_column}`]), [[3, 1, '1:1'], [4, 2, '1:2'], [10, 10, '1:3']]);
     assert.deepEqual(describeChanges(source, draft, label), ['Dihapus · Supervisor 09: kosong']);
-    assert.throws(() => removeSlot(draft, '1'), /Technician 01 tidak dapat dihapus/);
+    // A Technician slot holding an employee can be removed (the editor asks first); Technician 02 moves to 1:1.
+    removeSlot(draft, '1');
+    assert.deepEqual(toPayload(draft).slots.technician.map((s) => [s.id, `${s.grid_row}:${s.grid_column}`]), [[2, '1:1']]);
     assert.throws(() => removeSlot(draft, '3'), /aktivitas LOTOTO aktif/);
-    // A slot that holds a tool can go too (the editor asks first); the tool record stays.
+    // A slot that holds a tool can go too; the tool record stays.
     removeSlot(draft, '7');
+    assert.equal(cellsOf(draft)[8], '1:1');
     const added = addSlot(draft, 'technician');
     removeSlot(draft, added.key);
-    assert.deepEqual(toPayload(draft).removed, [9, 7]);
+    assert.deepEqual(toPayload(draft).removed, [9, 1, 7]);
 });
 
 test('bands below Technician can be ordered freely', () => {

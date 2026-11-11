@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\PermissionName;
 use App\Models\Employee;
+use App\Models\LototoActivity;
 use App\Models\SpareLock;
 use App\Models\LototoBoard;
 use App\Models\LototoBoardSlot;
@@ -43,7 +44,7 @@ class SpareLockController extends Controller
             'board' => $board,
             'activities' => $spareLock->activities()
                 ->when(! $canManageSafety, fn ($query) => $query->whereHas('employee', fn ($employees) => $employees->visibleTo($request->user())))
-                ->with(['employee', 'spareLock'])
+                ->with(['employee', 'spareLock', ...LototoActivity::feedbackRelations()])
                 ->latest('started_at')
                 ->paginate(20),
         ]);

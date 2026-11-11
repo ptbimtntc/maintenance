@@ -18,7 +18,7 @@
 
         <section class="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
             <h2 class="text-lg font-bold text-neutral-900">Add Board</h2>
-            <p class="mt-1 text-sm text-neutral-600">Board baru memakai layout standar LOTOTO. Technician dan Supervisor diambil dari Business Unit terpilih; gembok Spare dibuat otomatis dengan kode dari nama divisi (contoh: DRAMIX-SP-001).</p>
+            <p class="mt-1 text-sm text-neutral-600">Board baru memakai layout standar LOTOTO. Technician dan Supervisor diambil dari Business Unit terpilih; gembok Spare dibuat otomatis dengan kode SP-{inisial Business Unit}-{nomor urut} (contoh: SP-HP-01, SP-HP-02).</p>
             <form method="POST" action="{{ route('safety.lototo.boards.store') }}" class="mt-4 grid gap-4 sm:grid-cols-4" data-board-create-form>
                 @csrf
                 <label class="text-sm font-semibold text-neutral-700">Division Name

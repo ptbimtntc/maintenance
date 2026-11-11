@@ -6,9 +6,11 @@ use App\Enums\RoleName;
 use App\Models\BusinessUnit;
 use App\Models\Employee;
 use App\Models\EmploymentStatus;
+use App\Models\LototoActivity;
 use App\Models\LototoBoard;
 use App\Models\LototoBoardSlot;
 use App\Models\LototoTool;
+use App\Models\LototoToolActivity;
 use App\Models\SpareLock;
 use App\Models\User;
 use App\Support\LototoSlotGrid;
@@ -20,13 +22,17 @@ use RuntimeException;
 use Tests\TestCase;
 
 /**
- * A slot's category is what it holds; its section (band) and cell are where it is. Changing the category of an
- * empty slot keeps its id, number, band and cell. Column counts only widen or narrow a band, never move slots.
+ * A slot's category is what it holds; its section (band) is where it is. Changing the category of a slot (any
+ * category, Technician included, unless something on it is IN) keeps its id, number, band and place in the
+ * reading order. Every save packs each band in reading order (automatic layout): a wider Tools slot pushes the
+ * slots after it along, a narrower or removed one lets them close up, and no gap is left.
  *
  * Board (columns): Technician 20, Supervisor 5, Spare 8, Other / Tools 6.
+ *   Technician 1..3 at 1:1-3 (1 assigned).
  *   Supervisor 1..8: row 1 cols 1-5, row 2 cols 1-3 (1 assigned, the rest empty).
- *   Tools: 1 (span 2) at 1:1, 2 at 1:3, 3 at 1:4, 4 at 1:5, 5 at 1:6, 6 at 2:1, 7 (empty) at 2:4.
- *   Spare: 1..3 with locks SP-01..03 at 1:1-3; an empty slot numbered 5 at 1:8; lock SP-04 not placed.
+ *   Tools: 1 (span 2) at 1:1, 2 at 1:3, 3 at 1:4, 4 at 1:5, 5 at 1:6, 6 at 2:1, 7 (empty) at 2:4 (a gap at 2:2-3).
+ *   Spare: 1..3 with locks SP-01..03 at 1:1-3; an empty slot numbered 5 at 1:8 (a gap at 1:4-7); SP-04 not placed.
+ * The first save closes both gaps: Tools 7 to 2:2, Spare 5 to 1:4 (closeGaps).
  */
 class LototoCategoryCellTest extends TestCase
 {
@@ -42,7 +48,7 @@ class LototoCategoryCellTest extends TestCase
         parent::setUp();
 
         $this->seed(RolesAndPermissionsSeeder::class);
-        $unit = BusinessUnit::factory()->create(['is_active' => true]);
+        $unit = BusinessUnit::factory()->create(['is_active' => true, 'name' => 'Cells Unit']);
         $active = EmploymentStatus::factory()->create(['code' => 'ACTIVE']);
         $this->admin = User::factory()->create();
         $this->admin->assignRole(RoleName::Administrator->value);
@@ -84,11 +90,12 @@ class LototoCategoryCellTest extends TestCase
         $this->assertSame(['tool', 'supervisor', 7, 2, 2], [$slot->category, $slot->section, $slot->position, $slot->grid_row, $slot->grid_column]);
         // The slot holds the chosen tool record and shows its name.
         $this->assertSame('Kunci Torsi', LototoTool::query()->findOrFail($slot->tool_id)->name);
-        $this->assertSame(collect($rows)->except($this->ids['supervisor7'])->all(), collect($this->rows())->except($this->ids['supervisor7'])->all());
+        // Every other slot keeps its content; only the two gaps of the fixture close (automatic layout).
+        $this->assertSame(collect($this->closeGaps($rows))->except($this->ids['supervisor7'])->all(), collect($this->rows())->except($this->ids['supervisor7'])->all());
 
         $after = $this->drawnCells();
         $this->assertSame(['supervisor', 2, 2, 1], $after[$this->ids['supervisor7']]);
-        $this->assertSame(collect($before)->except($this->ids['supervisor7'])->all(), collect($after)->except($this->ids['supervisor7'])->all());
+        $this->assertSame(collect($this->closeGapCells($before))->except($this->ids['supervisor7'])->all(), collect($after)->except($this->ids['supervisor7'])->all());
         // Drawn as a tool card, with the tool look, inside the Supervisor band.
         $this->assertMatchesRegularExpression('/lototo-supervisor-area.*data-slot-category="tool"[^>]*data-slot-section="supervisor"[^>]*data-slot-id="'.$this->ids['supervisor7'].'".*lototo-card--as-tool.*Kunci Torsi.*lototo-other-group/s', $this->page());
 
@@ -107,36 +114,116 @@ class LototoCategoryCellTest extends TestCase
         $spare = LototoBoardSlot::query()->findOrFail($this->ids['supervisor8']);
         $this->assertSame(['spare', 'supervisor', 8, 2, 3, $this->freeLock->id], [$spare->category, $spare->section, $spare->position, $spare->grid_row, $spare->grid_column, $spare->spare_lock_id]);
         $supervisor = LototoBoardSlot::query()->findOrFail($this->ids['emptySpare5']);
-        $this->assertSame(['supervisor', 'spare', 5, 1, 8], [$supervisor->category, $supervisor->section, $supervisor->position, $supervisor->grid_row, $supervisor->grid_column]);
-        $this->assertSame(collect($rows)->except([$this->ids['supervisor8'], $this->ids['emptySpare5']])->all(),
+        // Still after Spare 3 in the Spare band; the gap before it closes (1:8 -> 1:4).
+        $this->assertSame(['supervisor', 'spare', 5, 1, 4], [$supervisor->category, $supervisor->section, $supervisor->position, $supervisor->grid_row, $supervisor->grid_column]);
+        $this->assertSame(collect($this->closeGaps($rows))->except([$this->ids['supervisor8'], $this->ids['emptySpare5']])->all(),
             collect($this->rows())->except([$this->ids['supervisor8'], $this->ids['emptySpare5']])->all());
 
         $html = $this->page();
         $this->assertMatchesRegularExpression('/lototo-supervisor-area.*data-slot-category="spare"[^>]*data-slot-section="supervisor".*lototo-card--as-spare.*Gembok spare SP-04/s', $html);
         $this->assertMatchesRegularExpression('/lototo-spare-group.*data-slot-category="supervisor"[^>]*data-slot-section="spare"[^>]*data-slot-id="'.$this->ids['emptySpare5'].'".*SUPERVISOR posisi 5 kosong/s', $html);
-        $this->assertSame(['spare', 1, 8, 1], $this->drawnCells()[$this->ids['emptySpare5']]);
+        $this->assertSame(['spare', 1, 4, 1], $this->drawnCells()[$this->ids['emptySpare5']]);
     }
 
-    public function test_real_overlaps_band_edges_and_locked_rules_are_refused_and_save_nothing(): void
+    public function test_a_wider_tool_pushes_the_next_slots_along_and_a_narrower_one_lets_them_close_up(): void
     {
+        $content = fn () => collect($this->rows())->map(fn ($row) => array_diff_key($row, ['grid_row' => 1, 'grid_column' => 1, 'tool_column_span' => 1]))->all();
+        $before = $content();
+        $tools = fn () => collect(range(1, 7))->mapWithKeys(fn ($n) => ["tool{$n}" => $this->cell("tool{$n}")])->all();
+
+        // Tools 2 from one column to two: Tools 3..7 move along (Tools 5 no longer fits row 1); nothing is refused.
+        $this->putLayout($this->edit($this->draft(), 'tool', 'tool2', ['tool_column_span' => 2]))->assertOk();
+        $this->assertSame(['tool1' => '1:1', 'tool2' => '1:3', 'tool3' => '1:5', 'tool4' => '1:6', 'tool5' => '2:1', 'tool6' => '2:2', 'tool7' => '2:3'], $tools());
+        $this->assertSame(2, (int) LototoBoardSlot::query()->find($this->ids['tool2'])->tool_column_span);
+        $this->assertDrawnWithoutOverlap();
+
+        // Back to one column: the slots after it close up again, no gap is left.
+        $this->putLayout($this->edit($this->draft(), 'tool', 'tool2', ['tool_column_span' => 1]))->assertOk();
+        $this->assertSame(['tool1' => '1:1', 'tool2' => '1:3', 'tool3' => '1:4', 'tool4' => '1:5', 'tool5' => '1:6', 'tool6' => '2:1', 'tool7' => '2:2'], $tools());
+
+        // Supervisor 5 (1:5, the band's last column) as a two-column tool starts row 2; Supervisor 6..8 follow it.
+        $this->putLayout($this->recategorise($this->draft(), 'supervisor5', 'tool', ['tool_id' => $this->tool('X'), 'tool_column_span' => 2]))->assertOk();
+        $this->assertSame(['1:4', '2:1', '2:3', '2:4', '2:5'], collect(range(4, 8))->map(fn ($n) => $this->cell("supervisor{$n}"))->all());
+        $this->assertDrawnWithoutOverlap();
+
+        // Ids, numbers, categories and content never change; the editor preview reads the same cells.
+        $this->assertSame(collect($before)->except($this->ids['supervisor5'])->all(), collect($content())->except($this->ids['supervisor5'])->all());
+        $layout = $this->getJson(route('safety.lototo.boards.layout', $this->board))->json();
+        $this->assertSame(['supervisor', 2, 1, 5], collect($layout['slots']['tool'])->where('id', $this->ids['supervisor5'])->map(fn ($s) => [$s['section'], $s['grid_row'], $s['grid_column'], $s['position']])->first());
+    }
+
+    public function test_technician_slots_can_change_category_or_be_removed_without_touching_records(): void
+    {
+        $employee = Employee::query()->findOrFail(LototoBoardSlot::query()->find($this->ids['technician1'])->employee_id);
+        // A finished activity of that employee: history that must survive the slot changes.
+        $history = LototoActivity::query()->create($this->activity($employee->id, 'completed'));
+        $records = fn () => [Employee::query()->count(), LototoActivity::query()->count(), SpareLock::query()->count(), LototoTool::query()->count()];
+        $recordsBefore = $records();
+
+        // Technician 1 (holds an employee, nothing IN) becomes a spare slot with SP-04; Technician 2 is removed;
+        // Technician 3 (empty) becomes a Supervisor slot. All stay in the Technician band, in reading order.
+        $draft = $this->recategorise($this->draft(), 'technician1', 'spare', ['spare_lock_id' => $this->freeLock->id]);
+        $draft = $this->recategorise($draft, 'technician3', 'supervisor', ['employee_id' => null]);
+        $draft['removed'] = [$this->ids['technician2']];
+        $draft['slots']['technician'] = array_values(array_filter($draft['slots']['technician'], fn ($slot) => $slot['id'] !== $this->ids['technician2']));
+        $this->putLayout($draft)->assertOk();
+
+        $one = LototoBoardSlot::query()->findOrFail($this->ids['technician1']);
+        $three = LototoBoardSlot::query()->findOrFail($this->ids['technician3']);
+        $this->assertSame(['spare', 'technician', 1, 1, 1, $this->freeLock->id, null], [$one->category, $one->section, $one->position, $one->grid_row, $one->grid_column, $one->spare_lock_id, $one->employee_id]);
+        // Technician 2 is gone and Technician 3 (now Supervisor) closes up to 1:2.
+        $this->assertNull(LototoBoardSlot::query()->find($this->ids['technician2']));
+        $this->assertSame(['supervisor', 'technician', 3, 1, 2], [$three->category, $three->section, $three->position, $three->grid_row, $three->grid_column]);
+        // Only slot rows changed: the employee, every activity (history included), every lock and tool remain.
+        $this->assertSame($recordsBefore, $records());
+        $this->assertNotNull($history->fresh());
+        $this->assertNotNull($employee->fresh());
+
+        // Drawn in the Technician band with their own look.
+        $html = $this->page();
+        $this->assertMatchesRegularExpression('/lototo-technician-grid.*data-slot-category="spare"[^>]*data-slot-section="technician"[^>]*data-slot-id="'.$this->ids['technician1'].'".*lototo-card--as-spare.*SP-04.*lototo-supervisor-area/s', $html);
+        $this->assertMatchesRegularExpression('/lototo-technician-grid.*data-slot-category="supervisor"[^>]*data-slot-section="technician"[^>]*data-slot-id="'.$this->ids['technician3'].'".*lototo-supervisor-area/s', $html);
+
+        // A slot of another band may become a Technician slot too.
+        $this->putLayout($this->recategorise($this->draft(), 'supervisor6', 'technician', ['employee_id' => null]))->assertOk();
+        $this->assertSame(['technician', 'supervisor'], [LototoBoardSlot::query()->find($this->ids['supervisor6'])->category, LototoBoardSlot::query()->find($this->ids['supervisor6'])->section]);
+    }
+
+    public function test_slots_with_something_in_and_moves_between_bands_are_refused_and_save_nothing(): void
+    {
+        // Technician 1's employee is IN; Spare 1's lock is in use; Tools 2's tool is IN.
+        $employeeId = LototoBoardSlot::query()->find($this->ids['technician1'])->employee_id;
+        LototoActivity::query()->create($this->activity($employeeId, 'in_progress'));
+        $spareLock = SpareLock::query()->findOrFail(LototoBoardSlot::query()->find($this->ids['spare1'])->spare_lock_id);
+        $spareLock->update(['current_activity_id' => LototoActivity::query()->create([...$this->activity($employeeId, 'in_progress'), 'spare_lock_id' => $spareLock->id])->id]);
+        LototoToolActivity::query()->create(['tool_id' => LototoBoardSlot::query()->find($this->ids['tool2'])->tool_id, 'board_id' => $this->board->id,
+            'location' => 'Line A', 'status' => 'in_progress', 'started_by' => $this->admin->id, 'started_at' => now('UTC')]);
         $rows = $this->rows();
+        $remove = function (string $name, string $category) {
+            $draft = $this->draft();
+            $draft['removed'] = [$this->ids[$name]];
+            $draft['slots'][$category] = array_values(array_filter($draft['slots'][$category], fn ($slot) => $slot['id'] !== $this->ids[$name]));
+
+            return $draft;
+        };
         $cases = [
-            // Supervisor 2 (1:2) as a two-column tool would cover Supervisor 3 on 1:3.
-            'wide tool over a neighbour' => [$this->recategorise($this->draft(), 'supervisor2', 'tool', ['tool_id' => $this->tool('X'), 'tool_column_span' => 2]), '/Supervisor 2 \(menjadi Other \/ Tools\) bertabrakan dengan Supervisor 3 pada baris 1 kolom 3/'],
-            // Supervisor 5 (1:5) as a two-column tool would leave the five-column Supervisor band.
-            'wide tool past the band edge' => [$this->recategorise($this->draft(), 'supervisor5', 'tool', ['tool_id' => $this->tool('X'), 'tool_column_span' => 2]), '/selebar 2 kolom mulai kolom 5 melewati batas pita Supervisor \(5 kolom\)/'],
-            'tool widened over a neighbour' => [$this->edit($this->draft(), 'tool', 'tool2', ['tool_column_span' => 2]), '/bertabrakan dengan Other \/ Tools 2|Other \/ Tools 2 bertabrakan/'],
-            'tool widened past the edge' => [$this->edit($this->draft(), 'tool', 'tool5', ['tool_column_span' => 2]), '/selebar 2 kolom mulai kolom 6 melewati batas pita Other \/ Tools \(6 kolom\)/'],
-            'technician cell moved' => [$this->edit($this->draft(), 'technician', 'technician2', ['grid_row' => 2, 'grid_column' => 1]), '/Posisi Technician 2 dikunci/'],
-            'technician recategorised' => [$this->recategorise($this->draft(), 'technician3', 'supervisor', ['employee_id' => null]), '/bukan posisi Technician/'],
+            'technician with LOTOTO IN recategorised' => [$this->recategorise($this->draft(), 'technician1', 'supervisor', ['employee_id' => null]), '/Technician 1 memiliki aktivitas LOTOTO aktif \(IN\), sehingga kategorinya tidak dapat diganti/'],
+            'technician with LOTOTO IN removed' => [$remove('technician1', 'technician'), '/Technician 1 memiliki aktivitas LOTOTO aktif \(IN\) dan tidak dapat dihapus/'],
+            'spare lock in use recategorised' => [$this->recategorise($this->draft(), 'spare1', 'tool', ['tool_id' => null]), '/Spare 1 memiliki gembok Spare yang sedang digunakan/'],
+            'spare lock in use removed' => [$remove('spare1', 'spare'), '/Spare 1 memiliki gembok Spare yang sedang digunakan \(IN\) dan tidak dapat dihapus/'],
+            'tool IN removed' => [$remove('tool2', 'tool'), '/Other \/ Tools 2 memiliki Tools yang sedang IN dan tidak dapat dihapus/'],
             'slot moved to another band' => [$this->edit($this->draft(), 'supervisor', 'supervisor6', ['section' => 'spare']), '/tetap berada di pita Supervisor/'],
-            'empty slot made a technician' => [$this->recategorise($this->draft(), 'supervisor6', 'technician', ['employee_id' => null]), '/bukan posisi Technician/'],
+            'technician number changed' => [$this->edit($this->draft(), 'technician', 'technician3', ['position' => 9]), '/Posisi Technician saat ini mengikuti LOTOTO number/'],
         ];
         foreach ($cases as $name => [$draft, $pattern]) {
             $response = $this->putLayout($draft)->assertUnprocessable();
             $this->assertMatchesRegularExpression($pattern, implode(' ', $response->json('errors.slots') ?? []), $name);
             $this->assertSame($rows, $this->rows(), "{$name} changed the database");
         }
+        // The editor gets the same flag, so its preview refuses them too.
+        $layout = $this->getJson(route('safety.lototo.boards.layout', $this->board))->json();
+        $locked = fn ($category, $name) => collect($layout['slots'][$category])->firstWhere('id', $this->ids[$name])['locked'];
+        $this->assertSame([true, true, true, false], [$locked('technician', 'technician1'), $locked('spare', 'spare1'), $locked('tool', 'tool2'), $locked('tool', 'tool3')]);
     }
 
     public function test_a_new_column_count_packs_every_section_in_reading_order(): void
@@ -147,11 +234,16 @@ class LototoCategoryCellTest extends TestCase
         $cells = fn () => collect($this->rows())->mapWithKeys(fn ($row, $id) => [array_search($id, $this->ids, true) => $row['grid_row'].':'.$row['grid_column']])->all();
         $layoutColumns = fn () => array_map(fn ($key) => $this->board->fresh()->layout[$key], ['board_columns', 'technician_columns', 'supervisor_columns', 'spare_columns', 'tool_columns']);
 
-        // A save that leaves the count alone keeps the per-band widths and every cell.
+        // A save that leaves the count alone keeps the per-band widths; the automatic layout only closes the two
+        // gaps of the fixture (Tools 7 2:4 -> 2:2, Spare 5 1:8 -> 1:4).
         $cellsBefore = $cells();
         $this->putLayout($this->draft())->assertOk();
         $this->assertSame([20, 20, 5, 8, 6], $layoutColumns());
-        $this->assertSame($cellsBefore, $cells());
+        $this->assertSame([...$cellsBefore, 'tool7' => '2:2', 'emptySpare5' => '1:4'], $cells());
+        // A second save without changes moves nothing.
+        $cellsPacked = $cells();
+        $this->putLayout($this->draft())->assertOk();
+        $this->assertSame($cellsPacked, $cells());
 
         // Edit Mode, 5 per row: every band takes 5 and its slots are packed in reading order. Tools 5 (1:6) no
         // longer fits row 1 and opens row 2; Tools 6 and 7 follow it; the empty Spare 5 closes the gap at 1:4.
@@ -194,7 +286,7 @@ class LototoCategoryCellTest extends TestCase
         $this->assertSame([6, 6, 6, 6, 6], $layoutColumns());
     }
 
-    public function test_slots_are_added_in_a_section_and_removed_one_by_one_leaving_their_cell_empty(): void
+    public function test_slots_are_added_in_a_section_and_removed_and_the_slots_after_them_close_up(): void
     {
         $toolRecords = LototoTool::query()->orderBy('id')->get(['id', 'code', 'name'])->toArray();
         $rows = $this->rows();
@@ -209,24 +301,30 @@ class LototoCategoryCellTest extends TestCase
 
         $this->assertNull(LototoBoardSlot::query()->find($this->ids['supervisor8']));
         $this->assertNull(LototoBoardSlot::query()->find($this->ids['tool6']));
-        // Its tool record stays, now without a place; no other slot moved or changed.
+        // Its tool record stays, now without a place. Tools 7 closes up into the cell Tools 6 left (2:1); every
+        // other slot keeps its content and place (only the fixture's Spare gap closes).
         $this->assertSame($toolRecords, LototoTool::query()->orderBy('id')->get(['id', 'code', 'name'])->toArray());
-        $this->assertSame(collect($rows)->except([$this->ids['supervisor8'], $this->ids['tool6']])->all(), collect($this->rows())->only(array_keys(collect($rows)->except([$this->ids['supervisor8'], $this->ids['tool6']])->all()))->all());
+        $kept = collect($this->closeGaps($rows))->except([$this->ids['supervisor8'], $this->ids['tool6']])->all();
+        $kept[$this->ids['tool7']]['grid_column'] = 1;
+        $this->assertSame($kept, collect($this->rows())->only(array_keys($kept))->all());
         $added = LototoBoardSlot::query()->where('board_id', $this->board->id)->where('category', 'supervisor')->where('position', 9)->sole();
         $this->assertSame(['supervisor', 2, 3, null], [$added->section, $added->grid_row, $added->grid_column, $added->employee_id]);
-        // Removed slots stay gone after reload: no empty placeholder takes their cell (Tools 2:1 stays empty).
+        // Removed slots stay gone after reload: no empty placeholder comes back for them.
         $html = $this->page();
         $this->assertStringNotContainsString('data-slot-id="'.$this->ids['tool6'].'"', $html);
-        $this->assertDoesNotMatchRegularExpression('/data-slot-category="tool" data-slot-position="6" data-grid-row="2" data-grid-column="1"/', $html);
+        $this->assertDoesNotMatchRegularExpression('/data-slot-category="tool" data-slot-position="6"/', $html);
         $this->assertArrayNotHasKey($this->ids['supervisor8'], $this->getJson(route('safety.lototo.boards.layout', $this->board))->json('slots.supervisor'));
 
-        // A Technician slot cannot be removed; a stale removal (slot already gone) is refused as a changed list.
+        // A Technician slot can be removed too: Technician 3 goes, nothing else in the band moves.
         $draft = $this->draft();
         $draft['removed'] = [$this->ids['technician3']];
         $draft['slots']['technician'] = array_values(array_filter($draft['slots']['technician'], fn ($slot) => $slot['id'] !== $this->ids['technician3']));
+        $this->putLayout($draft)->assertOk();
+        $this->assertNull(LototoBoardSlot::query()->find($this->ids['technician3']));
+        $this->assertSame(['1:1', '1:2'], [$this->cell('technician1'), $this->cell('technician2')]);
+        // The stale draft (Technician 3 already gone) is refused and saves nothing.
         $rows = $this->rows();
-        $response = $this->putLayout($draft)->assertUnprocessable();
-        $this->assertStringContainsString('Technician 3 tidak dapat dihapus', implode(' ', $response->json('errors.slots')));
+        $this->putLayout($draft)->assertStatus(409);
         $this->assertSame($rows, $this->rows());
     }
 
@@ -238,7 +336,7 @@ class LototoCategoryCellTest extends TestCase
         $this->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => 'gerinda baru'], ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('name');
         $this->post(route('safety.lototo.boards.tools.store', $this->board), ['name' => ' '], ['Accept' => 'application/json'])->assertUnprocessable();
         $next = $this->getJson(route('safety.lototo.boards.layout', $this->board))->json('manage.next_spare_code');
-        $this->assertSame('CELLS-SP-001', $next);
+        $this->assertSame('SP-CU-01', $next);
         $lock = $this->postJson(route('safety.lototo.boards.spare-locks.store', $this->board))->assertCreated()->json('spare_lock');
         $this->assertSame([$next, null, false], [$lock['code'], $lock['slot'], $lock['in']]);
         // Data only: no slot was made or filled.
@@ -344,6 +442,53 @@ class LototoCategoryCellTest extends TestCase
         $migration->up();
         LototoSlotGrid::forgetSchema();
         $this->assertSame(0, DB::table('lototo_board_slots')->whereColumn('section', '!=', 'category')->count());
+    }
+
+    /** $rows (from rows()) after the automatic layout closes the fixture's two gaps. */
+    private function closeGaps(array $rows): array
+    {
+        $rows[$this->ids['tool7']]['grid_column'] = 2;
+        $rows[$this->ids['emptySpare5']]['grid_column'] = 4;
+
+        return $rows;
+    }
+
+    /** drawnCells() after the automatic layout closes the fixture's two gaps. */
+    private function closeGapCells(array $cells): array
+    {
+        $cells[$this->ids['tool7']][2] = 2;
+        $cells[$this->ids['emptySpare5']][2] = 4;
+
+        return $cells;
+    }
+
+    /** "row:column" stored for slot $name. */
+    private function cell(string $name): string
+    {
+        $slot = LototoBoardSlot::query()->findOrFail($this->ids[$name]);
+
+        return "{$slot->grid_row}:{$slot->grid_column}";
+    }
+
+    /** Every band as drawn on the board: no cell is used twice and every slot is inside its band's columns. */
+    private function assertDrawnWithoutOverlap(): void
+    {
+        $columns = ['technician' => 20, 'supervisor' => 5, 'spare' => 8, 'tool' => 6];
+        $taken = [];
+        foreach ($this->drawnCells() as $id => [$band, $row, $column, $span]) {
+            $this->assertLessThanOrEqual($columns[$band], $column + $span - 1, "slot {$id} leaves {$band}");
+            foreach (range($column, $column + $span - 1) as $c) {
+                $this->assertArrayNotHasKey("{$band}:{$row}:{$c}", $taken, "slot {$id} overlaps slot ".($taken["{$band}:{$row}:{$c}"] ?? ''));
+                $taken["{$band}:{$row}:{$c}"] = $id;
+            }
+        }
+    }
+
+    private function activity(int $employeeId, string $status): array
+    {
+        return ['employee_id' => $employeeId, 'board' => $this->board->code, 'location' => 'Line A', 'activity' => 'Ganti bearing',
+            'risks' => ['listrik'], 'risk_controls' => 'LOTO', 'knows_procedure' => true, 'follows_lototo' => true, 'uses_ppe' => true,
+            'safe_tools' => true, 'safe_hands' => true, 'status' => $status, 'started_at' => now('UTC'), 'ended_at' => $status === 'completed' ? now('UTC') : null];
     }
 
     private function slot(string $name, string $category, int $position, int $row, int $column, array $extra = []): void

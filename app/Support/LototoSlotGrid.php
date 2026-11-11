@@ -13,10 +13,11 @@ use Illuminate\Validation\ValidationException;
  * Where LOTOTO board slots are drawn: a section (band) and a cell (grid_row, grid_column) inside it. The slot's
  * category only says what it holds (and a Tools slot's column span); its position number is its identity.
  *
- * A section whose stored cells still match the legacy rule (its own category's slots, cell from the number and
- * the column count, Tools flowing with their spans) is "by number": the old Settings pages may reorder it and it
- * reflows as before. A section arranged in Edit Mode keeps its cells; nothing moves it again, new slots take a
- * free cell, and any change that would make two slots share a cell, or a slot leave its section, is refused.
+ * Automatic layout: every section is packed in reading order (row, then column) without gaps, each slot taking
+ * its column span (pack / reflow). A Tools slot changed from 1 to 2 columns pushes the slots after it along; from
+ * 2 to 1, or a removed slot, lets them close up. Slot numbers and their order never change, only the drawn cells
+ * are computed again, and the Edit Mode preview uses the same rule. A section whose stored cells still match the
+ * legacy rule (its own category's slots, cell from the number) is "by number" and may be placed by number again.
  * Before the section column exists, a slot's section is its category.
  */
 class LototoSlotGrid
@@ -186,8 +187,8 @@ class LototoSlotGrid
 
     /**
      * Stores the cells after a change. Sections listed in $reflow (taken with byNumber() before the change) are
-     * placed by number again, as the old pages always did. Every other section keeps its cells: only slots without
-     * a cell get one (their legacy cell if free, else the first free cell). A slot without a section gets its
+     * placed by number again, as the old pages always did. Every other section is packed (pack): slots keep their
+     * reading order and close every gap, a slot without a cell comes last. A slot without a section gets its
      * category. A result where slots would overlap or leave their section is refused, so the caller's transaction
      * rolls back. Call inside that transaction.
      */
@@ -216,7 +217,7 @@ class LototoSlotGrid
                 $legacy = self::legacyCells($sectionSlots, $section, $width);
                 $cells = $sectionSlots->mapWithKeys(fn ($slot) => [$slot->id => array_slice($legacy[(int) $slot->position], 0, 2)])->all();
             } else {
-                $cells = self::keepAndFill($sectionSlots, $section, $width);
+                $cells = self::pack($sectionSlots, $section, $width);
             }
             $target += $cells;
             $messages = [...$messages, ...self::conflicts($label, $sectionSlots->map(fn ($slot) => [
@@ -316,56 +317,24 @@ class LototoSlotGrid
             ->get(['id', 'category', ...(self::hasSections() ? ['section'] : []), 'position', 'tool_column_span', 'grid_row', 'grid_column']);
     }
 
-    /** Cells kept as stored; slots without one take their legacy cell when free, else the first free cell. */
-    private static function keepAndFill(Collection $slots, string $section, int $columns): array
+    /**
+     * Automatic layout of one section: its slots packed in their current reading order (stored cell, row then
+     * column; a slot without a cell by its legacy cell, else last), each taking its span, without gaps (reflow).
+     * A wider or narrower Tools slot, a removed slot or a slot changing category moves the slots after it; numbers
+     * and order never change. The Edit Mode preview (lototo-board-draft.js packDraft) uses the same rule.
+     */
+    public static function pack(Collection $slots, string $section, int $columns): array
     {
-        $cells = [];
-        $taken = [];
-        $occupy = function (int $row, int $column, int $span) use (&$taken) {
-            for ($offset = 0; $offset < $span; $offset++) {
-                $taken[$row.':'.($column + $offset)] = true;
-            }
-        };
-        $isFree = function (int $row, int $column, int $span) use (&$taken, $columns) {
-            if ($column + $span - 1 > $columns) {
-                return false;
-            }
-            for ($offset = 0; $offset < $span; $offset++) {
-                if (isset($taken[$row.':'.($column + $offset)])) {
-                    return false;
-                }
-            }
-
-            return true;
-        };
-        foreach ($slots as $slot) {
-            if ($slot->grid_row !== null && $slot->grid_column !== null) {
-                $cells[$slot->id] = [(int) $slot->grid_row, (int) $slot->grid_column];
-                $occupy((int) $slot->grid_row, (int) $slot->grid_column, self::span($slot, $slot->category));
-            }
-        }
         $legacy = self::legacyCells($slots->where('category', $section), $section, $columns);
-        foreach ($slots as $slot) {
-            if (isset($cells[$slot->id])) {
-                continue;
-            }
-            $span = self::span($slot, $slot->category);
-            [$row, $column] = $slot->category === $section && isset($legacy[(int) $slot->position]) ? $legacy[(int) $slot->position] : [1, 1];
-            if (! $isFree($row, $column, $span)) {
-                [$row, $column] = [1, 1];
-                while (! $isFree($row, $column, $span)) {
-                    $column++;
-                    if ($column > $columns) {
-                        $row++;
-                        $column = 1;
-                    }
-                }
-            }
-            $cells[$slot->id] = [$row, $column];
-            $occupy($row, $column, $span);
+        $items = [];
+        foreach ($slots->values() as $slot) {
+            [$row, $column] = $slot->grid_row !== null && $slot->grid_column !== null
+                ? [(int) $slot->grid_row, (int) $slot->grid_column]
+                : ($slot->category === $section && isset($legacy[(int) $slot->position]) ? array_slice($legacy[(int) $slot->position], 0, 2) : [null, null]);
+            $items[$slot->id] = [$row, $column, self::span($slot, $slot->category)];
         }
 
-        return $cells;
+        return self::reflow($items, $columns);
     }
 
     /**
