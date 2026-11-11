@@ -199,11 +199,15 @@ class ShiftCommTest extends TestCase
         $this->assertSame(['M-001', 4], [$warnings[1]['machine'], $warnings[1]['count']]);
         $this->assertSame('2026-09-25', $warnings[1]['first']->toDateString());
         $this->assertSame('2026-10-01', $warnings[1]['last']->toDateString());
+        $this->assertCount(5, $warnings[0]['records']);
+        $this->assertCount(4, $warnings[1]['records']);
         $this->actingAs($user)->get(route('shift-comm.index'))
             ->assertSee('Peringatan Problem Berulang TS (Rolling 7 hari)')
             ->assertSee('Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam 7 hari terakhir', false)
             ->assertSee('• Mesin M-001 (4x Problem)', false)
             ->assertSee('• Mesin M-003 (5x Problem)', false)
+            ->assertSee('Lihat Rincian')
+            ->assertSee('Rincian 4 laporan problem Torsion Shaft pada Mesin M-001', false)
             ->assertDontSee('M-002 (', false);
     }
 

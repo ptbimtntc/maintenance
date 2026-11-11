@@ -185,7 +185,7 @@ class ShiftComm extends Model
      * A warning clears once a shift after the machine's latest Torsion Shaft
      * record has started without a new Torsion Shaft record for it.
      *
-     * @return list<array{machine: string, count: int, first: Carbon, last: Carbon, slot: int}>
+     * @return list<array{machine: string, count: int, first: Carbon, last: Carbon, slot: int, records: \Illuminate\Support\Collection<int, self>}>
      */
     public static function repeatTorsionWarnings(?Carbon $now = null): array
     {
@@ -198,7 +198,7 @@ class ShiftComm extends Model
             ->where('is_torsion_shaft', true)
             ->orderBy('comm_date')
             ->orderBy('shift')
-            ->get(['machine_no', 'comm_date', 'shift'])
+            ->get(['id', 'comm_number', 'machine_no', 'machine_type', 'problem', 'construction', 'torsion_relay_status', 'comm_date', 'shift', 'team'])
             ->groupBy(fn (self $c) => strtoupper(preg_replace('/[^[:alnum:]]/u', '', $c->machine_no)))
             ->map(function ($records) use ($windowDays) {
                 $last = $records->last()->comm_date;
@@ -210,6 +210,7 @@ class ShiftComm extends Model
                     'first' => $inWindow->first()->comm_date,
                     'last' => $last,
                     'slot' => self::shiftSlot($last->toDateString(), $records->last()->shift),
+                    'records' => $inWindow->values(),
                 ];
             })
             ->filter(fn (array $w) => $w['count'] >= $threshold && $w['slot'] >= $currentSlot)
