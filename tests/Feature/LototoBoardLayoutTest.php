@@ -36,7 +36,7 @@ class LototoBoardLayoutTest extends TestCase
         parent::setUp();
 
         $this->seed(RolesAndPermissionsSeeder::class);
-        $this->unit = BusinessUnit::factory()->create();
+        $this->unit = BusinessUnit::factory()->create(['name' => 'Layout Unit']);
         $this->active = EmploymentStatus::factory()->create(['code' => 'ACTIVE']);
         $this->board = $this->makeBoard('board-layout-test');
         $this->otherBoard = $this->makeBoard('board-layout-other');
@@ -83,7 +83,7 @@ class LototoBoardLayoutTest extends TestCase
             ->assertJsonPath('columns', ['technician' => 20, 'supervisor' => 20, 'spare' => 20, 'tool' => 20])
             ->assertJsonPath('manage.spare_locks.0.code', 'SP-01')
             ->assertJsonPath('manage.spare_locks.1.slot', 'Spare 02')
-            ->assertJsonPath('manage.next_spare_code', 'BOARD-LAYOUT-TEST-SP-001')
+            ->assertJsonPath('manage.next_spare_code', 'SP-LU-01')
             ->assertJsonPath('manage.tools', [])
             ->assertJsonPath('section_order', ['spare', 'supervisor', 'other'])
             ->assertJsonPath('column_limits', ['min' => 5, 'max' => 30])
@@ -162,18 +162,8 @@ class LototoBoardLayoutTest extends TestCase
             'technician position moved' => fn ($d) => $this->withSlot($this->withSlot($d, 'technician', 3, ['position' => 9]), 'technician', 1, []),
             'slot of another board' => fn ($d) => $this->withSlot($d, 'technician', 3, ['id' => LototoBoardSlot::query()->where('board_id', $this->otherBoard->id)->value('id')]),
             'slot left out' => fn ($d) => ['slots' => ['technician' => array_slice($d['slots']['technician'], 0, 2)] + $d['slots']] + $d,
-            'filled slot changes category' => function ($d) {
-                $supervisorSlot = array_shift($d['slots']['supervisor']);
-                $d['slots']['tool'][] = ['position' => 5, 'tool_label' => null, 'is_enabled' => true] + $supervisorSlot;
-
-                return $d;
-            },
-            'technician slot changes category' => function ($d) {
-                $technicianSlot = array_pop($d['slots']['technician']);
-                $d['slots']['supervisor'][] = ['position' => 5] + $technicianSlot;
-
-                return $d;
-            },
+            // A slot changing category (Technician or filled ones included) is allowed unless something on it is IN;
+            // those rules are covered in LototoCategoryCellTest.
         ];
         $before = $this->snapshot();
 

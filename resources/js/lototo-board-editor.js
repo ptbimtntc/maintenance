@@ -192,7 +192,8 @@ function initBoardEditor(page) {
         draft.title = settings.elements.title.value;
         draft.subtitle = settings.elements.subtitle.value;
         Object.keys(draft.components).forEach((component) => { draft.components[component] = settings.elements[`component_${component}`].checked; });
-        board.querySelector('.lototo-station-title').textContent = draft.title;
+        // The header shows the board title with a hyphen, as the page does.
+        board.querySelector('.lototo-station-title').textContent = draft.title.replace(' · ', ' - ');
         board.querySelector('.lototo-station-subtitle').textContent = draft.subtitle;
         applyComponents();
         refresh();
@@ -212,13 +213,13 @@ function initBoardEditor(page) {
     }
     columnCount.addEventListener('change', () => changeColumns(Number(columnCount.value)));
 
-    /** Marks a slot element as editable: a remove button (not on a saved Technician slot or one with IN) and, when empty, a +. */
+    /** Marks a slot element as editable: a remove button (any category, not on a slot with something IN) and, when empty, a +. */
     function decorate(element) {
         element.classList.add('lototo-editor-slot');
         element.querySelector(':scope > .lototo-editor-add')?.remove();
         element.querySelector(':scope > .lototo-editor-remove')?.remove();
         const found = draftKeyFor(element) && findSlot(draft, draftKeyFor(element));
-        if (found && !found.slot.locked && !(found.category === 'technician' && found.slot.id !== null)) {
+        if (found && !found.slot.locked) {
             const remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'lototo-editor-remove';
@@ -302,7 +303,20 @@ function initBoardEditor(page) {
             draft,
             saved,
             key,
-            apply: (values) => { if (saving) return; updateSlot(draft, saved, key, values); renderSlot(key); refresh(); },
+            apply: (values) => {
+                if (saving) return;
+                const before = findSlot(draft, key);
+                if (values.category && before && values.category !== before.category && !isEmpty(before.slot)
+                    && !window.confirm(`Ganti kategori ${CATEGORY_LABELS[before.category]} ${pad(before.slot.position)} menjadi ${CATEGORY_LABELS[values.category]}? `
+                        + `${slotLabel(before.category, before.slot)} dilepas dari slot ini setelah disimpan; data employee, gembok, Tool, dan riwayat LOTOTO tetap ada.`)) {
+                    return;
+                }
+                updateSlot(draft, saved, key, values);
+                renderSlot(key);
+                // Automatic layout: a changed span or category moves the slots after it.
+                placeCards(board, draft, draftKeyFor);
+                refresh();
+            },
             remove: () => {
                 if (saving) return;
                 const element = elementFor(key);
@@ -317,6 +331,7 @@ function initBoardEditor(page) {
                     element.replaceWith(empty);
                     decorate(empty);
                 }
+                placeCards(board, draft, draftKeyFor);
                 refresh();
             },
         });
@@ -385,6 +400,7 @@ function initBoardEditor(page) {
                 } else {
                     placeNewSlot(now.slot, now.category);
                 }
+                placeCards(board, draft, draftKeyFor);
                 refresh();
             },
             remove: () => {},
@@ -392,18 +408,22 @@ function initBoardEditor(page) {
     }
 
     /**
-     * The remove button of a slot: the slot leaves the draft (a saved one is deleted on Save) and its cell stays
-     * empty; no other slot moves. A slot that holds something asks first. Its employee, lock or tool and every
-     * LOTOTO record stay.
+     * The remove button of a slot (any category): the slot leaves the draft (a saved one is deleted on Save) and the
+     * slots after it close up (automatic layout). Removing always asks first; a slot with something IN is refused.
+     * Its employee, lock or tool and every LOTOTO record stay.
      */
     function removeFromBoard(element) {
         const key = draftKeyFor(element);
         const found = key && findSlot(draft, key);
         if (!found) return;
         const name = `${CATEGORY_LABELS[found.category]} ${pad(found.slot.position)}`;
-        if (!isEmpty(found.slot) && !window.confirm(`Hapus slot ${name} yang berisi ${slotLabel(found.category, found.slot)}? Slot hilang dari board setelah disimpan; data employee, gembok, Tool, dan riwayat LOTOTO tetap ada.`)) return;
+        const question = isEmpty(found.slot)
+            ? `Hapus slot ${name}? Slot hilang dari board setelah disimpan dan slot sesudahnya merapat.`
+            : `Hapus slot ${name} yang berisi ${slotLabel(found.category, found.slot)}? Slot hilang dari board setelah disimpan; data employee, gembok, Tool, dan riwayat LOTOTO tetap ada.`;
+        if (!found.slot.locked && !window.confirm(question)) return;
         if (!attempt(() => removeSlot(draft, key))) return;
         element.remove();
+        placeCards(board, draft, draftKeyFor);
         refresh();
     }
 
@@ -416,6 +436,7 @@ function initBoardEditor(page) {
         let slot;
         if (!attempt(() => { slot = addSlot(draft, section, undefined, null, section); })) return;
         placeNewSlot(slot, section);
+        placeCards(board, draft, draftKeyFor);
         refresh();
     });
 

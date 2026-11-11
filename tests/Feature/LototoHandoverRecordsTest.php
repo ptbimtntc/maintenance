@@ -89,10 +89,11 @@ class LototoHandoverRecordsTest extends TestCase
 
         $technicianPage = $this->actingAs($this->admin)->get(route('safety.lototo.show', ['employee' => $this->technician, 'board' => $this->board->id]))->assertOk();
         $technicianPage->assertSee('Lokasi pribadi')->assertSee('CLOSE');
-        $this->assertSame(1, substr_count($technicianPage->getContent(), 'Lokasi pribadi'));
+        // The record is listed once in the desktop table and once as a phone / tablet card, never twice in either.
+        $this->assertSame([1, 1], $this->listedIn($technicianPage->getContent(), 'Lokasi pribadi'));
 
         $sparePage = $this->actingAs($this->admin)->get(route('safety.lototo.spare-locks.show', $this->sp1))->assertOk();
-        $this->assertSame(1, substr_count($sparePage->getContent(), 'Lokasi pribadi'));
+        $this->assertSame([1, 1], $this->listedIn($sparePage->getContent(), 'Lokasi pribadi'));
         $this->assertSame(1, $this->sp1->activities()->count());
         $this->assertNull($this->sp1->activities()->first()->out_details['spare_activity_id'] ?? null);
     }
@@ -206,6 +207,14 @@ class LototoHandoverRecordsTest extends TestCase
         $this->assertSame($spare->id, data_get($pending->fresh()->out_details, 'spare_activity_id'));
         $this->assertNull($pending->fresh()->spare_lock_id);
         $this->assertSame($spare->id, $this->sp1->fresh()->current_activity_id);
+    }
+
+    /** [rows of the desktop table, phone / tablet cards] that show $location. */
+    private function listedIn(string $html, string $location): array
+    {
+        $table = substr($html, strpos($html, '<table'), strpos($html, '</table>') - strpos($html, '<table'));
+
+        return [substr_count($table, $location), substr_count($html, 'aria-label="Aktivitas LOTOTO '.$location.'"')];
     }
 
     private function personalIn(Employee $employee, array $overrides = []): LototoActivity

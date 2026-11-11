@@ -758,7 +758,7 @@ class LototoTest extends TestCase
             ->get(route('safety.lototo.follow-up', $activity))
             ->assertOk()
             ->assertSee('Susah sinyal di area mesin.')
-            ->assertSee('Feedback / tindakan supervisor')
+            ->assertSee('Supervisor Comment / Feedback')
             ->assertSee('YA');
 
         $otherUser = User::factory()->create();

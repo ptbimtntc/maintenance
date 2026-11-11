@@ -9,8 +9,12 @@ use App\Models\EmploymentStatus;
 use App\Models\LototoActivity;
 use App\Models\LototoBoard;
 use App\Models\LototoBoardSlot;
+use App\Models\LototoSupervisorFeedback;
 use App\Models\SpareLock;
+use App\Models\User;
 use App\Notifications\LototoSafetyAlert;
+use App\Support\LototoFollowUpLink;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -74,10 +78,12 @@ class LototoController extends Controller
             ->where('code', 'ACTIVE')
             ->value('id');
 
+        // The board is the plant's lockout station: whoever may open it sees the same board, the one the Guest Viewer
+        // sees (every active employee of the board's Business Unit on their lock). Which boards a user may open stays
+        // limited (accessibleActiveBoards), and each employee's activity page keeps Employee::visibleTo (show()).
         $employees = Employee::query()
             ->with(['maintenanceArea', 'maintenanceTeam', 'position'])
             ->where('business_unit_id', $board->business_unit_id)
-            ->visibleTo($request->user())
             ->when(
                 $activeStatusId !== null,
                 fn ($query) => $query->where('employment_status_id', $activeStatusId)
@@ -224,7 +230,14 @@ class LototoController extends Controller
         }
         if (! $canManageSafety) {
             if ($spareLock) {
-                abort_unless($this->isAuthorizedSpareTechnician($request, $board, $activeActivity?->employee), 403);
+                // A free spare lock is started (IN) by Manage Safety only. Scanned without an identity (no login, or
+                // the read-only Guest account) its QR asks for a login and then opens this same IN form.
+                if (! $activeActivity && $isQrVisitor) {
+                    throw new AuthenticationException('Login untuk memulai Spare Lock yang tersedia.');
+                }
+                abort_unless($this->isAuthorizedSpareTechnician($request, $board, $activeActivity?->employee), 403, $activeActivity
+                    ? 'Spare Lock ini sedang digunakan oleh karyawan lain; OUT hanya dapat dilakukan oleh pemakainya atau pengguna dengan izin Manage Safety.'
+                    : 'Spare Lock yang tersedia hanya dapat dimulai (IN) oleh pengguna dengan izin Manage Safety.');
                 $requestedLototoNumber = $activeActivity->employee->lototo_number;
                 $requestedEmployee = $activeActivity->employee;
             } else {
@@ -665,17 +678,39 @@ class LototoController extends Controller
             return;
         }
 
+        // The technician's own supervisor (employees.supervisor_id), never any other supervisor. The email goes to
+        // the supervisor's address in employees (else the address of the supervisor's account); the in-app
+        // notification goes to the supervisor's account, when there is one.
         $supervisor = $employee->supervisor()->with('user')->first();
         $supervisorUser = $supervisor?->user;
+        $mailTo = filled($supervisor?->email) ? $supervisor->email : $supervisorUser?->email;
 
-        if (! $supervisorUser) {
+        if (! $supervisor || (! $supervisorUser && blank($mailTo))) {
             throw ValidationException::withMessages([
-                'supervisor_feedback' => 'Data atasan atau akun supervisor belum tersedia. Hubungi administrator agar peringatan LOTOTO dapat diteruskan.',
+                'supervisor_feedback' => 'Data atasan, akun, atau email supervisor belum tersedia. Hubungi administrator agar peringatan LOTOTO dapat diteruskan.',
             ]);
         }
 
+        // One follow-up per activity: a NO and feedback together still send one notification, and an activity
+        // already waiting for (or answered by) its supervisor is never notified again.
+        if (in_array($activity->supervisor_follow_up_status, ['pending', 'completed'], true)) {
+            return;
+        }
         $activity->update(['supervisor_follow_up_status' => 'pending']);
-        Notification::send($supervisorUser, new LototoSafetyAlert($activity, $unsafeAnswers, $hasFeedback));
+        // Sent once the IN is saved: a notification or email that cannot be delivered is reported, never undoes the IN.
+        DB::afterCommit(function () use ($supervisorUser, $mailTo, $supervisor, $activity, $unsafeAnswers, $hasFeedback) {
+            $alert = new LototoSafetyAlert($activity->fresh(['employee']), $unsafeAnswers, $hasFeedback, $supervisor);
+            foreach ([
+                fn () => $supervisorUser?->notify($alert),
+                fn () => filled($mailTo) ? Notification::route('mail', $mailTo)->notify($alert) : null,
+            ] as $send) {
+                try {
+                    $send();
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            }
+        });
     }
 
     public function followUp(Request $request, LototoActivity $activity): View
@@ -693,27 +728,79 @@ class LototoController extends Controller
             'supervisor_follow_up' => ['required', 'string', 'max:5000'],
         ]);
 
-        DB::transaction(function () use ($activity, $data, $request) {
-            $lockedActivity = LototoActivity::query()
-                ->lockForUpdate()
-                ->findOrFail($activity->id);
+        $this->saveSupervisorFeedback($activity, $request->user()->employee, $request->user(), $data['supervisor_follow_up']);
 
-            if ($lockedActivity->supervisor_follow_up_status !== 'pending') {
+        return to_route('safety.lototo.follow-up', $activity)
+            ->with('status', 'Feedback tindak lanjut LOTOTO berhasil disimpan.');
+    }
+
+    /** The Supervisor Feedback page opened from the follow-up email (signed link, no login needed). */
+    public function respond(Request $request, LototoActivity $activity): View
+    {
+        $supervisor = LototoFollowUpLink::supervisorFor($request, $activity);
+        abort_unless($supervisor !== null, 403, 'Link feedback tidak valid atau sudah tidak berlaku.');
+        $activity->load(['employee', 'spareLock', 'supervisorFollowUpBy', ...($this->hasFeedbackHistory() ? ['supervisorFeedbacks.supervisor', 'supervisorFeedbacks.user'] : [])]);
+
+        return view('safety.lototo.follow-up-respond', [
+            'activity' => $activity,
+            'supervisor' => $supervisor,
+            // The same signed URL (signature included) is where the form posts and where it comes back.
+            'formAction' => $request->fullUrl(),
+        ]);
+    }
+
+    public function submitRespond(Request $request, LototoActivity $activity): RedirectResponse
+    {
+        $supervisor = LototoFollowUpLink::supervisorFor($request, $activity);
+        abort_unless($supervisor !== null, 403, 'Link feedback tidak valid atau sudah tidak berlaku.');
+        $data = $request->validate([
+            'supervisor_follow_up' => ['required', 'string', 'max:5000'],
+        ]);
+        $this->saveSupervisorFeedback($activity, $supervisor, $supervisor->user, $data['supervisor_follow_up']);
+
+        return redirect()->to($request->fullUrl())->with('status', 'Feedback supervisor berhasil dikirim.');
+    }
+
+    /**
+     * Saves one supervisor reply: a new history row (earlier replies stay) and the activity's latest-reply columns.
+     * Only for an activity whose follow-up was requested. The same text sent twice in a row by the same supervisor
+     * (a double click or a resent form) is stored once.
+     */
+    private function saveSupervisorFeedback(LototoActivity $activity, ?Employee $supervisor, ?User $user, string $comment): void
+    {
+        DB::transaction(function () use ($activity, $supervisor, $user, $comment) {
+            $lockedActivity = LototoActivity::query()->lockForUpdate()->findOrFail($activity->id);
+            if (! in_array($lockedActivity->supervisor_follow_up_status, ['pending', 'completed'], true)) {
                 throw ValidationException::withMessages([
-                    'supervisor_follow_up' => 'Tindak lanjut LOTOTO ini sudah dikirim atau tidak memerlukan tindak lanjut.',
+                    'supervisor_follow_up' => 'Aktivitas LOTOTO ini tidak memerlukan tindak lanjut supervisor.',
                 ]);
             }
-
+            $comment = trim($comment);
+            if ($this->hasFeedbackHistory()) {
+                $last = LototoSupervisorFeedback::query()->where('lototo_activity_id', $lockedActivity->id)->latest('id')->first();
+                if ($last && $last->comment === $comment && (int) $last->supervisor_employee_id === (int) $supervisor?->id) {
+                    return;
+                }
+                LototoSupervisorFeedback::query()->create([
+                    'lototo_activity_id' => $lockedActivity->id,
+                    'supervisor_employee_id' => $supervisor?->id,
+                    'user_id' => $user?->id,
+                    'comment' => $comment,
+                ]);
+            }
             $lockedActivity->update([
-                'supervisor_follow_up' => $data['supervisor_follow_up'],
-                'supervisor_follow_up_by' => $request->user()->id,
+                'supervisor_follow_up' => $comment,
+                'supervisor_follow_up_by' => $user?->id,
                 'supervisor_follow_up_at' => now('UTC'),
                 'supervisor_follow_up_status' => 'completed',
             ]);
         });
+    }
 
-        return to_route('safety.lototo.follow-up', $activity)
-            ->with('status', 'Feedback tindak lanjut LOTOTO berhasil disimpan.');
+    /** Whether the reply history table exists yet (code may be deployed before its migration runs). */
+    private function hasFeedbackHistory(): bool
+    {
+        return \Illuminate\Support\Facades\Schema::hasTable('lototo_supervisor_feedbacks');
     }
 
     private function authorizeFollowUp(Request $request, LototoActivity $activity): void
@@ -741,7 +828,7 @@ class LototoController extends Controller
                 // Personal records. Outstanding activities saved before the spare got its own record carry the
                 // spare's id on the personal record itself; they are personal history too.
                 ->where(fn ($query) => $query->whereNull('spare_lock_id')->orWhere('outcome', 'outstanding'))
-                ->with('spareLock')
+                ->with(['spareLock', ...LototoActivity::feedbackRelations()])
                 ->latest('started_at')
                 ->paginate(20),
         ]);

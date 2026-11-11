@@ -103,6 +103,7 @@ export function addSlot(draft, category, position = nextPosition(draft, category
         ...extra,
     };
     draft.slots[category].push(slot);
+    packDraft(draft);
 
     return slot;
 }
@@ -132,6 +133,25 @@ export function reflowSection(items, columns) {
 }
 
 /**
+ * Automatic layout of the whole draft: every band packed in its current reading order with reflowSection, so a
+ * Tools slot made wider pushes the slots after it along, a narrower one or a removed slot lets them close up, and
+ * no gap is left. Numbers and order never change. The save packs the same way (LototoSlotGrid::reflow), so the
+ * preview is what the board shows after saving. Without stored cells the board is still placed by number.
+ */
+export function packDraft(draft) {
+    if (!draft.coordinates) return;
+    CATEGORIES.forEach((section) => {
+        const entries = slotsInSection(draft, section);
+        const cells = reflowSection(entries.map(({ category, slot }) => ({ key: slot.key, row: slot.grid_row, column: slot.grid_column, span: spanOf(slot, category) })), draft.columns[section]);
+        entries.forEach(({ slot }) => {
+            const cell = cells.get(slot.key);
+            slot.grid_row = cell.row;
+            slot.grid_column = cell.column;
+        });
+    });
+}
+
+/**
  * Sets the board's one column count ("Kolom per baris", board_columns, the value Settings shows): every band takes
  * it and its slots are packed into it in reading order. Slots keep their id, category, number and content.
  */
@@ -140,20 +160,10 @@ export function setColumns(draft, count) {
     if (!Number.isInteger(count) || count < min || count > max) {
         throw new DraftError(`Jumlah kolom per baris harus ${min} sampai ${max}.`);
     }
-    if (draft.coordinates) {
-        CATEGORIES.forEach((section) => {
-            const entries = slotsInSection(draft, section);
-            const cells = reflowSection(entries.map(({ category, slot }) => ({ key: slot.key, row: slot.grid_row, column: slot.grid_column, span: spanOf(slot, category) })), count);
-            entries.forEach(({ slot }) => {
-                const cell = cells.get(slot.key);
-                slot.grid_row = cell.row;
-                slot.grid_column = cell.column;
-            });
-        });
-    }
     draft.board_columns = count;
     draft.columns_changed = true;
     CATEGORIES.forEach((category) => { draft.columns[category] = count; });
+    packDraft(draft);
 }
 
 /** Bands still using their own width from before (they get the board count once it is changed). */
@@ -187,24 +197,24 @@ export function removeNewSlot(draft, key) {
         throw new DraftError('Posisi ini sudah tersimpan; hapus lewat tombol hapus pada slot.');
     }
     draft.slots[found.category] = draft.slots[found.category].filter((slot) => slot.key !== key);
+    packDraft(draft);
 }
 
 /**
- * Removes one slot (the save deletes a saved one). Its cell stays empty; no other slot moves. Technician slots
- * and slots with LOTOTO IN are refused. The employee, lock or tool it held keeps its own data.
+ * Removes one slot of any category, Technician included (the save deletes a saved one); the slots after it close
+ * up. A slot with something IN (employee activity, spare lock in use or tool IN) is refused. The employee, lock
+ * or tool it held and every LOTOTO activity keep their own data.
  */
 export function removeSlot(draft, key) {
     const found = findSlot(draft, key);
     if (!found) throw new DraftError('Posisi tidak ditemukan pada draft.');
     const { category, slot } = found;
-    if (slot.id !== null && category === 'technician') {
-        throw new DraftError(`Technician ${pad(slot.position)} tidak dapat dihapus: posisi Technician dikunci.`);
-    }
     if (slot.locked) {
-        throw new DraftError(`${CATEGORY_LABELS[category]} ${pad(slot.position)} memiliki aktivitas LOTOTO aktif (IN) dan tidak dapat dihapus.`);
+        throw new DraftError(`${CATEGORY_LABELS[category]} ${pad(slot.position)} memiliki aktivitas LOTOTO aktif, gembok yang sedang digunakan, atau Tools yang sedang IN, sehingga tidak dapat dihapus.`);
     }
     if (slot.id !== null) draft.removed.push(slot.id);
     draft.slots[category] = draft.slots[category].filter((candidate) => candidate.key !== key);
+    packDraft(draft);
 
     return found;
 }
@@ -222,37 +232,24 @@ export function updateSlot(draft, saved, key, changes) {
     const position = changes.position ?? slot.position;
 
     if (slot.locked) {
-        throw new DraftError('Slot ini memiliki aktivitas LOTOTO aktif atau gembok yang sedang digunakan, sehingga tidak dapat diubah.');
+        throw new DraftError('Slot ini memiliki aktivitas LOTOTO aktif, gembok yang sedang digunakan, atau Tools yang sedang IN, sehingga tidak dapat diubah.');
     }
-    if (category !== found.category && original) {
-        if (original.category === 'technician' || !isEmpty(original)) {
-            throw new DraftError('Kategori hanya dapat diganti untuk slot kosong yang tersimpan, dan bukan posisi Technician.');
-        }
-    }
+    // Any slot may change category; what it held leaves the board (the editor asks first when it is not empty).
     if (original?.category === 'technician' && category === 'technician' && position !== original.position) {
-        throw new DraftError('Posisi Technician dikunci dan tidak dapat diubah.');
+        // Only the number: a Technician slot's number follows the employee's LOTOTO number (server rule too).
+        throw new DraftError('Nomor slot Technician mengikuti nomor LOTOTO karyawan dan tidak dapat diubah. Kategori dan penghapusan slot tetap dapat diatur.');
     }
     if (!Number.isInteger(position) || position < 1 || position > 99999) {
         throw new DraftError('Nomor posisi harus angka 1 sampai 99999.');
     }
     const span = category === 'tool' ? Math.max(1, Math.min(3, Number(changes.tool_column_span ?? slot.tool_column_span ?? 1))) : 1;
     if (draft.coordinates && slot.grid_row !== null && slot.grid_row !== undefined) {
-        // The category only changes what the slot holds: it stays in its band and cell, keeping its number. Only a
-        // real overlap in that band (a wider tool covering a neighbour) or leaving its columns is refused.
-        const { grid_row: row, grid_column: column, section } = slot;
-        if (category === 'technician' && section !== 'technician') {
-            throw new DraftError('Slot Technician hanya berada di pita Technician; slot ini tidak dapat menjadi Technician.');
-        }
-        const width = draft.columns[section];
-        if (column + span - 1 > width) {
-            throw new DraftError(span > 1
-                ? `Slot selebar ${span} kolom mulai kolom ${column} melewati batas pita ${CATEGORY_LABELS[section]} (${width} kolom). Pita tidak dilebarkan otomatis.`
-                : `Slot berada di kolom ${column}, di luar lebar pita ${CATEGORY_LABELS[section]} (${width} kolom). Pita tidak dilebarkan otomatis.`);
-        }
-        const occupant = occupantOf(draft, section, row, column, span, key);
-        if (occupant) {
-            const occupantCategory = findSlot(draft, occupant.key).category;
-            throw new DraftError(`Baris ${row} kolom ${column}${span > 1 ? `–${column + span - 1}` : ''} pada pita ${CATEGORY_LABELS[section]} bertabrakan dengan ${CATEGORY_LABELS[occupantCategory]} ${pad(occupant.position)}. Tidak ada slot yang dipindahkan.`);
+        // The category only changes what the slot holds: it stays in its band, at its place in the reading order,
+        // keeping its number. Its cell and those after it are computed again (packDraft), so a wider or narrower
+        // span never collides with an old cell; only a span wider than the whole band is refused.
+        const width = draft.columns[slot.section];
+        if (span > width) {
+            throw new DraftError(`Slot selebar ${span} kolom tidak muat pada pita ${CATEGORY_LABELS[slot.section]} (${width} kolom).`);
         }
         if (position !== slot.position && draft.slots[category].some((other) => other.key !== key && other.position === position)) {
             throw new DraftError(`Posisi ${pad(position)} sudah dipakai pada ${CATEGORY_LABELS[category]}.`);
@@ -290,6 +287,7 @@ export function updateSlot(draft, saved, key, changes) {
     };
     draft.slots[found.category] = draft.slots[found.category].filter((candidate) => candidate.key !== key);
     draft.slots[category].push(updated);
+    packDraft(draft);
 
     return updated;
 }

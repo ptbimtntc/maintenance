@@ -93,7 +93,8 @@ class LototoQrFormAccessTest extends TestCase
         // The free spare's QR names nobody, so the holder lands on their own personal QR form, not on a 403.
         $this->assertSame($this->personalQr($this->owner), $redirect);
         $this->get($redirect)->assertOk()->assertSee('Aktivitas gembok spare selesai dan gembok tersedia kembali.');
-        $this->get($this->spareQr())->assertForbidden();
+        // The now free spare's QR asks for a login (Spare IN is for Safety administrators) and shows nothing else.
+        $this->get($this->spareQr())->assertRedirect(route('guest-login'));
         $this->assertGuest();
     }
 
@@ -107,8 +108,9 @@ class LototoQrFormAccessTest extends TestCase
         $other = LototoBoard::query()->create([...$this->board->only(['business_unit_id', 'title', 'subtitle', 'layout', 'component_settings', 'is_active']),
             'division_name' => 'Other', 'code' => 'board-qr-other']);
         $this->post($action, [...$this->answers('07', 'in'), 'board_id' => $other->id])->assertForbidden();
-        // A free spare: Spare IN stays with Safety administrators.
-        $this->get($this->spareQr())->assertForbidden();
+        // A free spare: Spare IN stays with Safety administrators. Its QR asks for a login instead of opening the form,
+        // and an IN posted with the QR's signature is still refused.
+        $this->get($this->spareQr())->assertRedirect(route('guest-login'));
         $this->post(AllowLototoQrForm::url('safety.lototo.form.store', ['spare_lock' => 'SP-01', 'board' => $this->board->id]), [
             ...$this->answers('07', 'in'), 'lock_mode' => 'spare', 'spare_lock_id' => $this->spare->id,
         ])->assertForbidden();

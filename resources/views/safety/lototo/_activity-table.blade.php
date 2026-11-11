@@ -1,9 +1,42 @@
+@php
+    $showTechnician = $showTechnician ?? false;
+    $currentSpareActivityId = $currentSpareActivityId ?? null;
+    // One activity's values, shared by the desktop table and the phone / tablet cards so both always agree.
+    $activityRow = function ($activity) use ($showTechnician, $currentSpareActivityId) {
+        $isCurrentSpareActivity = $showTechnician && $activity->id === $currentSpareActivityId;
+        $spareStartedAt = data_get($activity->out_details, 'spare_started_at');
+        $spareEndedAt = data_get($activity->out_details, 'spare_ended_at');
+        $startedAt = $showTechnician && $spareStartedAt
+            ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareStartedAt))
+            : \App\Models\LototoActivity::localTimeFromUtc($activity->started_at);
+        $endedAt = $showTechnician && $spareEndedAt
+            ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareEndedAt))
+            : ($isCurrentSpareActivity
+                ? null
+                : \App\Models\LototoActivity::localTimeFromUtc($activity->ended_at));
+        $durationMinutes = $startedAt && $endedAt
+            ? $startedAt->diffInMinutes($endedAt)
+            : null;
+        $answers = [
+            $activity->knows_procedure,
+            $activity->follows_lototo,
+            $activity->uses_ppe,
+            $activity->safe_tools,
+            $activity->safe_hands,
+        ];
 
-<div class="overflow-x-auto">
-    @php
-        $showTechnician = $showTechnician ?? false;
-        $currentSpareActivityId = $currentSpareActivityId ?? null;
-    @endphp
+        return compact('isCurrentSpareActivity', 'startedAt', 'endedAt', 'durationMinutes', 'answers');
+    };
+    $checkLabels = [
+        'Saya tahu bagaimana melakukan pekerjaan ini',
+        'Saya melakukan standar LOTOTO',
+        'Saya menggunakan APD dengan baik dan benar',
+        'Tools saya aman untuk digunakan',
+        'Jari / tangan saya aman (tidak dalam LoF)',
+    ];
+@endphp
+{{-- Desktop (lg and up): the full table, as before. --}}
+<div class="hidden overflow-x-auto lg:block">
     <table class="w-full min-w-[1180px] table-fixed border-collapse text-center text-sm text-neutral-800">
         <thead>
             <tr class="text-xs font-bold text-white">
@@ -26,27 +59,7 @@
         <tbody>
             @forelse ($activities as $activity)
                 @php
-                    $isCurrentSpareActivity = $showTechnician && $activity->id === $currentSpareActivityId;
-                    $spareStartedAt = data_get($activity->out_details, 'spare_started_at');
-                    $spareEndedAt = data_get($activity->out_details, 'spare_ended_at');
-                    $startedAt = $showTechnician && $spareStartedAt
-                        ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareStartedAt))
-                        : \App\Models\LototoActivity::localTimeFromUtc($activity->started_at);
-                    $endedAt = $showTechnician && $spareEndedAt
-                        ? \App\Models\LototoActivity::localTime(\Illuminate\Support\Carbon::parse($spareEndedAt))
-                        : ($isCurrentSpareActivity
-                            ? null
-                            : \App\Models\LototoActivity::localTimeFromUtc($activity->ended_at));
-                    $durationMinutes = $startedAt && $endedAt
-                        ? $startedAt->diffInMinutes($endedAt)
-                        : null;
-                    $answers = [
-                        $activity->knows_procedure,
-                        $activity->follows_lototo,
-                        $activity->uses_ppe,
-                        $activity->safe_tools,
-                        $activity->safe_hands,
-                    ];
+                    extract($activityRow($activity));
                 @endphp
                 <tr class="border-b border-neutral-200 bg-white align-middle">
                     @if ($showTechnician)
@@ -108,17 +121,7 @@
                         </td>
                     @endforeach
                     <td class="border border-neutral-200 px-2 py-3 text-left text-xs">
-                        @if ($activity->supervisor_feedback)
-                            <p><span class="font-semibold">Karyawan:</span> {{ $activity->supervisor_feedback }}</p>
-                        @endif
-                        @if ($activity->supervisor_follow_up)
-                            <p class="mt-1 border-t border-neutral-200 pt-1">
-                                <span class="font-semibold">Feedback SPV:</span> {{ $activity->supervisor_follow_up }}
-                            </p>
-                        @endif
-                        @if (! $activity->supervisor_feedback && ! $activity->supervisor_follow_up)
-                            -
-                        @endif
+                        @include('safety.lototo._activity-feedback', ['activity' => $activity, 'compact' => true])
                     </td>
                 </tr>
             @empty
@@ -130,4 +133,80 @@
             @endforelse
         </tbody>
     </table>
+</div>
+
+{{-- Phone and tablet (below lg): one card per activity, nothing wider than the screen. --}}
+<div class="lg:hidden">
+    @forelse ($activities as $activity)
+        @php
+            extract($activityRow($activity));
+            $isIn = $isCurrentSpareActivity || (! $showTechnician && $activity->status === 'in_progress');
+            $isClosed = ! $isCurrentSpareActivity && ($activity->status === 'completed' || $activity->outcome === 'outstanding');
+        @endphp
+        <article class="lototo-activity-card border-b border-neutral-200 bg-white px-4 py-4 last:border-b-0" aria-label="Aktivitas LOTOTO {{ $activity->location }}">
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    @if ($showTechnician)
+                        <p class="text-xs font-semibold uppercase text-neutral-500">
+                            {{ $activity->employee->preferred_name ?: $activity->employee->full_name }} · LOTOTO {{ $activity->employee->lototo_number }}
+                        </p>
+                    @endif
+                    <h3 class="break-words text-base font-bold leading-snug text-neutral-900">{{ $activity->location }}</h3>
+                </div>
+                <span @class([
+                    'shrink-0 rounded px-2 py-1 text-xs font-bold uppercase',
+                    'bg-emerald-100 text-emerald-800' => $isIn,
+                    'bg-neutral-100 text-neutral-700' => ! $isIn,
+                ])>
+                    {{ $isIn ? 'IN' : ($isClosed ? 'CLOSE' : strtoupper(str_replace('_', ' ', $activity->status))) }}
+                </span>
+            </div>
+
+            <dl class="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-neutral-50 p-3 text-xs">
+                <div class="min-w-0">
+                    <dt class="font-semibold uppercase text-neutral-500">Start</dt>
+                    <dd class="mt-0.5 font-bold text-neutral-900">{{ $startedAt?->format('d M Y') ?? '-' }}<span class="block">{{ $startedAt?->format('H:i') }}</span></dd>
+                </div>
+                <div class="min-w-0">
+                    <dt class="font-semibold uppercase text-neutral-500">End</dt>
+                    <dd class="mt-0.5 font-bold text-neutral-900">{{ $endedAt?->format('d M Y') ?? '-' }}<span class="block">{{ $endedAt?->format('H:i') }}</span></dd>
+                </div>
+                <div class="min-w-0">
+                    <dt class="font-semibold uppercase text-neutral-500">Hours</dt>
+                    <dd class="mt-0.5 font-bold text-neutral-900">{{ $durationMinutes !== null ? number_format($durationMinutes / 60, 2).' h' : '-' }}</dd>
+                </div>
+            </dl>
+
+            <div class="mt-3 text-sm text-neutral-800">
+                <p class="text-xs font-semibold uppercase text-neutral-500">Aktivitas pekerjaan</p>
+                <p class="mt-0.5 break-words font-medium">{{ $activity->activity }}</p>
+                <p class="mt-2 break-words text-xs text-neutral-600">
+                    <span class="font-semibold">Risiko:</span> {{ implode(', ', (array) $activity->risks) }}@if ($activity->other_risk), {{ $activity->other_risk }}@endif
+                </p>
+                <p class="mt-1 break-words text-xs text-neutral-600"><span class="font-semibold">Cara menghindarinya:</span> {{ $activity->risk_controls }}</p>
+                @if ($activity->spareLock)
+                    <p class="mt-1 text-xs font-semibold text-blue-700">Gembok: {{ $activity->spareLock->code }}</p>
+                @endif
+            </div>
+
+            <ul class="mt-3 divide-y divide-neutral-100 rounded-lg border border-neutral-200 text-xs">
+                @foreach ($answers as $index => $answer)
+                    <li class="flex items-center justify-between gap-3 px-3 py-2">
+                        <span class="min-w-0 text-neutral-700">{{ $checkLabels[$index] }}</span>
+                        @if ($answer)
+                            <span class="shrink-0 font-black text-emerald-700" aria-label="Ya">YA</span>
+                        @else
+                            <span class="shrink-0 font-black text-red-600" aria-label="Tidak">TIDAK</span>
+                        @endif
+                    </li>
+                @endforeach
+            </ul>
+
+            <div class="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-neutral-800">
+                @include('safety.lototo._activity-feedback', ['activity' => $activity, 'compact' => false])
+            </div>
+        </article>
+    @empty
+        <p class="px-4 py-12 text-center text-sm text-neutral-500">{{ $emptyMessage }}</p>
+    @endforelse
 </div>

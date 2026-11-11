@@ -338,24 +338,32 @@ Rencana pengembangan per karyawan: tujuan, gap kompetensi terkait, level saat in
 
 <!-- only:lototo -->
 ### LOTOTO
-Gunakan **Safety → LOTOTO** untuk membuka board. Pilih board aktif melalui daftar di bagian atas. Board menampilkan posisi **Technician**, **Supervisor**, **Spare**, dan **Other / Tools**, beserta status IN/OUT dan aktivitas yang terkait.
+Gunakan **Safety → LOTOTO** untuk membuka board. Pilih board aktif melalui daftar di bagian atas. Board menampilkan posisi **Technician**, **Supervisor**, **Spare**, dan **Other / Tools**, beserta status IN/OUT dan aktivitas yang terkait. Setiap pengguna yang membuka board melihat isi board yang sama seperti tampilan tamu (semua gembok karyawan Business Unit tersebut); tombol pengelolaan tetap mengikuti hak akses. Nomor LOTOTO pada gembok ditandai dengan latar merah.
 
 **Mengelola board** *(izin Manage Safety)*
 1. Pilih **Manage Board** untuk membuka daftar board.
-2. **Add Board** meminta nama divisi, Business Unit, dan jumlah gembok Spare yang akan dibuat. Technician dan Supervisor diambil dari karyawan pada Business Unit tersebut.
+2. **Add Board** meminta nama divisi, Business Unit, dan jumlah gembok Spare yang akan dibuat. Technician dan Supervisor diambil dari karyawan pada Business Unit tersebut. Kode gembok Spare dibuat otomatis dengan format **SP-{inisial Business Unit}-{nomor urut}**, misalnya SP-HP-01, SP-HP-02 untuk Half Product atau SP-DR-01 untuk Dramix. Gembok tambahan melanjutkan nomor terakhir; kode gembok lama tidak diubah.
 3. Gunakan **Set Inactive** untuk menghentikan IN baru; aktivitas yang masih IN tetap dapat diselesaikan. Board yang belum pernah dipakai dapat dihapus setelah dinonaktifkan.
 
 **Edit Mode**
 1. Pada board, pilih **Edit Board**. Perubahan layout menjadi draft sampai **Simpan Perubahan** dipilih; **Batal** membuang draft.
-2. Pilih slot untuk mengubah kategori, karyawan, gembok Spare, atau Tool. Tambahkan posisi dengan tombol **+** pada section; slot yang sedang digunakan tidak dapat dipindah atau dihapus.
-3. Atur judul, subtitle, komponen yang tampil, jumlah kolom, dan urutan section pada pengaturan board.
-4. **Kelola Tools** dan **Kelola Spare Lock** mengatur daftar aset board. Tools baru perlu ditempatkan ke slot **Other / Tools** melalui Edit Slot.
+2. Pilih slot untuk mengubah kategori, karyawan, gembok Spare, atau Tool. Ini berlaku untuk semua slot, termasuk Technician. Jika slot yang diganti kategorinya masih berisi karyawan, gembok, atau Tool, isinya dilepas dari slot setelah disimpan; data karyawan, gembok, Tool, dan riwayat LOTOTO tetap tersimpan.
+3. Hapus slot dengan tombol **×** pada slot (selalu ada konfirmasi). Tambahkan posisi dengan tombol **+** pada section. Slot yang sedang dipakai (aktivitas LOTOTO IN, gembok Spare sedang digunakan, atau Tools sedang IN) tidak dapat dihapus atau diganti kategorinya. Nomor slot Technician tetap mengikuti nomor LOTOTO karyawan.
+4. Letak slot diatur otomatis: setiap section disusun rapat sesuai urutan slot. Jika lebar slot Tools diubah dari 1 menjadi 2 kolom, slot sesudahnya bergeser; jika dikembalikan ke 1 kolom atau slot dihapus, slot sesudahnya merapat sehingga tidak ada ruang kosong. Nomor dan urutan slot tidak berubah, dan pratinjau Edit Mode sama dengan hasil setelah disimpan.
+5. Atur judul, subtitle, komponen yang tampil, jumlah kolom, dan urutan section pada pengaturan board.
+6. **Kelola Tools** dan **Kelola Spare Lock** mengatur daftar aset board. Tools baru perlu ditempatkan ke slot **Other / Tools** melalui Edit Slot.
 
 **Pemeriksaan dan QR**
 - Pilih **QR Code** untuk melihat QR Technician, Supervisor, Spare Lock, dan Tools; **Download QR** menyediakan pilihan desain cetak. QR mengarahkan pemindai ke form LOTOTO untuk identitas tersebut.
 - Pada form pemeriksaan, isi informasi pekerjaan, risiko, pengendalian, dan konfirmasi keselamatan sebelum status IN. Saat OUT, pilih **Close / Finish** atau **Outstanding / Handover** bila tersedia. Handover mencatat aktivitas lanjutan pada Spare Lock yang dipilih.
 - QR Spare Lock dapat dipakai untuk memulai pemakaian mandiri dan untuk menyelesaikan statusnya. QR Tools mencatat lokasi saat IN dan mengembalikan Tools ke board saat OUT; riwayat penggunaan ditampilkan pada halaman Tools dengan waktu lokal.
-- Aktivitas Technician dan Supervisor tercatat pada halaman aktivitas masing-masing dengan waktu lokal. Supervisor yang diminta melakukan follow-up dapat mengisi hasilnya melalui halaman LOTOTO Follow-up.
+- Saat dipindai dengan HP: QR Technician dan Supervisor langsung membuka form IN, atau form OUT bila masih ada aktivitas terbuka, tanpa login. QR Spare Lock yang sedang dipakai membuka form OUT untuk pemakainya. QR Spare Lock yang belum dipakai meminta login, lalu membuka form IN gembok tersebut untuk pengguna dengan izin Manage Safety. QR Tools meminta login terlebih dahulu.
+- Aktivitas Technician dan Supervisor tercatat pada halaman aktivitas masing-masing dengan waktu lokal. Di HP dan tablet, setiap aktivitas tampil sebagai kartu (lokasi, status, waktu, aktivitas, checklist, dan feedback); di desktop tetap berupa tabel. Pada form, kolom **No. LOTOTO** ditandai dengan latar merah.
+
+**Feedback supervisor (LOTOTO & LMRA FEEDBACK)**
+- Jika ada jawaban checklist **TIDAK** atau teknisi mengisi Feedback, supervisor teknisi tersebut (atasan pada data karyawan) menerima satu notifikasi di aplikasi dan satu email **LOTOTO & LMRA FEEDBACK** untuk aktivitas itu. Email dikirim ke alamat email supervisor pada data karyawan; jika kosong, ke email akun supervisor. Jika supervisor belum punya akun maupun email, IN ditolak dengan pesan agar administrator melengkapi datanya. Jawaban TIDAK ditandai merah.
+- Tombol **LINK TO FOLLOW UP** pada email membuka halaman **Supervisor Feedback** tanpa login. Link hanya berlaku untuk supervisor tersebut dan selama 30 hari. Data teknisi tampil read-only; supervisor menulis di kolom **Supervisor Comment / Feedback** lalu memilih **Send Feedback**. Supervisor yang sudah login juga dapat membalas melalui notifikasi di aplikasi.
+- Balasan supervisor tampil di halaman LOTOTO Activity teknisi, di bawah feedback teknisi, beserta nama dan waktunya. Selama belum dibalas tertulis **Menunggu feedback supervisor**. Balasan berikutnya ditambahkan tanpa menghapus balasan sebelumnya.
 <!-- /only -->
 
 ---
@@ -478,6 +486,8 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 | 2026-11-11 | Shift Comm: Memindahkan rentang tanggal kejadian dari kalimat pesan utama ke samping masing-masing nomor mesin pada daftar problem berulang. |
 | 2026-11-11 | Shift Comm: Menyesuaikan interaktivitas notifikasi warning — mengklik nomor mesin kini langsung menyaring dan menampilkan rincian laporan problem pada tabel utama. |
 | 2026-11-11 | Master Data: Menambahkan menu dan form konfigurasi parameter Shift Comm (Rolling Days dan Repeat Threshold problem berulang TS) yang dapat diatur secara dinamis melalui antarmuka. |
+| 2026-11-10 | LOTOTO: board terlihat sama untuk semua pengguna yang membukanya; nomor LOTOTO ditandai merah; email LOTOTO & LMRA FEEDBACK dan halaman Supervisor Feedback; balasan supervisor tampil di LOTOTO Activity; kode Spare baru SP-{inisial BU}-{nomor}; QR Spare yang belum dipakai meminta login lalu membuka form IN; slot Other / Tools lama dapat dikelola di Edit Mode. |
+| 2026-11-10 | LOTOTO: Edit Mode kini berlaku untuk semua slot termasuk Technician (ganti kategori dan hapus, kecuali slot yang sedang dipakai); letak slot diatur otomatis tanpa ruang kosong; halaman LOTOTO Activity tampil sebagai kartu di HP dan tablet; QR Desain 2 dan 5 lebih mudah dipindai kamera HP. |
 | 2026-11-10 | Shift Comm: Mengubah notifikasi warning problem berulang Torsion Shaft menjadi komponen dropdown overlay agar tidak menggeser layout saat dibuka. |
 | 2026-11-10 | Shift Comm: Menyesuaikan ambang batas warning problem berulang Torsion Shaft menjadi minimal 4 kali kejadian dalam rolling 7 hari. |
 | 2026-11-10 | Shift Comm: Memperbarui tampilan notifikasi warning problem berulang TS (posisi tepat di atas filter, default collapsed satu baris judul dengan chevron, expanded menampilkan ringkasan tanggal dan list nomor mesin serta jumlah kejadian). |

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import zlib from 'node:zlib';
 import QRCode from 'qrcode';
-import { DESIGNS, designsFor, qrCode, shortName } from '../../resources/js/lototo-print-designs.js';
+import { DESIGNS, designsFor, qrCode, qrLevel, shortName } from '../../resources/js/lototo-print-designs.js';
 import { buildPdf, toPoints } from '../../resources/js/lototo-print-pdf.js';
 
 const url = 'http://localhost/safety/lototo/form?board=1&employee_id=127&lototo_number=03&signature=6f1c0a9b2e7d4c3f8a5b6e1d2c9f0a7b4e3d2c1b0a9f8e7d6c5b4a3f2e1d0c9b';
@@ -118,4 +118,28 @@ test('Desain 4 of an employee opens the activity page; the other designs and spa
     // A spare lock or tool without an activity page keeps its own QR on Desain 4.
     const spare = { kind: 'spare', name: 'SPARE', number: 'SP-01', photo: null, qr: url };
     assert.ok(d4.render(spare).includes(qrCode(url, 'SP-01', { x: 4.91, y: 73.0, size: 32.31 })));
+});
+
+test('Desain 2 and 5 pick the lightest error correction that still recovers the number cut-out; Desain 4 keeps H', () => {
+    const host = 'https://maintenance.ptbimtntc-academy.com';
+    const signature = 'a'.repeat(64);
+    const employee = `${host}/safety/lototo/form?board=12&employee_id=1234&lototo_number=66&signature=${signature}`;
+    const supervisor = `${host}/safety/lototo/form?board=12&employee_id=1301&lototo_number=101&signature=${signature}`;
+    const tool = `${host}/safety/lototo/tools/15/form?board=12`;
+    // Long signed URLs: M (larger modules); a short tool URL, where the cut-out is a bigger share: Q.
+    assert.deepEqual([qrLevel(employee, '66', 23.88, true), qrLevel(supervisor, '101', 23.88, true), qrLevel(tool, 'TL-15', 23.88, true)], ['M', 'M', 'Q']);
+    // Without adaptive the level stays H.
+    assert.equal(qrLevel(employee, '66', 23.88), 'H');
+    // So the employee QR of Desain 2 has larger modules than before: 53 instead of 73 per side.
+    const sizeOf = (level) => QRCode.create(employee, { errorCorrectionLevel: level }).modules.size;
+    assert.deepEqual([sizeOf('M'), sizeOf('H')], [53, 73]);
+    const record = { kind: 'technician', name: 'BUDI', number: '66', photo: null, qr: employee, activity: `${host}/safety/lototo/1234?board=12` };
+    const d2 = DESIGNS.find((d) => d.id === 2).render(record);
+    const d5 = DESIGNS.find((d) => d.id === 5).render(record);
+    assert.ok(d2.includes(qrCode(employee, '66', { x: 51.48, y: 3.9, size: 23.88, adaptive: true })));
+    assert.ok(d5.includes(qrCode(employee, '66', { x: 51.48, y: 3.9, size: 23.88, adaptive: true })));
+    // Desain 4 is unchanged: its activity QR with H.
+    assert.ok(DESIGNS.find((d) => d.id === 4).render(record).includes(qrCode(record.activity, '66', { x: 4.91, y: 73.0, size: 32.31 })));
+    // A record without a URL never becomes an empty QR.
+    assert.throws(() => qrCode('', '66', { x: 0, y: 0, size: 23.88, adaptive: true }), /needs a URL/);
 });

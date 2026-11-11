@@ -88,7 +88,7 @@
                             autocomplete="off"
                             @readonly(filled($lototoNumber))
                             required
-                            class="mt-1.5 block min-h-11 w-full rounded-xl border-neutral-300 text-base shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                            class="mt-1.5 block min-h-11 w-full rounded-xl border-red-700 bg-red-600 text-base font-black tracking-wide text-white shadow-sm placeholder:font-semibold placeholder:text-red-100 focus:border-red-800 focus:ring-red-500"
                         >
                     </div>
 

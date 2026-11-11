@@ -100,7 +100,21 @@
             @if ($activities->isEmpty())
                 <p class="p-5 text-sm text-neutral-500">Belum ada riwayat penggunaan Tools ini.</p>
             @else
-                <div class="overflow-x-auto">
+                <ul class="divide-y divide-neutral-100 sm:hidden">
+                    @foreach ($activities as $activity)
+                        <li class="px-5 py-3 text-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <p class="min-w-0 break-words font-semibold text-neutral-900">{{ $activity->location }}</p>
+                                <span @class(['shrink-0 rounded px-2 py-0.5 text-xs font-bold', 'bg-amber-100 text-amber-900' => $activity->status === 'in_progress', 'bg-emerald-100 text-emerald-800' => $activity->status !== 'in_progress'])>{{ $activity->status === 'in_progress' ? 'IN' : 'OUT' }}</span>
+                            </div>
+                            <dl class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                                <div><dt class="font-semibold uppercase text-neutral-500">IN</dt><dd class="text-neutral-800">{{ \App\Models\LototoActivity::localTimeFromUtc($activity->started_at)->format('d M Y H:i') }}<span class="block text-neutral-500">{{ $activity->startedBy?->name }}</span></dd></div>
+                                <div><dt class="font-semibold uppercase text-neutral-500">OUT</dt><dd class="text-neutral-800">{{ \App\Models\LototoActivity::localTimeFromUtc($activity->ended_at)?->format('d M Y H:i') ?? '—' }}<span class="block text-neutral-500">{{ $activity->endedBy?->name }}</span></dd></div>
+                            </dl>
+                        </li>
+                    @endforeach
+                </ul>
+                <div class="hidden overflow-x-auto sm:block">
                     <table class="min-w-full divide-y divide-neutral-200 text-sm">
                         <thead class="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-600">
                             <tr><th class="px-4 py-2">Lokasi</th><th class="px-4 py-2">IN</th><th class="px-4 py-2">OUT</th><th class="px-4 py-2">Status</th></tr>
@@ -121,7 +135,7 @@
             @endif
         </section>
 
-        <a href="{{ route('safety.lototo.boards.show', $board) }}" class="inline-block text-sm font-semibold text-blue-700 hover:underline">Kembali ke board</a>
+        <a href="{{ route('safety.lototo.boards.show', $board) }}" class="inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 hover:underline lg:inline-block lg:min-h-0">Kembali ke board</a>
     </div>
     </div>
 </body>

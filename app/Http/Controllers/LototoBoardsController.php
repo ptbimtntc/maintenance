@@ -143,7 +143,7 @@ class LototoBoardsController extends Controller
                 ]);
             }
 
-            // Spare locks with codes made from the division (DRAMIX-SP-001, ...), OUT (no activity), each on its own Spare slot.
+            // Spare locks coded SP-{Business Unit initial}-01, -02, ... (LototoBoard::nextSpareCodes), OUT (no activity), each on its own Spare slot.
             $board->provisionSpareLocks($spareSlotCount > 0 ? range(1, $spareSlotCount) : []);
 
             foreach (range(1, 15) as $position) {

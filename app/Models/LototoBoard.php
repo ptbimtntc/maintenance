@@ -60,46 +60,36 @@ class LototoBoard extends Model
     }
 
     /**
-     * The division part of new spare lock codes: the division name in capitals, other characters as single
-     * hyphens (DRAMIX, STEEL-CORD). When an older board already has the same division, the Business Unit code is
-     * added (MAINTENANCE-HP), so two boards never draw from the same series and a board keeps its series when a
-     * later board of the same division is added.
+     * The Business Unit initial in new spare lock codes (SP-{initial}-01), from the unit's name: the first letter of
+     * each word (HALF PRODUCT -> HP, STEEL CORD -> SC) or the first two letters of a one-word name (DRAMIX -> DR).
+     * Business Units with the same initial share one series, so their codes still never repeat.
      */
-    public function spareCodePrefix(): string
+    public function spareCodeInitial(): string
     {
-        $division = self::codePart($this->division_name) ?: 'BOARD';
-        $shared = self::query()->where('id', '<', $this->id)->pluck('division_name')
-            ->contains(fn ($name) => self::codePart($name) === $division);
-        if ($shared) {
-            $unit = $this->businessUnit()->first();
-            $unitPart = self::codePart(preg_replace('/^BU[\s_-]+/i', '', (string) ($unit?->code ?: $unit?->name)));
-            $division .= '-'.($unitPart ?: $this->id);
+        $unit = $this->businessUnit()->first();
+        $words = array_values(array_filter(explode('-', self::codePart($unit?->name))));
+        if (count($words) > 1) {
+            return implode('', array_map(fn ($word) => $word[0], $words));
         }
 
-        return $division;
+        return substr($words[0] ?? 'BU', 0, 2) ?: 'BU';
     }
 
     /**
-     * The next $count unused spare lock codes for this board: "{prefix}-SP-001", "-002", ... unique across all boards.
-     * The codes of that series are locked, so two requests at once cannot take the same code (the unique index on
-     * spare_locks.code is the last guard). Call inside a transaction.
+     * The next $count spare lock codes for this board: SP-{initial}-01, -02, ... in its Business Unit's series,
+     * continuing after the highest number used so far (a number is never handed out twice, also after a lock was
+     * removed), two digits (three from 100). Codes of other formats saved before stay as they are and keep working.
+     * The series is locked, so two requests at once cannot take the same code (the unique index on spare_locks.code
+     * is the last guard). Call inside a transaction.
      */
     public function nextSpareCodes(int $count): array
     {
-        $prefix = $this->spareCodePrefix().'-SP-';
-        $used = SpareLock::query()->where('code', 'like', $prefix.'%')->lockForUpdate()->pluck('code')
-            ->map(fn ($code) => strtoupper($code))
-            ->flip();
-        $codes = [];
-        $number = 0;
-        while (count($codes) < $count) {
-            $code = sprintf('%s%03d', $prefix, ++$number);
-            if (! $used->has($code)) {
-                $codes[] = $code;
-            }
-        }
+        $prefix = 'SP-'.$this->spareCodeInitial().'-';
+        $highest = SpareLock::query()->where('code', 'like', $prefix.'%')->lockForUpdate()->pluck('code')
+            ->map(fn ($code) => preg_match('/^'.preg_quote($prefix, '/').'(\d+)$/i', (string) $code, $m) ? (int) $m[1] : 0)
+            ->max() ?? 0;
 
-        return $codes;
+        return $count > 0 ? array_map(fn ($offset) => sprintf('%s%02d', $prefix, $highest + $offset), range(1, $count)) : [];
     }
 
     private static function codePart(?string $value): string

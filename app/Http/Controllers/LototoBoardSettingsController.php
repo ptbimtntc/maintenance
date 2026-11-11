@@ -9,6 +9,7 @@ use App\Models\LototoActivity;
 use App\Models\LototoBoard;
 use App\Models\LototoBoardSlot;
 use App\Models\LototoTool;
+use App\Models\LototoToolActivity;
 use App\Models\SpareLock;
 use App\Support\LototoSlotGrid;
 use Illuminate\Http\JsonResponse;
@@ -78,11 +79,19 @@ class LototoBoardSettingsController extends Controller
     public function layout(Request $request, LototoBoard $board): JsonResponse
     {
         $this->authorizeManageSafety($request);
+        // Reading the layout never writes. Slots saved before cells existed (placed by number, the legacy fallback)
+        // get their cell on the next Save: the save packs every band in number order (reflowPlans), so from then on
+        // they are managed by the same rules as any slot.
         $slots = LototoBoardSlot::query()->where('board_id', $board->id)->with(['spareLock', 'tool'])->orderBy('id')->get();
         $activeEmployeeIds = LototoActivity::query()
             ->whereIn('employee_id', $slots->pluck('employee_id')->filter())
             ->where('status', 'in_progress')
             ->pluck('employee_id')
+            ->flip();
+        $openToolIds = LototoToolActivity::query()
+            ->whereIn('tool_id', $slots->pluck('tool_id')->filter())
+            ->where('status', 'in_progress')
+            ->pluck('tool_id')
             ->flip();
         $activeStatusId = EmploymentStatus::query()->where('code', 'ACTIVE')->value('id');
         $employees = Employee::query()
@@ -124,8 +133,10 @@ class LototoBoardSettingsController extends Controller
                 'tool_code' => $slot->tool?->code,
                 'tool_column_span' => (int) ($slot->tool_column_span ?? 1),
                 'is_enabled' => (bool) $slot->is_enabled,
-                // Slots whose lock is IN: the editor shows them locked, the save validates them again.
-                'locked' => ($slot->employee_id && $activeEmployeeIds->has($slot->employee_id)) || (bool) $slot->spareLock?->current_activity_id,
+                // Slots with something IN (employee, spare lock or tool): the editor refuses to remove them or change
+                // their category, the save validates them again (activeUseOf).
+                'locked' => ($slot->employee_id && $activeEmployeeIds->has($slot->employee_id)) || (bool) $slot->spareLock?->current_activity_id
+                    || ($slot->tool_id && $openToolIds->has($slot->tool_id)),
             ])->values()]),
             'options' => [
                 'technician' => $employees->filter(fn (Employee $employee) => $this->categoryFor($employee) === 'technician')->map(fn (Employee $employee) => [
@@ -154,9 +165,9 @@ class LototoBoardSettingsController extends Controller
 
     /**
      * Saves the inline editor's draft in one transaction: presentation, layout and every slot of every category.
-     * Each category list must hold all of that category's current slots (by id) plus new ones without an id; an
-     * empty non-Technician slot may be listed under another category to change its category. A stale version or
-     * any failed rule saves nothing.
+     * Each category list must hold all of that category's current slots (by id) plus new ones without an id; any
+     * slot (Technician included) may be listed under another category to change its category, unless something on
+     * it is IN. Every band is then packed again (automatic layout). A stale version or any failed rule saves nothing.
      */
     public function updateLayout(Request $request, LototoBoard $board): JsonResponse
     {
@@ -222,20 +233,17 @@ class LototoBoardSettingsController extends Controller
                 $submitted = [];
                 foreach ($data['slots'][$category] as $index => $entry) {
                     $slot = filled($entry['id'] ?? null) ? $currentSlots->get((int) $entry['id']) : null;
-                    if ($slot && $slot->category !== $category) {
-                        if ($slot->category === 'technician' || $category === 'technician'
-                            || $slot->employee_id || $slot->spare_lock_id || $slot->tool_id || filled($slot->tool_label)) {
-                            throw ValidationException::withMessages(['slots' => "Kategori posisi {$slot->position} hanya dapat diganti jika slot kosong dan bukan posisi Technician."]);
-                        }
+                    // Any slot, Technician included, may change category unless something on it is IN. What it
+                    // held (employee, spare lock or tool) only leaves the board; those records and every LOTOTO
+                    // activity stay, since activities belong to the employee, lock or tool, not to the slot.
+                    if ($slot && $slot->category !== $category && ($reason = self::activeUseOf($slot))) {
+                        throw ValidationException::withMessages(['slots' => self::categoryLabel($slot->category)." {$slot->position} {$reason}, sehingga kategorinya tidak dapat diganti."]);
                     }
                     // A slot stays in its band: the category only changes what it holds.
                     $currentSection = $slot ? LototoSlotGrid::sectionOf($slot) : null;
                     $section = $currentSection ?? ($entry['section'] ?? null) ?: $category;
                     if ($currentSection !== null && filled($entry['section'] ?? null) && $entry['section'] !== $currentSection) {
                         throw ValidationException::withMessages(['slots' => "Slot {$slot->position} tetap berada di pita ".self::categoryLabel($currentSection).'; letaknya tidak dapat dipindah ke pita lain.']);
-                    }
-                    if (($section === 'technician') !== ($category === 'technician')) {
-                        throw ValidationException::withMessages(['slots' => 'Pita Technician hanya berisi slot Technician, dan slot Technician hanya berada di pita Technician.']);
                     }
                     $key = $slot ? $slot->id : 'new-'.$index;
                     // A slot keeps its cell (and moves with it to a new category) unless the editor sends another.
@@ -269,11 +277,12 @@ class LototoBoardSettingsController extends Controller
                 throw ValidationException::withMessages(['board_columns' => 'Jumlah kolom per baris berubah tanpa diterapkan. Muat ulang board lalu ulangi.']);
             }
             $columns = collect($applyColumns ? array_fill_keys(self::CATEGORIES, $boardColumns) : self::layoutColumns($lockedBoard));
-            if ($applyColumns && LototoSlotGrid::isStored()) {
-                $this->reflowPlans($plans, $boardColumns);
-            }
             if (LototoSlotGrid::isStored()) {
-                $this->validateCells($plans, $currentSlots, $columns->all(), $applyColumns);
+                // Automatic layout: every band is packed again from the draft's reading order, so a changed span,
+                // a removed slot or a new category moves the slots after it. Overlaps are then checked on the
+                // result, never on cells the change made obsolete.
+                $this->reflowPlans($plans, $columns->all());
+                $this->validateCells($plans, $columns->all());
             }
             $lockedBoard->update([
                 'title' => trim($data['title']),
@@ -384,34 +393,21 @@ class LototoBoardSettingsController extends Controller
     }
 
     /**
-     * Cells of an inline-editor save: every slot inside its section's columns, no two slots (Tools with their span)
-     * on the same cell, and Technician slots and slots whose lock is IN keep their cell. Slots without a cell yet
-     * are left to LototoSlotGrid::sync(), which gives them a free one.
+     * Cells of an inline-editor save, after the automatic layout (reflowPlans): every slot inside its section's
+     * columns and no two slots (Tools with their span) on the same cell. Only the drawn cell is computed again; a
+     * slot whose lock is IN keeps its id, number and assignment, which is what links it to the activity.
      */
-    private function validateCells(array $plans, Collection $currentSlots, array $columns, bool $reflowed = false): void
+    private function validateCells(array $plans, array $columns): void
     {
         $messages = [];
         $bySection = [];
         foreach ($plans as $category => $plan) {
             $label = self::categoryLabel($category);
             foreach ($plan['submitted'] as $key => $values) {
-                $current = is_int($key) ? $currentSlots->get($key) : null;
-                $moved = $current && ((int) $current->grid_row !== (int) $values['grid_row'] || (int) $current->grid_column !== (int) $values['grid_column']);
-                if (! $reflowed && $moved && $current->grid_row !== null && $current->category === $category) {
-                    if ($category === 'technician') {
-                        $messages[] = "Posisi Technician {$current->position} dikunci dan tidak dapat dipindahkan.";
-                    } elseif (($current->spareLock?->current_activity_id) || ($current->employee_id && LototoActivity::query()
-                        ->where('employee_id', $current->employee_id)->where('status', 'in_progress')->exists())) {
-                        $messages[] = "{$label} {$current->position} memiliki aktivitas LOTOTO aktif dan tidak dapat dipindahkan.";
-                    }
-                }
                 if ($values['grid_row'] !== null && $values['grid_column'] !== null) {
                     // Spans follow what the slot holds; cells and widths follow the band it sits in.
                     $span = $category === 'tool' ? max(1, min(3, (int) $values['tool_column_span'])) : 1;
-                    $name = $current && $current->category !== $category
-                        ? self::categoryLabel($current->category)." {$values['position']} (menjadi {$label})"
-                        : "{$label} {$values['position']}";
-                    $bySection[$values['section']][] = [$name, $values['grid_row'], $values['grid_column'], $span];
+                    $bySection[$values['section']][] = ["{$label} {$values['position']}", $values['grid_row'], $values['grid_column'], $span];
                 }
             }
         }
@@ -424,10 +420,11 @@ class LototoBoardSettingsController extends Controller
     }
 
     /**
-     * A new column count packs each section's slots (as the draft holds them, new ones included) in reading order,
-     * with the same rule Settings uses (LototoSlotGrid::reflow).
+     * Automatic layout of a save: each section's slots (as the draft holds them, new ones included) packed in
+     * reading order into that section's columns, with the rule the preview and LototoSlotGrid::pack use.
+     * $columns: [section => column count].
      */
-    private function reflowPlans(array &$plans, int $columns): void
+    private function reflowPlans(array &$plans, array $columns): void
     {
         foreach (self::CATEGORIES as $section) {
             $items = [];
@@ -438,7 +435,7 @@ class LototoBoardSettingsController extends Controller
                     }
                 }
             }
-            foreach (LototoSlotGrid::reflow($items, $columns) as $item => [$row, $column]) {
+            foreach (LototoSlotGrid::reflow($items, $columns[$section]) as $item => [$row, $column]) {
                 [$category, $key] = explode('|', $item, 2);
                 $key = ctype_digit($key) ? (int) $key : $key;
                 $plans[$category]['submitted'][$key]['grid_row'] = $row;
@@ -448,25 +445,38 @@ class LototoBoardSettingsController extends Controller
     }
 
     /**
-     * Slots removed in Edit Mode: not a Technician slot, nothing IN on them, and not the protected legacy Tools
-     * positions of mtn_tr (the same rules as removing a position in Settings, which also requires it empty there;
-     * Edit Mode asks the admin to confirm a filled one). Activities, locks and tools are separate records and stay.
+     * Slots removed in Edit Mode, in every category (Technician included): refused while something on them is IN
+     * (activeUseOf). The admin confirms a filled one in Edit Mode. Only the slot row is deleted: the employee, spare
+     * lock or tool and every LOTOTO activity are separate records and stay (no cascade reaches them). No slot is
+     * protected for where it came from: the legacy Tools positions 1-15 of mtn_tr follow the same rules as any slot.
      */
     private function validateRemovedSlots(LototoBoard $board, Collection $slots): void
     {
         foreach ($slots as $slot) {
             $label = self::categoryLabel($slot->category)." {$slot->position}";
-            if ($slot->category === 'technician') {
-                throw ValidationException::withMessages(['slots' => "{$label} tidak dapat dihapus: posisi Technician dikunci."]);
-            }
-            if ($board->code === 'mtn_tr' && $slot->category === 'tool' && $slot->position <= 15) {
-                throw ValidationException::withMessages(['slots' => "{$label} masih dilindungi fallback legacy dan tidak dapat dihapus."]);
-            }
-            if ($slot->spareLock?->current_activity_id || ($slot->employee_id && LototoActivity::query()
-                ->where('employee_id', $slot->employee_id)->where('status', 'in_progress')->exists())) {
-                throw ValidationException::withMessages(['slots' => "{$label} memiliki aktivitas LOTOTO aktif (IN) dan tidak dapat dihapus."]);
+            if ($reason = self::activeUseOf($slot)) {
+                throw ValidationException::withMessages(['slots' => "{$label} {$reason} dan tidak dapat dihapus."]);
             }
         }
+    }
+
+    /**
+     * Why a slot may not be removed or change category right now, or null: its employee has a LOTOTO activity IN,
+     * its spare lock is in use, or its tool is IN. Slot ids and assignments are what link a board to those records.
+     */
+    private static function activeUseOf(LototoBoardSlot $slot): ?string
+    {
+        if ($slot->spare_lock_id && SpareLock::query()->whereKey($slot->spare_lock_id)->whereNotNull('current_activity_id')->exists()) {
+            return 'memiliki gembok Spare yang sedang digunakan (IN)';
+        }
+        if ($slot->employee_id && LototoActivity::query()->where('employee_id', $slot->employee_id)->where('status', 'in_progress')->exists()) {
+            return 'memiliki aktivitas LOTOTO aktif (IN)';
+        }
+        if ($slot->tool_id && LototoToolActivity::query()->where('tool_id', $slot->tool_id)->where('status', 'in_progress')->exists()) {
+            return 'memiliki Tools yang sedang IN';
+        }
+
+        return null;
     }
 
     /**

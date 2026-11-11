@@ -52,7 +52,7 @@ class LototoBoardsTest extends TestCase
                 'spare_lock_count' => 20,
             ])
             ->assertRedirect(route('safety.lototo.boards.index'))
-            ->assertSessionHas('status', fn ($status) => str_contains($status, 'PRODUCTION-SP-001 s.d. PRODUCTION-SP-020'));
+            ->assertSessionHas('status', fn ($status) => str_contains($status, 'SP-UT-01 s.d. SP-UT-20'));
 
         $board = LototoBoard::query()->where('division_name', 'Production')->firstOrFail();
         $this->assertSame($businessUnit->id, $board->business_unit_id);
@@ -66,7 +66,7 @@ class LototoBoardsTest extends TestCase
         $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $board->id, 'category' => 'technician', 'position' => 25, 'employee_id' => null]);
         $this->assertDatabaseHas('lototo_board_slots', ['board_id' => $board->id, 'category' => 'supervisor', 'position' => 10]);
         $this->assertSame(20, LototoBoardSlot::query()->where('board_id', $board->id)->whereNotNull('spare_lock_id')->count());
-        $this->assertSame(['PRODUCTION-SP-001', 'PRODUCTION-SP-020'], [
+        $this->assertSame(['SP-UT-01', 'SP-UT-20'], [
             SpareLock::query()->where('board_id', $board->id)->orderBy('code')->value('code'),
             SpareLock::query()->where('board_id', $board->id)->orderByDesc('code')->value('code'),
         ]);
@@ -78,7 +78,7 @@ class LototoBoardsTest extends TestCase
 
     public function test_add_board_form_has_only_division_business_unit_and_spare_count(): void
     {
-        $businessUnit = BusinessUnit::factory()->create();
+        $businessUnit = BusinessUnit::factory()->create(['name' => 'Half Product']);
         $html = $this->actingAs($this->administrator())->get(route('safety.lototo.boards.index'))->assertOk()->getContent();
         preg_match('#<form method="POST" action="'.preg_quote(route('safety.lototo.boards.store'), '#').'".*?</form>#s', $html, $form);
         $this->assertNotEmpty($form);
@@ -99,7 +99,7 @@ class LototoBoardsTest extends TestCase
         $board = LototoBoard::query()->where('division_name', 'Half Product')->firstOrFail();
         $this->assertSame([20, 20, 20], [$board->layout['board_columns'], $board->layout['technician_columns'], $board->layout['supervisor_columns']]);
         $this->assertSame(5, LototoBoardSlot::query()->where('board_id', $board->id)->where('category', 'spare')->count());
-        $this->assertSame('HALF-PRODUCT-SP-001', SpareLock::query()->where('board_id', $board->id)->orderBy('code')->value('code'));
+        $this->assertSame('SP-HP-01', SpareLock::query()->where('board_id', $board->id)->orderBy('code')->value('code'));
         $this->assertSame(15, LototoBoardSlot::query()->where('board_id', $board->id)->where('category', 'tool')->count());
         $this->assertSame(0, LototoTool::query()->where('board_id', $board->id)->count());
     }
@@ -123,7 +123,7 @@ class LototoBoardsTest extends TestCase
         $this->actingAs($admin)->post(route('safety.lototo.boards.store'), $payload)->assertRedirect();
         $this->actingAs($admin)->post(route('safety.lototo.boards.store'), $payload)->assertSessionHasErrors('division_name');
         $this->assertSame(1, LototoBoard::query()->where('division_name', 'Production')->count());
-        $this->assertSame(2, SpareLock::query()->where('code', 'like', 'PRODUCTION-SP-%')->count());
+        $this->assertSame(2, SpareLock::query()->where('code', 'like', 'SP-UT-%')->count());
     }
 
     public function test_non_admin_cannot_manage_boards(): void
@@ -433,7 +433,7 @@ class LototoBoardsTest extends TestCase
         \Illuminate\Support\Facades\Storage::disk('local')->assertMissing($tool->image_path);
     }
 
-    public function test_add_board_creates_physical_spare_locks_with_codes_from_the_division(): void
+    public function test_add_board_creates_physical_spare_locks_with_codes_from_the_business_unit(): void
     {
         $businessUnit = BusinessUnit::factory()->create(['name' => 'Steel Cord', 'code' => 'BU-SC']);
 
@@ -448,7 +448,7 @@ class LototoBoardsTest extends TestCase
         $board = LototoBoard::query()->where('business_unit_id', $businessUnit->id)->firstOrFail();
         $this->assertSame('Dramix', $board->division_name);
         $locks = SpareLock::query()->where('board_id', $board->id)->orderBy('code')->get();
-        $this->assertSame(['DRAMIX-SP-001', 'DRAMIX-SP-002', 'DRAMIX-SP-003'], $locks->pluck('code')->all());
+        $this->assertSame(['SP-SC-01', 'SP-SC-02', 'SP-SC-03'], $locks->pluck('code')->all());
         $this->assertTrue($locks->every->is_active);
         $this->assertTrue($locks->every(fn (SpareLock $lock) => $lock->current_activity_id === null));
         foreach ($locks as $index => $lock) {
@@ -460,9 +460,9 @@ class LototoBoardsTest extends TestCase
         $this->actingAs($this->administrator())
             ->get(route('safety.lototo.qr-codes', ['board' => $board->id]))
             ->assertOk()
-            ->assertSee(e(\App\Http\Middleware\AllowLototoQrForm::url('safety.lototo.form', ['spare_lock' => 'DRAMIX-SP-002', 'board' => $board->id])), false);
+            ->assertSee(e(\App\Http\Middleware\AllowLototoQrForm::url('safety.lototo.form', ['spare_lock' => 'SP-SC-02', 'board' => $board->id])), false);
         $this->actingAs($this->administrator())
-            ->get(route('safety.lototo.form', ['spare_lock' => 'DRAMIX-SP-002', 'board' => $board->id]))
+            ->get(route('safety.lototo.form', ['spare_lock' => 'SP-SC-02', 'board' => $board->id]))
             ->assertOk()
             ->assertSee('name="board_id" value="'.$board->id.'"', false)
             ->assertSee('name="spare_lock_id" value="'.$locks[1]->id.'"', false);
@@ -491,7 +491,7 @@ class LototoBoardsTest extends TestCase
         $this->assertDatabaseCount('spare_locks', 0);
     }
 
-    public function test_spare_codes_are_unique_across_boards_and_a_shared_division_adds_the_business_unit(): void
+    public function test_spare_codes_follow_the_business_unit_and_never_repeat_across_boards(): void
     {
         $admin = $this->administrator();
         $tireCord = BusinessUnit::factory()->create(['name' => 'Tire Cord', 'code' => 'BU-TC']);
@@ -502,15 +502,23 @@ class LototoBoardsTest extends TestCase
         $first = LototoBoard::query()->where('business_unit_id', $tireCord->id)->firstOrFail();
         $second = LototoBoard::query()->where('business_unit_id', $halfProduct->id)->firstOrFail();
 
-        $this->assertSame(['MAINTENANCE-SP-001', 'MAINTENANCE-SP-002'], SpareLock::query()->where('board_id', $first->id)->orderBy('code')->pluck('code')->all());
-        $this->assertSame(['MAINTENANCE-HP-SP-001', 'MAINTENANCE-HP-SP-002'], SpareLock::query()->where('board_id', $second->id)->orderBy('code')->pluck('code')->all());
-        // The older board keeps its own series after the second board appeared.
-        $this->assertSame('MAINTENANCE-SP-003', $first->fresh()->nextSpareCodes(1)[0]);
-        $this->assertSame('MAINTENANCE-HP-SP-003', $second->fresh()->nextSpareCodes(1)[0]);
+        $this->assertSame(['SP-TC-01', 'SP-TC-02'], SpareLock::query()->where('board_id', $first->id)->orderBy('code')->pluck('code')->all());
+        $this->assertSame(['SP-HP-01', 'SP-HP-02'], SpareLock::query()->where('board_id', $second->id)->orderBy('code')->pluck('code')->all());
+        $this->assertSame('SP-TC-03', $first->fresh()->nextSpareCodes(1)[0]);
+        $this->assertSame('SP-HP-03', $second->fresh()->nextSpareCodes(1)[0]);
+        // A second board of the same Business Unit continues the unit's series: its codes never repeat the first's.
+        $this->actingAs($admin)->post(route('safety.lototo.boards.store'), ['division_name' => 'Electrical', 'business_unit_id' => $tireCord->id, 'spare_lock_count' => 2])->assertSessionHasNoErrors();
+        $third = LototoBoard::query()->where('business_unit_id', $tireCord->id)->where('division_name', 'Electrical')->firstOrFail();
+        $this->assertSame(['SP-TC-03', 'SP-TC-04'], SpareLock::query()->where('board_id', $third->id)->orderBy('code')->pluck('code')->all());
+        // Codes of the older format stay as they are and do not disturb the series.
+        SpareLock::query()->create(['board_id' => $first->id, 'code' => 'MAINTENANCE-SP-001', 'is_active' => true]);
+        $this->assertSame('SP-TC-05', $first->fresh()->nextSpareCodes(1)[0]);
+        $this->assertSame(['SP-TC-05', 'SP-TC-06'], $first->fresh()->nextSpareCodes(2));
+        $this->assertSame([], $first->fresh()->nextSpareCodes(0));
 
         // The database refuses the same code twice, on any board.
         $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
-        SpareLock::query()->create(['board_id' => $second->id, 'code' => 'MAINTENANCE-SP-001', 'is_active' => true]);
+        SpareLock::query()->create(['board_id' => $second->id, 'code' => 'SP-TC-01', 'is_active' => true]);
     }
 
     public function test_the_unique_code_migration_stops_without_changes_while_two_boards_share_a_code(): void
@@ -539,13 +547,13 @@ class LototoBoardsTest extends TestCase
 
     public function test_a_failing_add_board_saves_nothing(): void
     {
-        $businessUnit = BusinessUnit::factory()->create();
+        $businessUnit = BusinessUnit::factory()->create(['name' => 'Rollback Unit']);
         Employee::factory()->create(['business_unit_id' => $businessUnit->id, 'employment_status_id' => $this->activeStatus->id, 'lototo_number' => '05']);
         $counts = fn () => [LototoBoard::query()->count(), LototoBoardSlot::query()->count(), SpareLock::query()->count()];
         $before = $counts();
         // A spare lock code taken at the same moment by another request.
         SpareLock::creating(function (SpareLock $lock) {
-            if ($lock->code === 'ROLLBACK-SP-002') {
+            if ($lock->code === 'SP-RU-02') {
                 throw new \Illuminate\Database\UniqueConstraintViolationException('sqlite', 'insert', [], new \Exception('duplicate'));
             }
         });
@@ -627,30 +635,29 @@ class LototoBoardsTest extends TestCase
         $this->assertStringContainsString('name="return_board" value="'.$active->id.'"', $html);
     }
 
-    public function test_spare_locks_are_added_one_by_one_with_the_next_free_code_and_never_placed(): void
+    public function test_spare_locks_are_added_one_by_one_with_the_next_code_and_never_placed(): void
     {
         $admin = $this->administrator();
-        $board = $this->board(BusinessUnit::factory()->create());
-        $board->update(['division_name' => 'Dramix']);
+        $board = $this->board(BusinessUnit::factory()->create(['name' => 'Dramix']));
         $board->provisionSpareLocks([1, 2]);
-        // A lock that already took code 004 is skipped.
-        SpareLock::query()->create(['board_id' => $board->id, 'code' => 'DRAMIX-SP-004', 'is_active' => true]);
+        // A lock that already took code 04: the series continues after it (03 is not handed out later).
+        SpareLock::query()->create(['board_id' => $board->id, 'code' => 'SP-DR-04', 'is_active' => true]);
         $slots = LototoBoardSlot::query()->where('board_id', $board->id)->count();
 
-        $this->actingAs($admin)->getJson(route('safety.lototo.boards.layout', $board))->assertJsonPath('manage.next_spare_code', 'DRAMIX-SP-003');
+        $this->actingAs($admin)->getJson(route('safety.lototo.boards.layout', $board))->assertJsonPath('manage.next_spare_code', 'SP-DR-05');
         $this->actingAs($admin)->postJson(route('safety.lototo.boards.spare-locks.store', $board))
             ->assertCreated()
-            ->assertJsonPath('spare_lock.code', 'DRAMIX-SP-003')
+            ->assertJsonPath('spare_lock.code', 'SP-DR-05')
             ->assertJsonPath('spare_lock.slot', null)
-            ->assertJsonPath('next_spare_code', 'DRAMIX-SP-005');
-        $this->actingAs($admin)->postJson(route('safety.lototo.boards.spare-locks.store', $board))->assertJsonPath('spare_lock.code', 'DRAMIX-SP-005');
+            ->assertJsonPath('next_spare_code', 'SP-DR-06');
+        $this->actingAs($admin)->postJson(route('safety.lototo.boards.spare-locks.store', $board))->assertJsonPath('spare_lock.code', 'SP-DR-06');
 
-        $this->assertSame(['DRAMIX-SP-001', 'DRAMIX-SP-002', 'DRAMIX-SP-003', 'DRAMIX-SP-004', 'DRAMIX-SP-005'], SpareLock::query()->where('board_id', $board->id)->orderBy('code')->pluck('code')->all());
+        $this->assertSame(['SP-DR-01', 'SP-DR-02', 'SP-DR-04', 'SP-DR-05', 'SP-DR-06'], SpareLock::query()->where('board_id', $board->id)->orderBy('code')->pluck('code')->all());
         $this->assertSame($slots, LototoBoardSlot::query()->where('board_id', $board->id)->count(), 'New spare locks are not put on a slot.');
-        $this->assertNull(SpareLock::query()->where('code', 'DRAMIX-SP-005')->value('current_activity_id'));
+        $this->assertNull(SpareLock::query()->where('code', 'SP-DR-06')->value('current_activity_id'));
         // Edit Slot offers the new lock.
-        $this->actingAs($admin)->getJson(route('safety.lototo.boards.layout', $board))->assertJsonFragment(['code' => 'DRAMIX-SP-005']);
-        $this->actingAs($admin)->get(route('safety.lototo.form', ['spare_lock' => 'DRAMIX-SP-005', 'board' => $board->id]))->assertOk();
+        $this->actingAs($admin)->getJson(route('safety.lototo.boards.layout', $board))->assertJsonFragment(['code' => 'SP-DR-06']);
+        $this->actingAs($admin)->get(route('safety.lototo.form', ['spare_lock' => 'SP-DR-06', 'board' => $board->id]))->assertOk();
 
         $staff = User::factory()->create();
         $staff->assignRole(RoleName::MaintenanceStaff->value);

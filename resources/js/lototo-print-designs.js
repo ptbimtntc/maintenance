@@ -134,11 +134,19 @@ export function frame(width, height, stroke) {
  * the reference it is Arial Bold stretched about 1.46 times across), at most 36% of the code wide. Only the modules
  * under the number and one module around it are removed, so error correction H keeps the code readable.
  */
-export function qrCode(url, number, { x, y, size }) {
-    const { modules } = QRCode.create(url, { errorCorrectionLevel: 'H' });
+/**
+ * Error correction for a QR with the number cut out of its centre. Level H (30 %) makes the code dense: a signed
+ * LOTOTO URL needs 73 x 73 modules, about 0.33 mm each on the 23.88 mm QR of Desain 2 and 5, too fine for many phone
+ * cameras. `adaptive` picks the lowest level that still recovers the cut-out with a wide margin (M up to 7.5 % of the
+ * modules cut out, Q up to 12 %, otherwise H), so the same URL gets larger modules. Measured on rendered designs:
+ * employee and spare QR codes read from about 170-240 dpi instead of only at 300 dpi.
+ */
+const CUT_OUT_LIMIT = { M: 0.075, Q: 0.12, H: 1 };
+
+function qrLayout(url, value, size, level) {
+    const { modules } = QRCode.create(url, { errorCorrectionLevel: level });
     const count = modules.size;
     const unit = size / count;
-    const value = String(number ?? '');
     const figure = size * 0.121;
     const labelWidth = Math.min(value.length * size * 0.131, size * 0.36);
     const centre = count / 2;
@@ -146,6 +154,22 @@ export function qrCode(url, number, { x, y, size }) {
     const c1 = Math.ceil(centre + labelWidth / unit / 2) + 1;
     const r0 = Math.floor(centre - figure / unit / 2) - 1;
     const r1 = Math.ceil(centre + figure / unit / 2) + 1;
+
+    return { modules, count, unit, figure, labelWidth, c0, c1, r0, r1, cutOut: ((c1 - c0) * (r1 - r0)) / (count * count) };
+}
+
+/** The error correction level qrCode() uses for a URL and number (exported for tests). */
+export function qrLevel(url, number, size, adaptive = false) {
+    const value = String(number ?? '');
+    if (!adaptive) return 'H';
+
+    return ['M', 'Q'].find((level) => qrLayout(url, value, size, level).cutOut <= CUT_OUT_LIMIT[level]) ?? 'H';
+}
+
+export function qrCode(url, number, { x, y, size, adaptive = false }) {
+    if (!url) throw new Error('A LOTOTO QR code needs a URL.');
+    const value = String(number ?? '');
+    const { modules, count, unit, figure, labelWidth, c0, c1, r0, r1 } = qrLayout(url, value, size, qrLevel(url, value, size, adaptive));
     let path = '';
     for (let row = 0; row < count; row++) {
         let start = null;
@@ -174,7 +198,8 @@ const design2Body = (r) => [
     text(nameOf(r), { x: 15.41, y: 11.19, cap: 4.58, maxWidth: 28.6 }),
     text(r.number, { x: 15.41, y: 26.45, cap: 9.33, color: RED, maxWidth: 28.6 }),
     photo(r.photo, { x: 30.99, y: 5.09, width: 17.44, height: 22.04 }, EMPLOYEES.includes(r.kind)),
-    qrCode(r.qr, r.number, { x: 51.48, y: 3.9, size: 23.88 }),
+    // The record's own IN/OUT URL (signed form URL for employees and spare locks, tool form for tools).
+    qrCode(r.qr, r.number, { x: 51.48, y: 3.9, size: 23.88, adaptive: true }),
 ].join('');
 
 /**
