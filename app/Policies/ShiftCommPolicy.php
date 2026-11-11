@@ -30,4 +30,16 @@ class ShiftCommPolicy
     {
         return $this->viewAny($user) && $user->hasRole(RoleName::Administrator->value);
     }
+
+    /** Only an Administrator can export Shift Comm entries. */
+    public function export(User $user): bool
+    {
+        return $this->viewAny($user) && $user->hasRole(RoleName::Administrator->value);
+    }
+
+    /** Only an Administrator can import Shift Comm entries. */
+    public function import(User $user): bool
+    {
+        return $this->viewAny($user) && $user->hasRole(RoleName::Administrator->value);
+    }
 }

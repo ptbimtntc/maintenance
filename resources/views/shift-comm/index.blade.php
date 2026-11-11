@@ -6,6 +6,20 @@
             <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
 
+        @if (session('import_errors'))
+            <div class="rounded-md bg-danger-50 px-4 py-3 text-sm text-danger-800">{{ session('import_errors') }}</div>
+        @endif
+
+        @if ($errors->any())
+            <div class="rounded-md bg-danger-50 px-4 py-3 text-sm text-danger-800">
+                <ul class="list-disc pl-5 space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         @if (count($repeatWarnings) > 0)
             @php
                 $rollingDays = \App\Models\ShiftComm::repeatWindowDays();
@@ -94,7 +108,31 @@
                     <a href="{{ route('shift-comm.index') }}" class="py-2 text-sm text-neutral-500 hover:underline">Reset</a>
                 @endif
             </form>
-            <a href="{{ route('shift-comm.create') }}"><x-primary-button type="button">New Shift Comm</x-primary-button></a>
+            <div class="flex flex-wrap items-center gap-2">
+                @can('export', \App\Models\ShiftComm::class)
+                    <x-button variant="secondary" href="{{ route('shift-comm.export', request()->query()) }}">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                        </svg>
+                        Export XLSX
+                    </x-button>
+                @endcan
+
+                @can('import', \App\Models\ShiftComm::class)
+                    <form method="POST" action="{{ route('shift-comm.import') }}" enctype="multipart/form-data">
+                        @csrf
+                        <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-neutral-300 bg-white px-3.5 py-2 text-sm font-medium text-neutral-700 shadow-xs transition hover:bg-neutral-50">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-4.5L12 16.5m0 0 4.5-4.5M12 16.5V3" />
+                            </svg>
+                            Import XLSX
+                            <input type="file" name="file" accept=".xlsx" class="hidden" onchange="this.form.requestSubmit()">
+                        </label>
+                    </form>
+                @endcan
+
+                <a href="{{ route('shift-comm.create') }}"><x-primary-button type="button">+ New Shift Comm</x-primary-button></a>
+            </div>
         </div>
 
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">

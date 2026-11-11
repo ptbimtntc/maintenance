@@ -286,6 +286,8 @@ Route::middleware(['auth', 'verified'])->prefix('tasks')->name('tasks.')->group(
 // every signed-in non-guest user; edit/delete limited by ShiftCommPolicy.
 Route::middleware(['auth', 'verified'])->prefix('shift-comm')->name('shift-comm.')->group(function () {
     Route::get('/', [ShiftCommController::class, 'index'])->name('index');
+    Route::get('/export', [ShiftCommController::class, 'export'])->name('export');
+    Route::post('/import', [ShiftCommController::class, 'import'])->name('import');
     Route::get('/create', [ShiftCommController::class, 'create'])->name('create');
     Route::get('/machine-lookup', [ShiftCommController::class, 'lookupMachine'])->name('machine-lookup');
     Route::post('/', [ShiftCommController::class, 'store'])->name('store');

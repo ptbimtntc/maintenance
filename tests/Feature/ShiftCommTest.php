@@ -334,4 +334,85 @@ class ShiftCommTest extends TestCase
                 'machine_type' => 'BF OLD',
             ]);
     }
+
+    private function xlsx(array $rows): \Illuminate\Http\UploadedFile
+    {
+        $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+        $sheet->getActiveSheet()->fromArray($rows);
+        $path = tempnam(sys_get_temp_dir(), 'comm').'.xlsx';
+        (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($sheet))->save($path);
+
+        return new \Illuminate\Http\UploadedFile($path, 'shift-comm.xlsx', null, null, true);
+    }
+
+    public function test_only_administrator_sees_import_and_export_buttons(): void
+    {
+        $admin = $this->staff(RoleName::Administrator->value);
+        $staff = $this->staff();
+
+        $this->actingAs($admin)->get(route('shift-comm.index'))
+            ->assertOk()
+            ->assertSee('Export XLSX')
+            ->assertSee('Import XLSX');
+
+        $this->actingAs($staff)->get(route('shift-comm.index'))
+            ->assertOk()
+            ->assertDontSee('Export XLSX')
+            ->assertDontSee('Import XLSX');
+    }
+
+    public function test_only_administrator_can_export_shift_comm(): void
+    {
+        $admin = $this->staff(RoleName::Administrator->value);
+        $staff = $this->staff();
+
+        ShiftComm::createNumbered([
+            'comm_date' => '2026-10-01',
+            'shift' => 1,
+            'team' => 'A',
+            'machine_no' => 'M-EXP',
+            'problem' => 'Test export problem',
+            'is_torsion_shaft' => 0,
+            'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($staff)->get(route('shift-comm.export'))
+            ->assertForbidden();
+
+        $response = $this->actingAs($admin)->get(route('shift-comm.export'));
+        $response->assertOk();
+        $this->assertStringContainsString('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_only_administrator_can_import_shift_comm(): void
+    {
+        $admin = $this->staff(RoleName::Administrator->value);
+        $staff = $this->staff();
+
+        $file = $this->xlsx([
+            ['Date', 'Shift', 'Team', 'Machine No.', 'Machine Type', 'Problem', 'Torsion Shaft', 'Estafet Torsion Shaft'],
+            ['2026-10-05', '1', 'B', 'M-IMP-01', 'BF2008', 'Wire cut', 'YA', 'Sedang dikerjakan'],
+            ['2026-10-05', '2', 'C', 'M-IMP-02', 'BF OLD', 'Motor overheat', 'TIDAK', null],
+        ]);
+
+        $this->actingAs($staff)->post(route('shift-comm.import'), ['file' => $file])
+            ->assertForbidden();
+
+        $response = $this->actingAs($admin)->post(route('shift-comm.import'), ['file' => $file]);
+        $response->assertRedirect(route('shift-comm.index'));
+        $response->assertSessionHas('status');
+
+        $this->assertDatabaseHas('shift_comms', [
+            'machine_no' => 'M-IMP-01',
+            'problem' => 'Wire cut',
+            'is_torsion_shaft' => 1,
+            'torsion_relay_status' => 'in_progress',
+        ]);
+
+        $this->assertDatabaseHas('shift_comms', [
+            'machine_no' => 'M-IMP-02',
+            'problem' => 'Motor overheat',
+            'is_torsion_shaft' => 0,
+        ]);
+    }
 }
