@@ -141,9 +141,10 @@ Tugas yang ditugaskan kepada Anda muncul di bagian tugas Anda dan memicu notifik
 Catatan komunikasi antar-shift (serah terima).
 1. Buka **Task → Shift Comm** → tambah entri baru.
 2. Pilih **tim**, **tanggal**, dan **shift**. Tanggal dan shift menjadi bagian dari ID entri sehingga **tidak bisa diubah** setelah dibuat.
-3. Isi status dan catatan, lalu simpan.
-4. Entri dapat dibuka, diedit, atau dihapus sesuai hak Anda.
-5. Bila ada mesin dengan problem berulang, banner kuning **WARNING** muncul di atas halaman. Banner ini **tertutup secara default** (hanya menampilkan jumlah mesin); klik banner untuk membuka/menutup rincian per mesin.
+3. Masukkan **Machine No.**; kolom **Machine Type** di sampingnya akan terisi otomatis secara read-only berdasarkan nomor/tipe mesin (dapat memilih saran mesin yang tersedia).
+4. Isi status dan catatan, lalu simpan.
+5. Entri dapat dibuka dan diedit oleh pembuatnya atau Administrator; tombol **Delete** hanya muncul dan dapat diakses oleh pengguna dengan role **Administrator**.
+6. Bila ada mesin dengan problem Torsion Shaft berulang (ambang batas kejadian dan rentang rolling days dapat diatur dinamis di Master Data, default: minimal 4 kali dalam rentang rolling 7 hari terakhir), bar notifikasi peringatan muncul tepat di atas kontrol filter sebagai komponen dropdown overlay. Ketika diklik, panel rincian terbuka melayang di atas konten (overlay) tanpa menggeser tata letak halaman. Di dalamnya, setiap nomor mesin bersifat interaktif (dapat diklik) untuk membuka/menutup rincian tabel laporan problem yang dialami mesin tersebut selama rentang rolling days yang aktif (termasuk nomor ID WO yang dapat diklik langsung, tanggal, shift, problem, dan status estafet). Komponen ini otomatis tersembunyi jika tidak ada problem berulang.
 <!-- /only -->
 
 ---
@@ -200,10 +201,11 @@ Plant Manager (pemimpin tertinggi) **tidak muncul** di daftar Employees maupun t
 <!-- /only -->
 
 <!-- only:organization -->
-### Organization (Master Data)
-Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, dan lain-lain.
+### Master Data
+Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, machine database (Machine Database C&B dan Machine Database WWD), serta konfigurasi **Shift Comm Parameters** (pengaturan Rolling Days dan Threshold Kejadian problem berulang TS).
 - **Create**, **Edit**, nonaktifkan, atau **Delete** data.
-- Tersedia **Import** dan **Export** per jenis data.
+- Khusus Machine Database: dapat mencari berdasarkan nomor mesin, functional location, atau tipe mesin, memfilter berdasarkan tipe mesin, serta input Machine Type dilengkapi saran otomatis dari tipe mesin yang sudah ada.
+- Tersedia **Import** dan **Export** XLSX per jenis data.
 <!-- /only -->
 
 <!-- only:overtime -->
@@ -479,8 +481,19 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-11 | Shift Comm: Meningkatkan interaktivitas notifikasi warning problem berulang TS — nomor mesin kini dapat diklik untuk menampilkan tabel rincian record laporan problem selama rentang rolling days. |
+| 2026-11-11 | Master Data: Menambahkan menu dan form konfigurasi parameter Shift Comm (Rolling Days dan Repeat Threshold problem berulang TS) yang dapat diatur secara dinamis melalui antarmuka. |
 | 2026-11-10 | LOTOTO: board terlihat sama untuk semua pengguna yang membukanya; nomor LOTOTO ditandai merah; email LOTOTO & LMRA FEEDBACK dan halaman Supervisor Feedback; balasan supervisor tampil di LOTOTO Activity; kode Spare baru SP-{inisial BU}-{nomor}; QR Spare yang belum dipakai meminta login lalu membuka form IN; slot Other / Tools lama dapat dikelola di Edit Mode. |
 | 2026-11-10 | LOTOTO: Edit Mode kini berlaku untuk semua slot termasuk Technician (ganti kategori dan hapus, kecuali slot yang sedang dipakai); letak slot diatur otomatis tanpa ruang kosong; halaman LOTOTO Activity tampil sebagai kartu di HP dan tablet; QR Desain 2 dan 5 lebih mudah dipindai kamera HP. |
+| 2026-11-10 | Shift Comm: Mengubah notifikasi warning problem berulang Torsion Shaft menjadi komponen dropdown overlay agar tidak menggeser layout saat dibuka. |
+| 2026-11-10 | Shift Comm: Menyesuaikan ambang batas warning problem berulang Torsion Shaft menjadi minimal 4 kali kejadian dalam rolling 7 hari. |
+| 2026-11-10 | Shift Comm: Memperbarui tampilan notifikasi warning problem berulang TS (posisi tepat di atas filter, default collapsed satu baris judul dengan chevron, expanded menampilkan ringkasan tanggal dan list nomor mesin serta jumlah kejadian). |
+| 2026-11-10 | Shift Comm: Menyesuaikan rentang waktu pengecekan (rolling window) problem Torsion Shaft berulang dari 30 hari menjadi 7 hari ke belakang. |
+| 2026-11-10 | Shift Comm: Tombol dan akses Delete pada detail entri kini dibatasi khusus untuk role Administrator saja. |
+| 2026-11-10 | Shift Comm: Menghilangkan opsi status "Selesai" pada input Estafet Torsion Shaft. |
+| 2026-11-10 | Menambahkan Machine Database C&B dan Machine Database WWD pada menu Master Data (lengkap dengan filter tipe mesin, pencarian, import/export XLSX, dan pemisahan unit C&B serta WWD). |
+| 2026-11-10 | Mengganti nama menu Organization pada sub People & Organization menjadi Master Data. |
+| 2026-11-06 | Shift Comm: menambahkan field Machine Type di samping Machine No. dengan auto-fill otomatis read-only berdasarkan nomor/tipe mesin. |
 | 2026-11-06 | Menjelaskan bahwa waktu aktivitas LOTOTO dan riwayat Tools ditampilkan dalam waktu lokal. |
 | 2026-11-06 | Mengganti keterangan LOTOTO yang sudah tidak sesuai dengan panduan board, Manage Board, Edit Mode, pemeriksaan, QR, Spare Lock, Tools, dan follow-up. |
 | 2026-11-05 | Logo aplikasi (sidebar, halaman login, laporan PDF) dan favicon diganti dengan logo perisai + topi toga. Tidak ada perubahan alur kerja. |

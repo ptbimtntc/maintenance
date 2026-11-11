@@ -47,10 +47,68 @@ $input = 'mt-1 block w-full rounded-md border-neutral-300 text-sm';
                 <p class="text-[11px] text-neutral-400">Date and shift are part of the ID, so they can't be changed after creation.</p>
             @endif
 
-            <div>
-                <x-input-label for="machine_no" value="Machine No." />
-                <input id="machine_no" type="text" name="machine_no" maxlength="50" required value="{{ $value('machine_no') }}" class="{{ $input }} sm:max-w-xs">
-                <x-input-error :messages="$errors->get('machine_no')" class="mt-1" />
+            <div x-data="{
+                machineNo: @js((string) $value('machine_no')),
+                machineType: @js((string) $value('machine_type')),
+                catalog: @js($machineCatalog ?? []),
+                rules: @js($machinePrefixRules ?? []),
+                async updateType() {
+                    const val = (this.machineNo || '').trim().toUpperCase();
+                    if (!val) {
+                        this.machineType = '';
+                        return;
+                    }
+                    if (this.catalog[val]) {
+                        this.machineType = this.catalog[val];
+                        return;
+                    }
+                    for (const [prefix, type] of Object.entries(this.rules)) {
+                        if (val.startsWith(prefix)) {
+                            this.machineType = type;
+                            return;
+                        }
+                    }
+                    try {
+                        const res = await fetch(`{{ route('shift-comm.machine-lookup') }}?no=${encodeURIComponent(val)}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.machine_type) {
+                                this.machineType = data.machine_type;
+                                return;
+                            }
+                        }
+                    } catch (e) {}
+                    this.machineType = '';
+                }
+            }" x-init="if (!machineType && machineNo) updateType()" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                    <x-input-label for="machine_no" value="Machine No." />
+                    <input id="machine_no" type="text" name="machine_no" maxlength="50" required
+                           list="machine-suggestions" autocomplete="off"
+                           x-model="machineNo"
+                           @input="updateType()"
+                           @change="updateType()"
+                           @blur="updateType()"
+                           value="{{ $value('machine_no') }}"
+                           class="{{ $input }}">
+                    <datalist id="machine-suggestions">
+                        @foreach ($machineSuggestions ?? [] as $machineSuggestion)
+                            <option value="{{ $machineSuggestion }}"></option>
+                        @endforeach
+                    </datalist>
+                    <x-input-error :messages="$errors->get('machine_no')" class="mt-1" />
+                </div>
+
+                <div>
+                    <x-input-label for="machine_type" value="Machine Type" />
+                    <input id="machine_type" type="text" name="machine_type" maxlength="50"
+                           readonly
+                           :value="machineType"
+                           tabindex="-1"
+                           placeholder="Otomatis terisi..."
+                           class="{{ $input }} bg-neutral-100 text-neutral-600 cursor-not-allowed font-medium">
+                    <x-input-error :messages="$errors->get('machine_type')" class="mt-1" />
+                </div>
             </div>
 
             <div>

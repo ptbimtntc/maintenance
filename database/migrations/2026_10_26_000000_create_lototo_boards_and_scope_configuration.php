@@ -15,12 +15,11 @@ return new class extends Migration
             ->distinct()
             ->pluck('employees.business_unit_id');
 
-        if ($legacyBusinessUnitIds->count() > 1
-            || ($legacyBusinessUnitIds->isEmpty() && DB::table('business_units')->exists())) {
+        if ($legacyBusinessUnitIds->count() > 1) {
             throw new RuntimeException('Cannot safely identify the legacy LOTOTO board Business Unit from its saved slot assignments.');
         }
 
-        $legacyBusinessUnitId = $legacyBusinessUnitIds->isEmpty() ? null : (int) $legacyBusinessUnitIds->first();
+        $legacyBusinessUnitId = $legacyBusinessUnitIds->first() ?: DB::table('business_units')->value('id');
         $legacyBusinessUnit = $legacyBusinessUnitId
             ? DB::table('business_units')->where('id', $legacyBusinessUnitId)->first()
             : null;

@@ -25,6 +25,8 @@ class Setting extends Model
         'training_reminder_days_before' => '7',
         // Empty = fall back to this site's own address (url('/')).
         'qr_base_url' => '',
+        'shift_comm_repeat_window_days' => '7',
+        'shift_comm_repeat_threshold' => '4',
     ];
 
     public static function get(string $key, mixed $default = null): mixed

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             JobDescriptionSeeder::class,
             TrainingSeeder::class,
             CertificateSeeder::class,
+            MachineSeeder::class,
         ]);
     }
 }

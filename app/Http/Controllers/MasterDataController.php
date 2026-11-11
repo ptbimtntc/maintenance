@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Concerns\ExportsSpreadsheet;
+use App\Models\Setting;
+use App\Models\ShiftComm;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -33,11 +35,23 @@ class MasterDataController extends Controller
         'Positions & Employment' => ['positions', 'skill-positions', 'employment-types', 'employment-sources', 'employment-statuses', 'shifts'],
         'Skills & Competency' => ['skill-categories', 'skills', 'competency-levels'],
         'Training & Certification' => ['training-categories', 'training-types', 'training-providers', 'certificate-types'],
+        'Machine & Equipment' => ['machines-cb', 'machines-wwd'],
+        'Parameters & Configuration' => ['shift-comm-parameters'],
     ];
+
+    private function isMachineType(string $type): bool
+    {
+        return in_array($type, ['machines-cb', 'machines-wwd'], true);
+    }
 
     public function landing(): View
     {
         $types = Config::get('master_data');
+        $types['shift-comm-parameters'] = [
+            'label' => 'Shift Comm Parameters',
+            'url' => route('organization.shift-comm-settings'),
+            'badge' => ShiftComm::repeatWindowDays().' Hari',
+        ];
         $groups = [];
 
         foreach (self::LANDING_GROUPS as $title => $slugs) {
@@ -57,10 +71,84 @@ class MasterDataController extends Controller
         return view('organization.landing', ['groups' => $groups]);
     }
 
+    public function shiftCommSettings(): View
+    {
+        return view('organization.shift-comm-settings', [
+            'repeatWindowDays' => ShiftComm::repeatWindowDays(),
+            'repeatThreshold' => ShiftComm::repeatThreshold(),
+        ]);
+    }
+
+    public function updateShiftCommSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'shift_comm_repeat_window_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'shift_comm_repeat_threshold' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        Setting::set('shift_comm_repeat_window_days', (string) $data['shift_comm_repeat_window_days']);
+        Setting::set('shift_comm_repeat_threshold', (string) $data['shift_comm_repeat_threshold']);
+
+        return redirect()->route('organization.shift-comm-settings')->with('status', 'Parameter Shift Comm berhasil diperbarui.');
+    }
+
     public function index(string $type, Request $request): View
     {
         $config = $this->configFor($type);
         $model = $config['model'];
+
+        if ($this->isMachineType($type)) {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('machines')) {
+                return view('organization.machines.index', [
+                    'type' => $type,
+                    'config' => $config,
+                    'records' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25),
+                    'search' => '',
+                    'machineTypeFilter' => '',
+                    'availableMachineTypes' => collect(),
+                    'from' => $this->originFor($request),
+                    'migrationPending' => true,
+                ]);
+            }
+
+            $search = trim((string) $request->query('q', ''));
+            $machineTypeFilter = trim((string) $request->query('machine_type', ''));
+
+            $records = $model::query()
+                ->when($search !== '', function ($q) use ($search) {
+                    $q->where(function ($query) use ($search) {
+                        $query->where('machine_no', 'like', "%{$search}%")
+                            ->orWhere('func_location', 'like', "%{$search}%")
+                            ->orWhere('machine_type', 'like', "%{$search}%");
+                    });
+                })
+                ->when($machineTypeFilter !== '', fn ($q) => $q->where('machine_type', $machineTypeFilter))
+                ->orderBy('machine_no')
+                ->paginate(25)
+                ->withQueryString();
+
+            $availableMachineTypes = rescue(
+                fn () => $model::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
+
+            return view('organization.machines.index', [
+                'type' => $type,
+                'config' => $config,
+                'records' => $records,
+                'search' => $search,
+                'machineTypeFilter' => $machineTypeFilter,
+                'availableMachineTypes' => $availableMachineTypes,
+                'from' => $this->originFor($request),
+                'migrationPending' => false,
+            ]);
+        }
 
         $records = $model::query()
             ->when($config['parent'] ?? null, fn ($q, $parent) => $q->with($this->parentRelationName($parent)))
@@ -79,6 +167,27 @@ class MasterDataController extends Controller
     {
         $config = $this->configFor($type);
 
+        if ($this->isMachineType($type)) {
+            $availableMachineTypes = rescue(
+                fn () => $config['model']::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
+
+            return view('organization.machines.form', [
+                'type' => $type,
+                'config' => $config,
+                'record' => null,
+                'availableMachineTypes' => $availableMachineTypes,
+                'from' => $this->originFor($request),
+            ]);
+        }
+
         return view('organization.form', [
             'type' => $type,
             'config' => $config,
@@ -93,6 +202,23 @@ class MasterDataController extends Controller
         $config = $this->configFor($type);
         $model = $config['model'];
 
+        if ($this->isMachineType($type)) {
+            $data = $request->validate([
+                'machine_no' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('machines', 'machine_no')->where(fn ($q) => $q->where('unit', $config['unit'])),
+                ],
+                'func_location' => ['nullable', 'string', 'max:255'],
+                'machine_type' => ['required', 'string', 'max:255'],
+            ]);
+
+            $model::create($data);
+
+            return $this->redirectToIndex($type, $request)->with('status', "{$config['singular']} created.");
+        }
+
         $data = $this->validatedData($request, $config);
 
         $model::create($data);
@@ -104,6 +230,27 @@ class MasterDataController extends Controller
     {
         $config = $this->configFor($type);
         $record = $config['model']::findOrFail($id);
+
+        if ($this->isMachineType($type)) {
+            $availableMachineTypes = rescue(
+                fn () => $config['model']::query()
+                    ->whereNotNull('machine_type')
+                    ->where('machine_type', '!=', '')
+                    ->distinct()
+                    ->orderBy('machine_type')
+                    ->pluck('machine_type'),
+                collect(),
+                false
+            );
+
+            return view('organization.machines.form', [
+                'type' => $type,
+                'config' => $config,
+                'record' => $record,
+                'availableMachineTypes' => $availableMachineTypes,
+                'from' => $this->originFor($request),
+            ]);
+        }
 
         return view('organization.form', [
             'type' => $type,
@@ -118,6 +265,25 @@ class MasterDataController extends Controller
     {
         $config = $this->configFor($type);
         $record = $config['model']::findOrFail($id);
+
+        if ($this->isMachineType($type)) {
+            $data = $request->validate([
+                'machine_no' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    Rule::unique('machines', 'machine_no')
+                        ->where(fn ($q) => $q->where('unit', $config['unit']))
+                        ->ignore($record->id),
+                ],
+                'func_location' => ['nullable', 'string', 'max:255'],
+                'machine_type' => ['required', 'string', 'max:255'],
+            ]);
+
+            $record->update($data);
+
+            return $this->redirectToIndex($type, $request)->with('status', "{$config['singular']} updated.");
+        }
 
         $data = $this->validatedData($request, $config, $record->id);
 
@@ -191,6 +357,23 @@ class MasterDataController extends Controller
     public function export(string $type): StreamedResponse
     {
         $config = $this->configFor($type);
+
+        if ($this->isMachineType($type)) {
+            $headers = ['ID', 'Machine Number', 'Func. Location', 'Machine Type', 'Unit'];
+
+            $rows = $config['model']::query()->orderBy('machine_no')->get()->map(function ($record) {
+                return [
+                    $record->id,
+                    $record->machine_no,
+                    $record->func_location,
+                    $record->machine_type,
+                    $record->unit,
+                ];
+            });
+
+            return $this->streamXlsx($type.'-'.now()->format('Y-m-d').'.xlsx', $headers, $rows);
+        }
+
         $columns = $this->sheetColumns($config);
         $parentNames = isset($config['parent'])
             ? $config['parent']['model']::withTrashed()->pluck('name', 'id')
@@ -224,6 +407,92 @@ class MasterDataController extends Controller
     {
         $config = $this->configFor($type);
         $request->validate(['file' => ['required', 'file', 'mimes:xlsx']]);
+
+        if ($this->isMachineType($type)) {
+            $model = $config['model'];
+            $rows = (new XlsxReader)->load($request->file('file')->getRealPath())->getActiveSheet()->toArray(null, true, true, false);
+            $header = array_map(fn ($cell) => strtolower(trim((string) $cell)), array_shift($rows) ?? []);
+
+            $findCol = function (array $candidates) use ($header): ?int {
+                foreach ($candidates as $cand) {
+                    $idx = array_search(strtolower($cand), $header, true);
+                    if ($idx !== false) {
+                        return $idx;
+                    }
+                }
+                return null;
+            };
+
+            $machineNoCol = $findCol(['machine number', 'machine no.', 'machine no', 'machineno', 'machine_no']);
+            $machineTypeCol = $findCol(['machine type', 'machinetype', 'machine_type']);
+            $funcLocCol = $findCol(['func. location', 'func location', 'func_location', 'funclocation', 'functional location']);
+            $idCol = $findCol(['id']);
+
+            if ($machineNoCol === null || $machineTypeCol === null) {
+                return redirect()->route('organization.index', $type)
+                    ->with('import_errors', 'The file must contain "Machine Number" and "Machine Type" columns.');
+            }
+
+            $created = 0;
+            $updated = 0;
+            $errors = [];
+
+            foreach ($rows as $index => $row) {
+                $rowNumber = $index + 2;
+                $machineNo = isset($row[$machineNoCol]) ? trim((string) $row[$machineNoCol]) : '';
+                $machineType = isset($row[$machineTypeCol]) ? trim((string) $row[$machineTypeCol]) : '';
+                $funcLoc = ($funcLocCol !== null && isset($row[$funcLocCol])) ? trim((string) $row[$funcLocCol]) : null;
+                $rowId = ($idCol !== null && isset($row[$idCol]) && is_numeric($row[$idCol])) ? (int) $row[$idCol] : null;
+
+                if ($machineNo === '' && $machineType === '' && ($funcLoc === null || $funcLoc === '')) {
+                    continue;
+                }
+
+                if ($machineNo === '') {
+                    $errors[] = "Row {$rowNumber}: Machine Number is required.";
+                    continue;
+                }
+
+                if ($machineType === '') {
+                    $errors[] = "Row {$rowNumber}: Machine Type is required.";
+                    continue;
+                }
+
+                $record = null;
+                if ($rowId !== null) {
+                    $record = $model::find($rowId);
+                }
+                $record ??= $model::where('machine_no', $machineNo)->first();
+
+                if ($record) {
+                    $record->update([
+                        'machine_no' => $machineNo,
+                        'func_location' => $funcLoc ?: $record->func_location,
+                        'machine_type' => $machineType,
+                    ]);
+                    $updated++;
+                } else {
+                    $model::create([
+                        'machine_no' => $machineNo,
+                        'func_location' => $funcLoc,
+                        'machine_type' => $machineType,
+                        'unit' => $config['unit'],
+                    ]);
+                    $created++;
+                }
+            }
+
+            $redirect = redirect()->route('organization.index', $type)
+                ->with('status', "{$created} {$config['label']} created, {$updated} updated from import.");
+
+            if ($errors !== []) {
+                $shown = array_slice($errors, 0, 8);
+                $suffix = count($errors) > 8 ? ' …and '.(count($errors) - 8).' more.' : '';
+                $redirect->with('import_errors', count($errors).' issue(s) found: '.implode(' | ', $shown).$suffix);
+            }
+
+            return $redirect;
+        }
 
         $columns = $this->sheetColumns($config);
         $model = $config['model'];

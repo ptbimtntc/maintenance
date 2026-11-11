@@ -9,7 +9,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-#[Fillable(['comm_date', 'shift', 'team', 'machine_no', 'problem', 'is_torsion_shaft', 'progress', 'torsion_relay_status', 'construction', 'length_m', 'remark', 'created_by'])]
+#[Fillable(['comm_date', 'shift', 'team', 'machine_no', 'machine_type', 'problem', 'is_torsion_shaft', 'progress', 'torsion_relay_status', 'construction', 'length_m', 'remark', 'created_by'])]
 class ShiftComm extends Model
 {
     /** Shift digit used inside the ID => label. The plant runs 3 shifts a day (defaulted by input time, see defaultShiftFor). */
@@ -21,10 +21,102 @@ class ShiftComm extends Model
         'not_started' => 'Belum dikerjakan',
         'in_progress' => 'Sedang dikerjakan',
         'next_shift' => 'Estafet shift berikutnya',
-        'done' => 'Selesai',
     ];
 
     public const TEAMS = ['A', 'B', 'C', 'D', 'NS'];
+
+    /** Predefined machine catalog: machine_no => machine_type */
+    public const MACHINE_CATALOG = [
+        'DR-01' => 'Drawing Machine',
+        'DR-02' => 'Drawing Machine',
+        'DR-03' => 'Drawing Machine',
+        'DR-04' => 'Drawing Machine',
+        'DR-05' => 'Drawing Machine',
+        'DR-06' => 'Drawing Machine',
+        'DR-07' => 'Drawing Machine',
+        'DR-08' => 'Drawing Machine',
+        'DR-09' => 'Drawing Machine',
+        'DR-10' => 'Drawing Machine',
+        'DR-11' => 'Drawing Machine',
+        'DR-12' => 'Drawing Machine',
+        'GL-01' => 'Galvanizing Line',
+        'GL-02' => 'Galvanizing Line',
+        'GL-03' => 'Galvanizing Line',
+        'GL-04' => 'Galvanizing Line',
+        'GL-05' => 'Galvanizing Line',
+        'ST-01' => 'Stranding Machine',
+        'ST-02' => 'Stranding Machine',
+        'ST-03' => 'Stranding Machine',
+        'ST-04' => 'Stranding Machine',
+        'ST-05' => 'Stranding Machine',
+        'TB-01' => 'Tubular Strander',
+        'TB-02' => 'Tubular Strander',
+        'TB-03' => 'Tubular Strander',
+        'BC-01' => 'Bunching Machine',
+        'BC-02' => 'Bunching Machine',
+        'BC-03' => 'Bunching Machine',
+        'UT-01' => 'Utility & Compressor',
+        'UT-02' => 'Utility & Compressor',
+        'WS-01' => 'Workshop Equipment',
+        'WS-02' => 'Workshop Equipment',
+    ];
+
+    /** Prefix rules for automatic machine type detection */
+    public const MACHINE_PREFIX_RULES = [
+        'DR-' => 'Drawing Machine',
+        'DRW-' => 'Drawing Machine',
+        'DR' => 'Drawing Machine',
+        'GL-' => 'Galvanizing Line',
+        'GLV-' => 'Galvanizing Line',
+        'GL' => 'Galvanizing Line',
+        'ST-' => 'Stranding Machine',
+        'STR-' => 'Stranding Machine',
+        'ST' => 'Stranding Machine',
+        'TB-' => 'Tubular Strander',
+        'TUB-' => 'Tubular Strander',
+        'TB' => 'Tubular Strander',
+        'BC-' => 'Bunching Machine',
+        'BNC-' => 'Bunching Machine',
+        'BC' => 'Bunching Machine',
+        'UT-' => 'Utility & Compressor',
+        'UTL-' => 'Utility & Compressor',
+        'UT' => 'Utility & Compressor',
+        'WS-' => 'Workshop Equipment',
+        'WKS-' => 'Workshop Equipment',
+        'WS' => 'Workshop Equipment',
+    ];
+
+    /** Lookup machine type by machine number, or null if unknown / empty */
+    public static function lookupMachineType(?string $machineNo): ?string
+    {
+        if (! $machineNo) {
+            return null;
+        }
+
+        $upper = strtoupper(trim($machineNo));
+
+        // 1. Check database machines table first
+        try {
+            $dbType = Machine::where('machine_no', $upper)->value('machine_type');
+            if ($dbType) {
+                return $dbType;
+            }
+        } catch (\Throwable) {
+            // fallback if table does not exist yet (e.g. during some migrations)
+        }
+
+        if (isset(self::MACHINE_CATALOG[$upper])) {
+            return self::MACHINE_CATALOG[$upper];
+        }
+
+        foreach (self::MACHINE_PREFIX_RULES as $prefix => $type) {
+            if (str_starts_with($upper, $prefix)) {
+                return $type;
+            }
+        }
+
+        return null;
+    }
 
 
     protected function casts(): array
@@ -44,7 +136,8 @@ class ShiftComm extends Model
 
     public function torsionRelayLabel(): ?string
     {
-        return self::TORSION_RELAY_STATUSES[$this->torsion_relay_status] ?? null;
+        return self::TORSION_RELAY_STATUSES[$this->torsion_relay_status]
+            ?? ($this->torsion_relay_status === 'done' ? 'Selesai' : null);
     }
 
     public function shiftName(): string
@@ -73,31 +166,43 @@ class ShiftComm extends Model
     /** Repeat-problem threshold: this many Torsion Shaft problems on one machine within the window. */
     public const REPEAT_THRESHOLD = 4;
 
-    public const REPEAT_WINDOW_DAYS = 30;
+    public const REPEAT_WINDOW_DAYS = 7;
+
+    public static function repeatWindowDays(): int
+    {
+        return Setting::getInt('shift_comm_repeat_window_days', self::REPEAT_WINDOW_DAYS);
+    }
+
+    public static function repeatThreshold(): int
+    {
+        return Setting::getInt('shift_comm_repeat_threshold', self::REPEAT_THRESHOLD);
+    }
 
     /**
      * Machines with repeated Torsion Shaft problems, most problems first. Per
-     * machine the window rolls back 30 days from its latest record; machine
+     * machine the window rolls back N days from its latest record; machine
      * numbers match regardless of case, spaces and hyphens ("M-001" = "m001").
      * A warning clears once a shift after the machine's latest Torsion Shaft
      * record has started without a new Torsion Shaft record for it.
      *
-     * @return list<array{machine: string, count: int, first: Carbon, last: Carbon, slot: int}>
+     * @return list<array{machine: string, count: int, first: Carbon, last: Carbon, slot: int, records: \Illuminate\Support\Collection<int, self>}>
      */
     public static function repeatTorsionWarnings(?Carbon $now = null): array
     {
         $now ??= now();
         $currentSlot = self::shiftSlot($now->toDateString(), self::defaultShiftFor($now));
+        $windowDays = self::repeatWindowDays();
+        $threshold = self::repeatThreshold();
 
         return static::query()
             ->where('is_torsion_shaft', true)
             ->orderBy('comm_date')
             ->orderBy('shift')
-            ->get(['machine_no', 'comm_date', 'shift'])
+            ->get(['id', 'comm_number', 'machine_no', 'machine_type', 'problem', 'construction', 'torsion_relay_status', 'comm_date', 'shift', 'team'])
             ->groupBy(fn (self $c) => strtoupper(preg_replace('/[^[:alnum:]]/u', '', $c->machine_no)))
-            ->map(function ($records) {
+            ->map(function ($records) use ($windowDays) {
                 $last = $records->last()->comm_date;
-                $inWindow = $records->filter(fn (self $c) => $c->comm_date->gte($last->copy()->subDays(self::REPEAT_WINDOW_DAYS)));
+                $inWindow = $records->filter(fn (self $c) => $c->comm_date->gte($last->copy()->subDays($windowDays)));
 
                 return [
                     'machine' => $records->last()->machine_no,
@@ -105,9 +210,10 @@ class ShiftComm extends Model
                     'first' => $inWindow->first()->comm_date,
                     'last' => $last,
                     'slot' => self::shiftSlot($last->toDateString(), $records->last()->shift),
+                    'records' => $inWindow->values(),
                 ];
             })
-            ->filter(fn (array $w) => $w['count'] >= self::REPEAT_THRESHOLD && $w['slot'] >= $currentSlot)
+            ->filter(fn (array $w) => $w['count'] >= $threshold && $w['slot'] >= $currentSlot)
             ->sortByDesc('count')
             ->values()
             ->all();

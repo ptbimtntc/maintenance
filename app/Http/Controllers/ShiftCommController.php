@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Machine;
 use App\Models\ShiftComm;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,6 +33,7 @@ class ShiftCommController extends Controller
             ->when($filters['q'], fn ($q, $v) => $q->where(function ($w) use ($v) {
                 $w->where('comm_number', 'like', "%{$v}%")
                     ->orWhere('machine_no', 'like', "%{$v}%")
+                    ->orWhere('machine_type', 'like', "%{$v}%")
                     ->orWhere('construction', 'like', "%{$v}%")
                     ->orWhere('problem', 'like', "%{$v}%");
             }))
@@ -46,6 +49,11 @@ class ShiftCommController extends Controller
     {
         $this->authorize('create', ShiftComm::class);
 
+        $machineCatalog = Machine::lookupCatalog();
+        if (empty($machineCatalog)) {
+            $machineCatalog = ShiftComm::MACHINE_CATALOG;
+        }
+
         return view('shift-comm.form', [
             'comm' => null,
             'defaults' => [
@@ -54,6 +62,22 @@ class ShiftCommController extends Controller
                 'team' => ShiftComm::defaultTeamFor($request->user()->employee),
             ],
             'constructions' => ShiftComm::constructionSuggestions(),
+            'machineCatalog' => $machineCatalog,
+            'machinePrefixRules' => ShiftComm::MACHINE_PREFIX_RULES,
+            'machineSuggestions' => array_keys($machineCatalog),
+        ]);
+    }
+
+    public function lookupMachine(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', ShiftComm::class);
+
+        $machineNo = $request->string('no')->toString();
+        $type = ShiftComm::lookupMachineType($machineNo);
+
+        return response()->json([
+            'machine_no' => $machineNo,
+            'machine_type' => $type,
         ]);
     }
 
@@ -77,10 +101,18 @@ class ShiftCommController extends Controller
     {
         $this->authorize('update', $shiftComm);
 
+        $machineCatalog = Machine::lookupCatalog();
+        if (empty($machineCatalog)) {
+            $machineCatalog = ShiftComm::MACHINE_CATALOG;
+        }
+
         return view('shift-comm.form', [
             'comm' => $shiftComm,
             'defaults' => [],
             'constructions' => ShiftComm::constructionSuggestions(),
+            'machineCatalog' => $machineCatalog,
+            'machinePrefixRules' => ShiftComm::MACHINE_PREFIX_RULES,
+            'machineSuggestions' => array_keys($machineCatalog),
         ]);
     }
 
@@ -108,6 +140,7 @@ class ShiftCommController extends Controller
         $rules = [
             'team' => ['required', Rule::in(ShiftComm::TEAMS)],
             'machine_no' => ['required', 'string', 'max:50'],
+            'machine_type' => ['nullable', 'string', 'max:50'],
             'problem' => ['required', 'string', 'max:5000'],
             'is_torsion_shaft' => ['required', 'boolean'],
             'progress' => ['nullable', 'string', 'max:5000'],
@@ -123,6 +156,11 @@ class ShiftCommController extends Controller
         }
 
         $data = $request->validate($rules);
+
+        // Auto-detect machine_type if omitted but machine_no is provided
+        if (empty($data['machine_type']) && ! empty($data['machine_no'])) {
+            $data['machine_type'] = ShiftComm::lookupMachineType($data['machine_no']);
+        }
 
         // A non-Torsion Shaft entry carries no estafet status.
         $data['torsion_relay_status'] = $data['is_torsion_shaft'] ? $data['torsion_relay_status'] : null;

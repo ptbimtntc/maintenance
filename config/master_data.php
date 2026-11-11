@@ -9,6 +9,8 @@ use App\Models\EmploymentSource;
 use App\Models\EmploymentStatus;
 use App\Models\EmploymentType;
 use App\Models\Location;
+use App\Models\MachineCb;
+use App\Models\MachineWwd;
 use App\Models\MaintenanceArea;
 use App\Models\MaintenanceTeam;
 use App\Models\Position;
@@ -212,5 +214,21 @@ return [
         'extra_fields' => [
             'scope' => ['type' => 'textarea', 'label' => 'Authorization Scope (one item per line)'],
         ],
+    ],
+
+    'machines-cb' => [
+        'model' => MachineCb::class,
+        'label' => 'Machine Database C&B',
+        'singular' => 'Machine C&B',
+        'name_field' => 'machine_no',
+        'unit' => 'CB',
+    ],
+
+    'machines-wwd' => [
+        'model' => MachineWwd::class,
+        'label' => 'Machine Database WWD',
+        'singular' => 'Machine WWD',
+        'name_field' => 'machine_no',
+        'unit' => 'WWD',
     ],
 ];
