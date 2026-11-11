@@ -206,9 +206,12 @@ class ShiftCommTest extends TestCase
             ->assertSee('Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam 7 hari terakhir', false)
             ->assertSee('• Mesin M-001 (4x Problem)', false)
             ->assertSee('• Mesin M-003 (5x Problem)', false)
-            ->assertSee('Lihat Rincian')
-            ->assertSee('Rincian 4 laporan problem Torsion Shaft pada Mesin M-001', false)
+            ->assertSee('Lihat di tabel')
             ->assertDontSee('M-002 (', false);
+
+        $filtered = $this->actingAs($user)->get(route('shift-comm.index', ['q' => 'M-001', 'torsion' => '1']));
+        $filtered->assertOk()
+            ->assertSee('M-001');
     }
 
     public function test_warning_component_hidden_when_no_repeated_problems(): void

@@ -25,89 +25,25 @@
                      x-transition:leave-start="opacity-100 translate-y-0"
                      x-transition:leave-end="opacity-0 -translate-y-1"
                      x-cloak
-                     class="absolute left-0 right-0 z-50 mt-1.5 max-h-[85vh] overflow-y-auto space-y-3 rounded-md border border-warning-300 bg-white p-4 text-sm text-neutral-800 shadow-xl ring-1 ring-black/5">
+                     class="absolute left-0 right-0 z-50 mt-1.5 space-y-3 rounded-md border border-warning-300 bg-white p-4 text-sm text-neutral-800 shadow-xl ring-1 ring-black/5">
                     <p class="text-neutral-700">
                         Mesin-mesin di bawah ini telah mengalami problem Torsion Shaft berulang dalam {{ $rollingDays }} hari terakhir ({{ $warningStart }} s/d {{ $warningEnd }}) dan perlu dilakukan pengecekan/tindakan lanjutan.
-                        <span class="block mt-0.5 text-xs font-medium text-neutral-500">Klik nomor mesin untuk melihat rincian laporan problem yang terjadi.</span>
+                        <span class="block mt-0.5 text-xs text-neutral-500">Klik pada nomor mesin untuk langsung melihat daftar rincian record laporan problem di tabel utama.</span>
                     </p>
 
-                    <div class="space-y-2">
+                    <ul class="space-y-1.5 font-semibold text-warning-900">
                         @foreach ($repeatWarnings as $warning)
-                            <div x-data="{ showRecords: false }" class="rounded-md border border-warning-200 bg-warning-50/40 overflow-hidden">
-                                <button type="button"
-                                        @click="showRecords = !showRecords"
-                                        :aria-expanded="showRecords"
-                                        class="flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left hover:bg-warning-100/60 transition cursor-pointer">
-                                    <span class="font-semibold text-warning-900 flex items-center gap-1.5">
-                                        <span>• Mesin {{ $warning['machine'] }} ({{ $warning['count'] }}x Problem)</span>
+                            <li>
+                                <a href="{{ route('shift-comm.index', ['q' => $warning['machine'], 'torsion' => '1']) }}"
+                                   class="group inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-sm font-semibold text-warning-900 hover:bg-warning-100 hover:text-brand-700 transition">
+                                    <span>• Mesin {{ $warning['machine'] }} ({{ $warning['count'] }}x Problem)</span>
+                                    <span class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 group-hover:underline">
+                                        Lihat di tabel &rarr;
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-neutral-600 bg-white/90 border border-warning-200 px-2 py-0.5 rounded shadow-2xs">
-                                        <span x-text="showRecords ? 'Tutup Rincian' : 'Lihat Rincian'">Lihat Rincian</span>
-                                        <svg class="h-3.5 w-3.5 shrink-0 transition-transform duration-200 text-neutral-500" :class="showRecords && 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
-                                        </svg>
-                                    </span>
-                                </button>
-
-                                <div x-show="showRecords" x-cloak class="border-t border-warning-200 bg-white p-3 space-y-2">
-                                    <div class="flex items-center justify-between text-xs text-neutral-500">
-                                        <span>Rincian {{ $warning['count'] }} laporan problem Torsion Shaft pada Mesin {{ $warning['machine'] }}:</span>
-                                        <a href="{{ route('shift-comm.index', ['q' => $warning['machine'], 'torsion' => '1']) }}" class="text-brand-600 hover:underline">
-                                            Filter di tabel utama &rarr;
-                                        </a>
-                                    </div>
-                                    <div class="overflow-x-auto rounded border border-neutral-200">
-                                        <table class="min-w-full divide-y divide-neutral-200 text-xs">
-                                            <thead class="bg-neutral-50 text-neutral-600 font-semibold uppercase text-left tracking-wider">
-                                                <tr>
-                                                    <th class="px-3 py-2">No. ID (WO)</th>
-                                                    <th class="px-3 py-2">Tanggal</th>
-                                                    <th class="px-3 py-2">Shift / Tim</th>
-                                                    <th class="px-3 py-2">Tipe Mesin</th>
-                                                    <th class="px-3 py-2">Deskripsi Problem</th>
-                                                    <th class="px-3 py-2">Status Estafet</th>
-                                                    <th class="px-3 py-2 text-right">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-neutral-100 bg-white">
-                                                @foreach ($warning['records'] as $record)
-                                                    <tr class="hover:bg-neutral-50 transition">
-                                                        <td class="whitespace-nowrap px-3 py-2 font-medium">
-                                                            <a href="{{ route('shift-comm.show', $record->id) }}" class="text-brand-600 hover:text-brand-800 hover:underline">
-                                                                {{ $record->comm_number }}
-                                                            </a>
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-2 text-neutral-700">
-                                                            {{ $record->comm_date->format('d M Y') }}
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-2 text-neutral-700">
-                                                            {{ $record->shiftName() }} ({{ $record->team }})
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-2 text-neutral-600">
-                                                            {{ $record->machine_type ?: '-' }}
-                                                        </td>
-                                                        <td class="px-3 py-2 text-neutral-800 max-w-xs truncate" title="{{ $record->problem }}">
-                                                            {{ $record->problem }}
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-2">
-                                                            <span class="inline-block rounded px-2 py-0.5 text-[11px] font-medium bg-warning-100 text-warning-800">
-                                                                {{ $record->torsionRelayLabel() ?: 'Torsion Shaft' }}
-                                                            </span>
-                                                        </td>
-                                                        <td class="whitespace-nowrap px-3 py-2 text-right">
-                                                            <a href="{{ route('shift-comm.show', $record->id) }}" class="inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-800 hover:underline">
-                                                                Detail &rarr;
-                                                            </a>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+                                </a>
+                            </li>
                         @endforeach
-                    </div>
+                    </ul>
                 </div>
             </div>
         @endif
