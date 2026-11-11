@@ -345,14 +345,17 @@ class MasterDataManagementTest extends TestCase
         $viewResponse->assertOk();
         $viewResponse->assertSee('Rolling Days Problem Berulang TS (Hari)');
         $viewResponse->assertSee('Threshold Kejadian Problem Berulang TS (Kali)');
+        $viewResponse->assertSee('Batas Waktu Edit Record / Edit Grace Period (Jam)');
 
         $updateResponse = $this->actingAs($admin)->put(route('organization.shift-comm-settings.update'), [
             'shift_comm_repeat_window_days' => 14,
             'shift_comm_repeat_threshold' => 5,
+            'shift_comm_edit_grace_period_hours' => 48,
         ]);
 
         $updateResponse->assertRedirect(route('organization.shift-comm-settings'));
         $this->assertSame(14, \App\Models\ShiftComm::repeatWindowDays());
         $this->assertSame(5, \App\Models\ShiftComm::repeatThreshold());
+        $this->assertSame(48, \App\Models\ShiftComm::editGracePeriodHours());
     }
 }

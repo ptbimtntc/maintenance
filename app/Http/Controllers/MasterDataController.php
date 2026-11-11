@@ -76,6 +76,7 @@ class MasterDataController extends Controller
         return view('organization.shift-comm-settings', [
             'repeatWindowDays' => ShiftComm::repeatWindowDays(),
             'repeatThreshold' => ShiftComm::repeatThreshold(),
+            'editGracePeriodHours' => ShiftComm::editGracePeriodHours(),
         ]);
     }
 
@@ -84,10 +85,12 @@ class MasterDataController extends Controller
         $data = $request->validate([
             'shift_comm_repeat_window_days' => ['required', 'integer', 'min:1', 'max:365'],
             'shift_comm_repeat_threshold' => ['required', 'integer', 'min:1', 'max:100'],
+            'shift_comm_edit_grace_period_hours' => ['required', 'integer', 'min:1', 'max:8760'],
         ]);
 
         Setting::set('shift_comm_repeat_window_days', (string) $data['shift_comm_repeat_window_days']);
         Setting::set('shift_comm_repeat_threshold', (string) $data['shift_comm_repeat_threshold']);
+        Setting::set('shift_comm_edit_grace_period_hours', (string) $data['shift_comm_edit_grace_period_hours']);
 
         return redirect()->route('organization.shift-comm-settings')->with('status', 'Parameter Shift Comm berhasil diperbarui.');
     }

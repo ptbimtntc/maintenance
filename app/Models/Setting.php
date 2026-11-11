@@ -27,6 +27,7 @@ class Setting extends Model
         'qr_base_url' => '',
         'shift_comm_repeat_window_days' => '7',
         'shift_comm_repeat_threshold' => '4',
+        'shift_comm_edit_grace_period_hours' => '24',
     ];
 
     public static function get(string $key, mixed $default = null): mixed

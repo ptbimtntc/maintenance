@@ -415,4 +415,63 @@ class ShiftCommTest extends TestCase
             'is_torsion_shaft' => 0,
         ]);
     }
+
+    public function test_edit_button_hidden_and_update_blocked_after_grace_period(): void
+    {
+        $author = $this->staff();
+        $admin = $this->staff(RoleName::Administrator->value);
+
+        // 1. Record created 25 hours ago (past the default 24-hour grace period)
+        $this->actingAs($author)->post(route('shift-comm.store'), $this->payload(['problem' => 'Old record']));
+        $oldComm = ShiftComm::latest('id')->firstOrFail();
+        $oldComm->created_at = now()->subHours(25);
+        $oldComm->save();
+
+        // Author cannot see edit button and cannot edit or update
+        $this->actingAs($author)->get(route('shift-comm.show', $oldComm))
+            ->assertOk()
+            ->assertDontSee('>Edit</a>', false);
+        $this->actingAs($author)->get(route('shift-comm.edit', $oldComm))
+            ->assertForbidden();
+        $this->actingAs($author)->put(route('shift-comm.update', $oldComm), $this->payload(['problem' => 'Hacked change']))
+            ->assertForbidden();
+
+        // Administrator also cannot edit or update an expired record
+        $this->actingAs($admin)->get(route('shift-comm.show', $oldComm))
+            ->assertOk()
+            ->assertDontSee('>Edit</a>', false);
+        $this->actingAs($admin)->get(route('shift-comm.edit', $oldComm))
+            ->assertForbidden();
+        $this->actingAs($admin)->put(route('shift-comm.update', $oldComm), $this->payload(['problem' => 'Admin change']))
+            ->assertForbidden();
+
+        // 2. Record created 2 hours ago (within the 24-hour grace period)
+        $this->actingAs($author)->post(route('shift-comm.store'), $this->payload(['problem' => 'Recent record']));
+        $recentComm = ShiftComm::latest('id')->firstOrFail();
+        $recentComm->created_at = now()->subHours(2);
+        $recentComm->save();
+
+        $this->actingAs($author)->get(route('shift-comm.show', $recentComm))
+            ->assertOk()
+            ->assertSee('>Edit</a>', false);
+        $this->actingAs($author)->get(route('shift-comm.edit', $recentComm))
+            ->assertOk();
+        $this->actingAs($author)->put(route('shift-comm.update', $recentComm), $this->payload(['problem' => 'Updated recent record']))
+            ->assertRedirect(route('shift-comm.show', $recentComm));
+        $this->assertDatabaseHas('shift_comms', ['id' => $recentComm->id, 'problem' => 'Updated recent record']);
+
+        // 3. Make grace period dynamic: increase to 48 hours in settings
+        \App\Models\Setting::set('shift_comm_edit_grace_period_hours', '48');
+        $this->assertSame(48, ShiftComm::editGracePeriodHours());
+
+        // Now the 25-hour-old record becomes editable again
+        $this->actingAs($author)->get(route('shift-comm.show', $oldComm))
+            ->assertOk()
+            ->assertSee('>Edit</a>', false);
+        $this->actingAs($author)->get(route('shift-comm.edit', $oldComm))
+            ->assertOk();
+        $this->actingAs($author)->put(route('shift-comm.update', $oldComm), $this->payload(['problem' => 'Updated old record with extended window']))
+            ->assertRedirect(route('shift-comm.show', $oldComm));
+        $this->assertDatabaseHas('shift_comms', ['id' => $oldComm->id, 'problem' => 'Updated old record with extended window']);
+    }
 }

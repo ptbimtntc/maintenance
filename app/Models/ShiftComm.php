@@ -168,6 +168,8 @@ class ShiftComm extends Model
 
     public const REPEAT_WINDOW_DAYS = 7;
 
+    public const EDIT_GRACE_PERIOD_HOURS = 24;
+
     public static function repeatWindowDays(): int
     {
         return Setting::getInt('shift_comm_repeat_window_days', self::REPEAT_WINDOW_DAYS);
@@ -176,6 +178,27 @@ class ShiftComm extends Model
     public static function repeatThreshold(): int
     {
         return Setting::getInt('shift_comm_repeat_threshold', self::REPEAT_THRESHOLD);
+    }
+
+    public static function editGracePeriodHours(): int
+    {
+        return Setting::getInt('shift_comm_edit_grace_period_hours', self::EDIT_GRACE_PERIOD_HOURS);
+    }
+
+    public function isWithinEditGracePeriod(?Carbon $now = null): bool
+    {
+        $hours = self::editGracePeriodHours();
+        if ($hours <= 0) {
+            return true;
+        }
+
+        if (! $this->created_at) {
+            return true;
+        }
+
+        $now ??= now();
+
+        return $this->created_at->copy()->addHours($hours)->gte($now);
     }
 
     /**

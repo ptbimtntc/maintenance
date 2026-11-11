@@ -49,6 +49,21 @@
                         <p class="mt-1 text-xs text-neutral-500">Jumlah minimum kejadian problem Torsion Shaft pada mesin yang sama dalam rentang rolling days agar notifikasi peringatan muncul (Default: 4 kali).</p>
                         <x-input-error :messages="$errors->get('shift_comm_repeat_threshold')" class="mt-1" />
                     </div>
+
+                    <div>
+                        <x-input-label for="shift_comm_edit_grace_period_hours" value="Batas Waktu Edit Record / Edit Grace Period (Jam)" />
+                        <x-text-input id="shift_comm_edit_grace_period_hours"
+                                      type="number"
+                                      min="1"
+                                      max="8760"
+                                      name="shift_comm_edit_grace_period_hours"
+                                      class="mt-1 block w-full"
+                                      value="{{ old('shift_comm_edit_grace_period_hours', $editGracePeriodHours) }}"
+                                      :disabled="!$canEdit"
+                                      required />
+                        <p class="mt-1 text-xs text-neutral-500">Batas waktu toleransi untuk melakukan edit data sejak waktu record dibuat (created_at) dalam satuan jam. Jika umur record melampaui batas ini, tombol edit otomatis tersembunyi dan akses update diblokir (Default: 24 jam).</p>
+                        <x-input-error :messages="$errors->get('shift_comm_edit_grace_period_hours')" class="mt-1" />
+                    </div>
                 </div>
 
                 <div class="mt-6 flex items-center justify-end gap-3 border-t border-neutral-200 pt-4">

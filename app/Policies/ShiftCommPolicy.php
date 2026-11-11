@@ -18,9 +18,13 @@ class ShiftCommPolicy
         return $this->viewAny($user);
     }
 
-    /** Anyone can read an entry; only its author or an Administrator can change it. */
+    /** Anyone can read an entry; only its author or an Administrator can change it while within the edit grace period. */
     public function update(User $user, ShiftComm $comm): bool
     {
+        if (! $comm->isWithinEditGracePeriod()) {
+            return false;
+        }
+
         return $this->viewAny($user)
             && ($user->id === $comm->created_by || $user->hasRole(RoleName::Administrator->value));
     }
