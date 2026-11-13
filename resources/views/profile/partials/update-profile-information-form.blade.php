@@ -13,9 +13,41 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" enctype="multipart/form-data">
         @csrf
         @method('patch')
+
+        <div x-data="{ preview: null }">
+            <x-input-label for="photo" :value="__('Photo')" />
+            <div class="mt-2 flex items-center gap-4">
+                <template x-if="preview">
+                    <img :src="preview" alt="" class="h-16 w-16 rounded-full object-cover">
+                </template>
+                <template x-if="! preview">
+                    <div>
+                        @if ($user->photoUrl())
+                            <img src="{{ $user->photoUrl() }}" alt="{{ __('Current photo') }}" class="h-16 w-16 rounded-full object-cover">
+                        @else
+                            <span class="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-700 text-lg font-semibold text-white">
+                                {{ \Illuminate\Support\Str::of($user->name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
+                            </span>
+                        @endif
+                    </div>
+                </template>
+                <input id="photo" type="file" name="photo" accept="image/jpeg,image/png,image/webp"
+                       x-on:change="preview = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null"
+                       class="block w-full text-sm text-neutral-700 file:mr-3 file:rounded-md file:border-0 file:bg-brand-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white shadow-sm transition hover:file:bg-brand-700" />
+            </div>
+            <p class="mt-1 text-xs text-neutral-500">{{ __('JPG, PNG, or WebP, max 2 MB.') }}</p>
+            <x-input-error class="mt-2" :messages="$errors->get('photo')" />
+
+            @if ($user->photoUrl())
+                <label class="mt-2 inline-flex items-center gap-2 text-sm text-neutral-600">
+                    <input type="checkbox" name="remove_photo" value="1" class="rounded border-neutral-300">
+                    {{ __('Remove current photo') }}
+                </label>
+            @endif
+        </div>
 
         <div>
             <x-input-label for="name" :value="__('Name')" />

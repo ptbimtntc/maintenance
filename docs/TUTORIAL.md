@@ -25,7 +25,6 @@ Di dalam aplikasi, daftar isi dan isi panduan **otomatis disesuaikan dengan akse
 2. Klik **Log in**.
 
 Pilihan lain di halaman login:
-- **Login with Face** — muncul hanya jika perangkat ini sudah didaftarkan untuk Face Login (lihat *Face Login* di bawah).
 - **Continue browsing as guest** — masuk sebagai tamu, hanya bisa **melihat** data, tidak bisa mengubah apa pun.
 - **Forgot password** — minta tautan reset password lewat email.
 
@@ -37,8 +36,7 @@ Akun yang dibuat dengan password awal akan langsung diarahkan ke halaman **Chang
 <!-- only:not-guest -->
 ### Profile
 Buka dari menu pengguna di pojok kanan atas.
-- **Informasi profil** — nama dan email.
-- **Face Login** — daftarkan wajah agar bisa login dan check-in training dengan kamera.
+- **Informasi profil** — nama, email, dan **foto**. Pilih file JPG/PNG/WebP (maks. 2 MB), lalu **Save**. Centang *Remove current photo* untuk menghapus foto. Foto tampil di menu pengguna pojok kanan atas; tanpa foto, yang tampil adalah inisial nama.
 <!-- /only -->
 
 <!-- only:not-guest -->
@@ -46,6 +44,7 @@ Buka dari menu pengguna di pojok kanan atas.
 Buka dari menu pengguna di pojok kanan atas → **Change Password**. Isi password saat ini, password baru, dan konfirmasinya, lalu **Save**.
 <!-- /only -->
 
+<!-- hide-in-app:start -->
 <!-- only:not-guest -->
 ### Face Login
 1. Buka **Profile → Face Login** dari perangkat yang akan dipakai, izinkan akses kamera.
@@ -55,6 +54,7 @@ Buka dari menu pengguna di pojok kanan atas → **Change Password**. Isi passwor
 
 Face Login yang sama juga dipakai untuk **check-in kehadiran training** (lihat *Kehadiran dengan Face Check-in* di bagian Training & Development, bila menu itu tersedia untuk Anda).
 <!-- /only -->
+<!-- hide-in-app:end -->
 
 ### Melengkapi profil lewat QR / link onboarding
 Karyawan baru bisa menerima **link onboarding** (biasanya lewat QR) dari HR. Buka link itu (tanpa login), lengkapi data profil, lalu kirim. Link punya masa berlaku; bila kedaluwarsa atau tidak ditemukan, minta HR membuat link baru dari profil karyawan.
@@ -460,10 +460,6 @@ Data dibatasi hierarki: Anda hanya melihat diri sendiri dan bawahan langsung. Ha
 Anda belum mengganti password awal. Ganti dulu di halaman *Change Password*.
 <!-- /only -->
 
-<!-- only:not-guest -->
-**Tombol Login with Face tidak muncul.**
-Perangkat ini belum didaftarkan. Login dengan password, lalu daftar di *Profile → Face Login*.
-<!-- /only -->
 
 <!-- only:tasks -->
 **Tugas tidak bisa ditugaskan ke saya.**
@@ -486,6 +482,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
 | 2026-11-11 | Shift Comm: Menambahkan fitur Export dan Import data Excel (.xlsx) khusus untuk peran Administrator. |

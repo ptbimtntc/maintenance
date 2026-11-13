@@ -91,9 +91,13 @@
             <x-dropdown align="right" width="48">
                 <x-slot name="trigger">
                     <button class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
-                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 text-xs font-semibold text-white">
-                            {{ Illuminate\Support\Str::of(Auth::user()->name)->explode(' ')->map(fn ($part) => Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
-                        </span>
+                        @if (Auth::user()->photoUrl())
+                            <img src="{{ Auth::user()->photoUrl() }}" alt="" class="h-8 w-8 rounded-full object-cover">
+                        @else
+                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 text-xs font-semibold text-white">
+                                {{ Illuminate\Support\Str::of(Auth::user()->name)->explode(' ')->map(fn ($part) => Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
+                            </span>
+                        @endif
                         <span class="hidden sm:block">
                             <span class="block">{{ Auth::user()->name }}</span>
                             <span class="block text-xs font-normal text-neutral-500">{{ Auth::user()->getRoleNames()->first() ?? 'No role assigned' }}</span>

@@ -14,9 +14,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'must_change_password'])]
+#[Fillable(['name', 'email', 'password', 'must_change_password', 'photo_path'])]
 #[Hidden(['password', 'remember_token', 'face_descriptor'])]
 class User extends Authenticatable
 {
@@ -36,6 +37,15 @@ class User extends Authenticatable
             'must_change_password' => 'boolean',
             'face_enrolled_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Public URL of the account photo, or null when none was uploaded
+     * (the UI then falls back to the name initials).
+     */
+    public function photoUrl(): ?string
+    {
+        return $this->photo_path ? Storage::disk('public')->url($this->photo_path) : null;
     }
 
     public function employee(): HasOne

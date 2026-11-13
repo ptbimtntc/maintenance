@@ -7,6 +7,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -30,7 +31,16 @@ class ProfileController extends Controller
     {
         abort_if($request->user()->hasRole(RoleName::Guest->value), 403);
 
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->safe()->only(['name', 'email']));
+
+        if ($request->hasFile('photo')) {
+            $this->deletePhoto($user->photo_path);
+            $user->photo_path = $request->file('photo')->store('user-photos', 'public');
+        } elseif ($request->boolean('remove_photo')) {
+            $this->deletePhoto($user->photo_path);
+            $user->photo_path = null;
+        }
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
@@ -39,5 +49,12 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    private function deletePhoto(?string $path): void
+    {
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }
