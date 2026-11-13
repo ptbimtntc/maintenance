@@ -48,4 +48,19 @@ class PasswordUpdateTest extends TestCase
             ->assertSessionHasErrorsIn('updatePassword', 'current_password')
             ->assertRedirect('/profile');
     }
+
+    public function test_change_password_page_is_displayed(): void
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)->get('/change-password')->assertOk();
+    }
+
+    public function test_user_with_starting_password_is_redirected_to_change_password(): void
+    {
+        $user = User::factory()->create(['must_change_password' => true]);
+
+        $this->actingAs($user)->get('/profile')->assertRedirect(route('password.change'));
+        $this->actingAs($user)->get('/change-password')->assertOk();
+    }
 }

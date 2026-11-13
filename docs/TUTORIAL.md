@@ -31,15 +31,19 @@ Pilihan lain di halaman login:
 
 <!-- only:not-guest -->
 ### Login pertama: wajib ganti password
-Akun yang dibuat dengan password awal akan langsung diarahkan ke halaman **Profile**. Sebelum password diganti, hanya halaman Profile yang bisa dibuka. Isi password baru di bagian *Update Password*, lalu menu lain terbuka.
+Akun yang dibuat dengan password awal akan langsung diarahkan ke halaman **Change Password**. Sebelum password diganti, hanya halaman itu yang bisa dibuka. Isi password baru, lalu menu lain terbuka.
 <!-- /only -->
 
 <!-- only:not-guest -->
 ### Profile
 Buka dari menu pengguna di pojok kanan atas.
 - **Informasi profil** — nama dan email.
-- **Update Password** — ganti password.
 - **Face Login** — daftarkan wajah agar bisa login dan check-in training dengan kamera.
+<!-- /only -->
+
+<!-- only:not-guest -->
+### Change Password
+Buka dari menu pengguna di pojok kanan atas → **Change Password**. Isi password saat ini, password baru, dan konfirmasinya, lalu **Save**.
 <!-- /only -->
 
 <!-- only:not-guest -->
@@ -63,7 +67,7 @@ Karyawan baru bisa menerima **link onboarding** (biasanya lewat QR) dari HR. Buk
 - **Kotak Search menu** — di atas sidebar, untuk mencari menu dengan cepat.
 - **Help** — menu di bagian bawah sidebar yang membuka panduan ini langsung di dalam aplikasi, lengkap dengan daftar isi. Isi panduan menyesuaikan akun yang login: hanya fitur yang bisa Anda akses yang ditampilkan.
 - **Tombol collapse** — di bawah sidebar, untuk menciutkan sidebar menjadi ikon saja.
-- **Top bar** — ikon **lonceng notifikasi** (dengan angka belum dibaca) dan menu pengguna (Profile, Logout).
+- **Top bar** — ikon **lonceng notifikasi** (dengan angka belum dibaca) dan menu pengguna (Profile, Change Password, Logout).
 - **Lencana “🔒 View only”** — muncul di halaman daftar bila Anda hanya boleh melihat, tidak boleh mengedit menu itu.
 - **Filter, pencarian, dan ekspor** — kebanyakan halaman daftar punya panel filter, kotak cari, dan tombol ekspor **CSV / XLSX**.
 
@@ -452,8 +456,8 @@ Anda belum punya hak edit untuk menu itu. Minta Administrator memberi hak edit l
 Data dibatasi hierarki: Anda hanya melihat diri sendiri dan bawahan langsung. Hanya HR dan Administrator yang melihat semua.
 
 <!-- only:not-guest -->
-**Saya hanya bisa membuka halaman Profile.**
-Anda belum mengganti password awal. Ganti dulu di *Update Password*.
+**Saya hanya bisa membuka halaman Change Password.**
+Anda belum mengganti password awal. Ganti dulu di halaman *Change Password*.
 <!-- /only -->
 
 <!-- only:not-guest -->
@@ -482,6 +486,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
 | 2026-11-11 | Shift Comm: Menambahkan fitur Export dan Import data Excel (.xlsx) khusus untuk peran Administrator. |
 | 2026-11-11 | Shift Comm: Memindahkan rentang tanggal kejadian dari kalimat pesan utama ke samping masing-masing nomor mesin pada daftar problem berulang. |

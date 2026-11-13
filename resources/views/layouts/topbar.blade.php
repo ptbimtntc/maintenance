@@ -109,6 +109,12 @@
                         {{ __('Profile') }}
                     </x-dropdown-link>
 
+                    @unless (Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
+                    <x-dropdown-link :href="route('password.change')">
+                        {{ __('Change Password') }}
+                    </x-dropdown-link>
+                    @endunless
+
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-dropdown-link :href="route('logout')"

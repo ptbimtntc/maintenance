@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Accounts provisioned with a starting password (see the
- * app:provision-employee-users command) can only reach the profile page,
+ * app:provision-employee-users command) can only reach the change-password page,
  * where they set their own password, until they've done so.
  */
 class EnsurePasswordIsChanged
@@ -17,8 +17,8 @@ class EnsurePasswordIsChanged
     {
         $user = $request->user();
 
-        if ($user && $user->must_change_password && ! $request->routeIs('profile.edit', 'password.update', 'logout', 'face-login.enroll', 'face-login.disable')) {
-            return redirect()->route('profile.edit')
+        if ($user && $user->must_change_password && ! $request->routeIs('password.change', 'password.update', 'logout', 'face-login.enroll', 'face-login.disable')) {
+            return redirect()->route('password.change')
                 ->with('status', 'password-must-change');
         }
 

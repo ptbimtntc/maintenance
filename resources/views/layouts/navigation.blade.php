@@ -38,6 +38,12 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        @unless (Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
+                        <x-dropdown-link :href="route('password.change')">
+                            {{ __('Change Password') }}
+                        </x-dropdown-link>
+                        @endunless
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -83,6 +89,12 @@
                 <x-responsive-nav-link :href="route('profile.edit')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
+
+                @unless (Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
+                <x-responsive-nav-link :href="route('password.change')">
+                    {{ __('Change Password') }}
+                </x-responsive-nav-link>
+                @endunless
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
