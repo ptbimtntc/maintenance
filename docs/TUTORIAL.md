@@ -24,6 +24,8 @@ Di dalam aplikasi, daftar isi dan isi panduan **otomatis disesuaikan dengan akse
 1. Buka alamat aplikasi, lalu isi **Email atau NIK** dan **Password**.
 2. Klik **Log in**.
 
+Jika email sudah diisi pada data Employee, email tersebut menjadi email akun dan dapat dipakai untuk login maupun menerima notifikasi. Login dengan NIK tetap tersedia.
+
 Pilihan lain di halaman login:
 - **Continue browsing as guest** — masuk sebagai tamu, hanya bisa **melihat** data, tidak bisa mengubah apa pun.
 - **Forgot password** — minta tautan reset password lewat email.
@@ -482,6 +484,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |

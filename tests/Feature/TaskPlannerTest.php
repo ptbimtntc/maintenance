@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\TaskAssigned;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -243,5 +244,40 @@ class TaskPlannerTest extends TestCase
         Notification::fake();
         $this->actingAs($owner)->delete(route('tasks.destroy', $task));
         Notification::assertSentOnDemand(\App\Notifications\TaskActivity::class);
+    }
+
+    public function test_task_email_replaces_a_legacy_internal_account_email_with_the_employee_email(): void
+    {
+        [$owner] = $this->staffWithEmployee();
+        $assignee = User::factory()->create(['email' => '131154@employees.mpd.local']);
+        $assignee->username = '131154';
+        $assignee->save();
+        $employee = Employee::factory()->create(['user_id' => $assignee->id, 'email' => null]);
+        $plan = $this->makePlan($owner);
+        $task = $plan->tasks()->create([
+            'task_bucket_id' => $plan->buckets->first()->id,
+            'title' => 'Test email delivery',
+            'created_by' => $owner->id,
+        ]);
+        $task->assignees()->attach($employee->id);
+
+        DB::table('employees')->where('id', $employee->id)->update(['email' => 'fajar.sodiq91@gmail.com']);
+        Notification::fake();
+
+        $this->actingAs($owner)->put(route('tasks.update', $task), [
+            'title' => 'Updated test email delivery',
+            'task_bucket_id' => $plan->buckets->first()->id,
+            'priority' => 'medium',
+            'progress' => 'not_started',
+            'assignee_ids' => [$employee->id],
+        ])->assertRedirect();
+
+        $this->assertSame('fajar.sodiq91@gmail.com', $assignee->fresh()->email);
+        Notification::assertSentTo($assignee, \App\Notifications\TaskActivity::class, fn ($notification, $channels) => in_array('mail', $channels, true));
+
+        $this->post(route('logout'));
+        $this->post(route('login'), ['email' => 'fajar.sodiq91@gmail.com', 'password' => 'password'])
+            ->assertRedirect();
+        $this->assertAuthenticatedAs($assignee);
     }
 }

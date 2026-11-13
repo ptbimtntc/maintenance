@@ -64,6 +64,7 @@ class TaskNotifier
     private function send(Employee $employee, $notification): void
     {
         if ($employee->user) {
+            $employee->syncUserEmail();
             $employee->user->notify($notification);
         } elseif ($employee->email) {
             Notification::route('mail', [$employee->email => $employee->full_name])->notify($notification);

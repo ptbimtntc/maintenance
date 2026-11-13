@@ -21,7 +21,7 @@ class ProvisionEmployeeUsers extends Command
 
         Employee::query()->whereNull('user_id')->with('position')->orderBy('employee_number')->each(function (Employee $employee) use ($created) {
             $username = mb_strtolower(trim($employee->employee_number));
-            $email = Str::slug($username).'@employees.mpd.local';
+            $email = $employee->email ?: Str::slug($username).'@employees.mpd.local';
 
             if (User::where('username', $username)->orWhere('email', $email)->exists()) {
                 $this->warn("Skipped {$employee->employee_number}: a login with that NIK already exists.");

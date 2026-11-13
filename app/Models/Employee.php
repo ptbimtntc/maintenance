@@ -57,6 +57,27 @@ class Employee extends Model
     protected static function booted(): void
     {
         static::addGlobalScope(new ExcludePlantManagerScope);
+
+        static::saved(function (Employee $employee): void {
+            if ($employee->wasChanged('email')) {
+                $employee->syncUserEmail();
+            }
+        });
+    }
+
+    public function syncUserEmail(): void
+    {
+        if (blank($this->email) || $this->user_id === null) {
+            return;
+        }
+
+        $user = $this->user()->first();
+
+        if ($user && $user->email !== $this->email) {
+            $user->forceFill(['email' => $this->email])->save();
+        }
+
+        $this->setRelation('user', $user);
     }
 
     /**
