@@ -28,13 +28,8 @@
         @endif
         <div class="flex flex-col justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-md sm:flex-row sm:items-center">
             <div class="flex items-center gap-4">
-                @if ($employee->photo_path)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}" alt="{{ $employee->full_name }}" class="h-16 w-16 rounded-full object-cover">
-                @else
-                    <span class="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-lg font-semibold text-neutral-500">
-                        {{ \Illuminate\Support\Str::of($employee->full_name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
-                    </span>
-                @endif
+                <x-employee-avatar :employee="$employee" img-class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-neutral-200"
+                    fallback-class="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xl font-semibold text-neutral-500 ring-2 ring-neutral-200" />
                 <div>
                     <h2 class="text-xl font-semibold text-neutral-900">{{ $employee->full_name }}</h2>
                     <p class="text-sm text-neutral-500">{{ $employee->employee_number }} &middot; {{ $employee->position?->title ?? 'No position assigned' }}</p>

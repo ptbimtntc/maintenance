@@ -75,11 +75,7 @@
 
                 <div class="detail-profile sticky-layer">
                     <div class="detail-photo">
-                        @if ($employee->photo_path)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}" alt="{{ $employee->full_name }}">
-                        @else
-                            <div class="photo-placeholder">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($employee->full_name, 0, 1)) }}</div>
-                        @endif
+                        <x-employee-avatar :employee="$employee" :signed="true" :letters="1" img-class="" fallback-class="photo-placeholder" />
                     </div>
                     <div class="detail-employee-info">
                         <h2>{{ $employee->full_name }}</h2>

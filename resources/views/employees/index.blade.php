@@ -144,14 +144,7 @@
                                 </td>
                             @endcan
                             <td class="px-3 py-2">
-                                @if ($employee->photo_path)
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
-                                         alt="{{ $employee->full_name }}" class="h-10 w-10 rounded-full object-cover">
-                                @else
-                                    <span class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-100 text-xs font-semibold text-neutral-500">
-                                        {{ \Illuminate\Support\Str::of($employee->full_name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
-                                    </span>
-                                @endif
+                                <x-employee-avatar :employee="$employee" />
                             </td>
                             <td class="px-3 py-2">
                                 <a href="{{ route('employees.show', $employee) }}" class="font-medium text-neutral-900 hover:underline">{{ $employee->employee_number }}</a>

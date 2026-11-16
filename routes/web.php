@@ -83,6 +83,9 @@ Route::middleware('throttle:30,1')->group(function () {
         ->name('safety.lototo.follow-up.respond.store');
 });
 
+// Employee photo for pages opened without a login (public certificate pages): valid only with the signature the page built.
+Route::get('/employee-photos/{employee}', [EmployeeController::class, 'signedPhoto'])->middleware(['signed:relative', 'throttle:120,1'])->name('employees.photo.signed');
+
 Route::get('/', function () {
     return redirect()->route(auth()->check() ? 'dashboard' : 'guest-login');
 });
@@ -116,6 +119,8 @@ Route::middleware(['auth', 'verified'])->prefix('plant-manager')->name('plant-ma
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('employees', EmployeeController::class)
         ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'menu.edit:'.MenuKey::Employees->value);
+    // The photo shown on the Employees pages: streamed by the app (no public/storage link needed), only if the file exists.
+    Route::get('/employees/{employee}/photo', [EmployeeController::class, 'photo'])->name('employees.photo');
     Route::get('/employees-qr-codes', [EmployeeController::class, 'qrCodes'])->name('employees.qr-codes');
     Route::put('/employees-qr-codes/base-url', [EmployeeController::class, 'updateQrBaseUrl'])->name('employees.qr-codes.base-url');
     Route::post('/employees-bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->middleware('menu.edit:'.MenuKey::Employees->value)->name('employees.bulk-destroy');

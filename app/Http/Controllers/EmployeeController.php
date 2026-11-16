@@ -275,6 +275,21 @@ class EmployeeController extends Controller
             ->with('status', 'A new onboarding link has been generated.');
     }
 
+    public function photo(Employee $employee)
+    {
+        // Any signed-in user: the same photo is already shown to everyone on the organization chart, tasks and LOTOTO.
+        $path = \App\Support\LototoEmployeePhoto::path($employee);
+        abort_if($path === null, 404);
+
+        return Storage::disk('public')->response($path, null, ['Cache-Control' => 'private, max-age=86400']);
+    }
+
+    /** The photo for public pages: only with the signed link the page itself built. */
+    public function signedPhoto(Employee $employee)
+    {
+        return $this->photo($employee);
+    }
+
     public function show(Employee $employee): View
     {
         $this->authorize('view', $employee);

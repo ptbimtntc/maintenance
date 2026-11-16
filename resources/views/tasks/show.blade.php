@@ -67,11 +67,8 @@
                         @foreach ($task->assignees as $assignee)
                             <div x-data="{ open: false }" class="group relative" @click.outside="open = false">
                                 <button type="button" @click="open = !open" aria-label="{{ $assignee->full_name }}" class="block rounded-full ring-2 ring-white">
-                                    @if ($assignee->photo_path)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($assignee->photo_path) }}" alt="{{ $assignee->full_name }}" class="h-8 w-8 rounded-full object-cover">
-                                    @else
-                                        <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700">{{ strtoupper(mb_substr($assignee->full_name, 0, 1)) }}</span>
-                                    @endif
+                                    <x-employee-avatar :employee="$assignee" :letters="1" img-class="h-8 w-8 shrink-0 rounded-full object-cover"
+                                            fallback-class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-semibold text-brand-700" />
                                 </button>
                                 <span x-show="open" x-cloak class="absolute left-1/2 top-full z-10 mt-1 -translate-x-1/2 whitespace-nowrap rounded bg-neutral-900 px-2 py-1 text-xs text-white shadow group-hover:block" :class="open ? '' : 'hidden'">{{ $assignee->full_name }}</span>
                                 <span x-show="!open" class="pointer-events-none absolute left-1/2 top-full z-10 mt-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-neutral-900 px-2 py-1 text-xs text-white shadow group-hover:block">{{ $assignee->full_name }}</span>

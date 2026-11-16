@@ -32,13 +32,23 @@ class LototoEmployeePhoto
     }
 
     /** The URL the page uses for the photo (relative, so it follows the address the page was opened from), or null. */
-    public static function url(Employee $employee): ?string
+    public static function url(Employee $employee, string $route = 'safety.lototo.employee-photo'): ?string
     {
         if (self::path($employee) === null) {
             return null;
         }
 
-        return route('safety.lototo.employee-photo', ['employee' => $employee->id, 'v' => $employee->updated_at?->timestamp], absolute: false);
+        return route($route, ['employee' => $employee->id, 'v' => $employee->updated_at?->timestamp], absolute: false);
+    }
+
+    /** A signed copy of the photo URL for pages opened without a login (public certificate pages): path-only signature, no expiry. */
+    public static function signedUrl(Employee $employee): ?string
+    {
+        if (self::path($employee) === null) {
+            return null;
+        }
+
+        return \Illuminate\Support\Facades\URL::signedRoute('employees.photo.signed', ['employee' => $employee->id, 'v' => $employee->updated_at?->timestamp], absolute: false);
     }
 
     /** Forgets what was looked up (tests that change files within one process). */

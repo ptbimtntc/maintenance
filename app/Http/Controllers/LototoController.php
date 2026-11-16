@@ -12,7 +12,9 @@ use App\Models\LototoBoardSlot;
 use App\Models\LototoSupervisorFeedback;
 use App\Models\SpareLock;
 use App\Models\User;
+use App\Notifications\LototoFollowUpReply;
 use App\Notifications\LototoSafetyAlert;
+use App\Support\LototoFollowUpWhatsApp;
 use App\Support\LototoEmployeePhoto;
 use App\Support\LototoFollowUpLink;
 use Illuminate\Auth\AuthenticationException;
@@ -730,17 +732,18 @@ class LototoController extends Controller
             'supervisor_follow_up' => ['required', 'string', 'max:5000'],
         ]);
 
-        $this->saveSupervisorFeedback($activity, $request->user()->employee, $request->user(), $data['supervisor_follow_up']);
+        $result = $this->saveSupervisorFeedback($activity, $request->user()->employee, $request->user(), $data['supervisor_follow_up']);
 
         return to_route('safety.lototo.follow-up', $activity)
-            ->with('status', 'Feedback tindak lanjut LOTOTO berhasil disimpan.');
+            ->with('status', 'Feedback tindak lanjut LOTOTO berhasil disimpan.')
+            ->with('follow_up_result', $result);
     }
 
     /** The Supervisor Feedback page opened from the follow-up email (signed link, no login needed). */
     public function respond(Request $request, LototoActivity $activity): View
     {
         $supervisor = LototoFollowUpLink::supervisorFor($request, $activity);
-        abort_unless($supervisor !== null, 403, 'Link feedback tidak valid atau sudah tidak berlaku.');
+        abort_unless($supervisor !== null, 403, LototoFollowUpLink::denialMessage($request, $activity));
         $activity->load(['employee', 'spareLock', 'supervisorFollowUpBy', ...($this->hasFeedbackHistory() ? ['supervisorFeedbacks.supervisor', 'supervisorFeedbacks.user'] : [])]);
 
         return view('safety.lototo.follow-up-respond', [
@@ -754,13 +757,13 @@ class LototoController extends Controller
     public function submitRespond(Request $request, LototoActivity $activity): RedirectResponse
     {
         $supervisor = LototoFollowUpLink::supervisorFor($request, $activity);
-        abort_unless($supervisor !== null, 403, 'Link feedback tidak valid atau sudah tidak berlaku.');
+        abort_unless($supervisor !== null, 403, LototoFollowUpLink::denialMessage($request, $activity));
         $data = $request->validate([
             'supervisor_follow_up' => ['required', 'string', 'max:5000'],
         ]);
-        $this->saveSupervisorFeedback($activity, $supervisor, $supervisor->user, $data['supervisor_follow_up']);
+        $result = $this->saveSupervisorFeedback($activity, $supervisor, $supervisor->user, $data['supervisor_follow_up']);
 
-        return redirect()->to($request->fullUrl())->with('status', 'Feedback supervisor berhasil dikirim.');
+        return redirect()->to($request->fullUrl())->with('status', 'Feedback supervisor berhasil dikirim.')->with('follow_up_result', $result);
     }
 
     /**
@@ -768,9 +771,10 @@ class LototoController extends Controller
      * Only for an activity whose follow-up was requested. The same text sent twice in a row by the same supervisor
      * (a double click or a resent form) is stored once.
      */
-    private function saveSupervisorFeedback(LototoActivity $activity, ?Employee $supervisor, ?User $user, string $comment): void
+    private function saveSupervisorFeedback(LototoActivity $activity, ?Employee $supervisor, ?User $user, string $comment): array
     {
-        DB::transaction(function () use ($activity, $supervisor, $user, $comment) {
+        $isNew = true;
+        DB::transaction(function () use ($activity, $supervisor, $user, $comment, &$isNew) {
             $lockedActivity = LototoActivity::query()->lockForUpdate()->findOrFail($activity->id);
             if (! in_array($lockedActivity->supervisor_follow_up_status, ['pending', 'completed'], true)) {
                 throw ValidationException::withMessages([
@@ -781,6 +785,8 @@ class LototoController extends Controller
             if ($this->hasFeedbackHistory()) {
                 $last = LototoSupervisorFeedback::query()->where('lototo_activity_id', $lockedActivity->id)->latest('id')->first();
                 if ($last && $last->comment === $comment && (int) $last->supervisor_employee_id === (int) $supervisor?->id) {
+                    $isNew = false;
+
                     return;
                 }
                 LototoSupervisorFeedback::query()->create([
@@ -797,6 +803,49 @@ class LototoController extends Controller
                 'supervisor_follow_up_status' => 'completed',
             ]);
         });
+
+        return $this->notifyEmployeeOfFollowUp($activity->fresh(['employee']), trim($comment), $supervisor, $isNew);
+    }
+
+    /**
+     * After the reply is stored: email the employee whose activity it is (their own address, never the supervisor's)
+     * and describe the outcome for the confirmation popup. The email goes out once per newly stored reply (a double
+     * click or a resent form stores nothing new, so sends nothing); a failed email is reported as failed, and the
+     * stored reply and its history stay. The popup offers the WhatsApp hand-over only when the employee has a number.
+     *
+     * @return array<string, mixed>
+     */
+    private function notifyEmployeeOfFollowUp(LototoActivity $activity, string $comment, ?Employee $supervisor, bool $isNew): array
+    {
+        $employee = $activity->employee;
+        $mailTo = filled($employee->email) ? $employee->email : $employee->user?->email;
+        $result = [
+            'employee' => $employee->full_name,
+            'lototo_number' => $employee->lototo_number,
+            'email' => $mailTo,
+            'emailed' => false,
+            'email_skipped' => ! $isNew,
+            'error' => null,
+            'whatsapp_url' => LototoFollowUpWhatsApp::url($employee, $activity, $comment),
+            'phone' => $employee->phone,
+        ];
+        if (! $isNew) {
+            return $result;
+        }
+        if (! filled($mailTo)) {
+            $result['error'] = 'Karyawan belum memiliki alamat email.';
+
+            return $result;
+        }
+        try {
+            Notification::route('mail', $mailTo)->notify(new LototoFollowUpReply($activity, $comment, $supervisor?->full_name));
+            $result['emailed'] = true;
+        } catch (\Throwable $exception) {
+            report($exception);
+            $result['error'] = 'Email tidak dapat dikirim saat ini.';
+        }
+
+        return $result;
     }
 
     /** Whether the reply history table exists yet (code may be deployed before its migration runs). */

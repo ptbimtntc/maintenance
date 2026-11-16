@@ -61,15 +61,8 @@ $photoRingClass = $isBlueCollar || $isIntern ? 'ring-2 ring-white/70' : 'ring-2 
        class="org-chart-node inline-flex w-48 flex-col items-center gap-1 rounded-lg border p-3 text-center shadow-sm transition hover:shadow-md
               {{ $cardClass }}
               {{ $isMatch ? 'ring-4 ring-brand-400 ring-offset-2 ring-offset-neutral-200' : '' }}">
-        @if ($employee->photo_path)
-            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
-                 alt="{{ $employee->full_name }}"
-                 class="h-14 w-14 rounded-full object-cover {{ $photoRingClass }}">
-        @else
-            <span class="flex h-14 w-14 items-center justify-center rounded-full text-base font-semibold {{ $avatarClass }}">
-                {{ \Illuminate\Support\Str::of($employee->full_name)->explode(' ')->map(fn ($part) => \Illuminate\Support\Str::substr($part, 0, 1))->take(2)->implode('') }}
-            </span>
-        @endif
+        <x-employee-avatar :employee="$employee" img-class="h-14 w-14 shrink-0 rounded-full object-cover {{ $photoRingClass }}"
+            fallback-class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-base font-semibold {{ $avatarClass }}" />
 
         <span class="text-sm font-semibold leading-tight">{{ $employee->full_name }}</span>
         <span class="text-xs {{ $mutedTextClass }}">{{ $employee->employee_number }}</span>

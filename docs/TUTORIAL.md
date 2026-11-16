@@ -162,7 +162,7 @@ Catatan komunikasi antar-shift (serah terima).
 <!-- only:employees -->
 ### Employees (Database Karyawan)
 **Melihat dan mencari**
-- Daftar menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift.
+- Daftar menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift. Foto ditampilkan langsung oleh aplikasi (juga di detail Employee, bagan organisasi, Task, dan halaman verifikasi sertifikat); bila file foto belum ada atau tidak dapat dimuat, tampil inisial nama (bukan gambar rusak). Pada form tambah/ubah Employee, foto yang baru dipilih langsung tampil sebagai pratinjau sebelum disimpan.
 - Cari berdasarkan NIK atau nama.
 - Filter: Business Unit, Department, Employment Type, Employment Source, Employment Status (default **Active**), Supervisor, dan Shift. Beberapa filter bisa dipilih lebih dari satu nilai.
 
@@ -371,6 +371,7 @@ Gunakan **Safety → LOTOTO** untuk membuka board. Pilih board aktif melalui daf
 - Jika ada jawaban checklist **TIDAK** atau teknisi mengisi Feedback, supervisor teknisi tersebut (atasan pada data karyawan) menerima satu notifikasi di aplikasi dan satu email **LOTOTO & LMRA FEEDBACK** untuk aktivitas itu. Email dikirim ke alamat email supervisor pada data karyawan; jika kosong, ke email akun supervisor. Jika supervisor belum punya akun maupun email, IN ditolak dengan pesan agar administrator melengkapi datanya. Jawaban TIDAK ditandai merah.
 - Tombol **LINK TO FOLLOW UP** pada email membuka halaman **Supervisor Feedback** tanpa login. Link hanya berlaku untuk supervisor tersebut dan selama 30 hari. Data teknisi tampil read-only; supervisor menulis di kolom **Supervisor Comment / Feedback** lalu memilih **Send Feedback**. Supervisor yang sudah login juga dapat membalas melalui notifikasi di aplikasi.
 - Balasan supervisor tampil di halaman LOTOTO Activity teknisi, di bawah feedback teknisi, beserta nama dan waktunya. Selama belum dibalas tertulis **Menunggu feedback supervisor**. Balasan berikutnya ditambahkan tanpa menghapus balasan sebelumnya.
+- Setelah supervisor menekan **Send Feedback**, balasan disimpan lalu aplikasi mengirim **email Follow Up ke karyawan pemilik aktivitas** (ke alamat email karyawan itu sendiri, bukan email supervisor), berisi aktivitas LOTOTO dan isi Follow Up. Email dikirim sekali per balasan; menekan tombol dua kali atau me-refresh halaman tidak mengirim ulang. Muncul jendela **Follow Up Berhasil Dikirim** yang menyebut nama dan email karyawan. Jika email gagal (mis. karyawan belum punya email), jendela menyebut **Email Gagal Dikirim**; balasan tetap tersimpan. Bila karyawan punya nomor telepon di data Employee, tersedia pilihan **Kirim via WhatsApp** (membuka WhatsApp dengan pesan yang sudah terisi; supervisor tetap menekan kirim) atau **Nanti saja**; tanpa nomor, jendela menyatakan nomor WhatsApp tidak tersedia. Bila link tidak dapat dibuka, halaman menyebut sebabnya (kedaluwarsa, link rusak, atau sedang masuk dengan akun lain).
 <!-- /only -->
 
 ---
@@ -489,6 +490,8 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
+| 2026-11-16 | Foto karyawan tampil seragam dan proporsional di Employees (daftar, detail, form), bagan organisasi, Task, Plant Manager, dan halaman verifikasi sertifikat; inisial bila foto tidak ada; pratinjau foto pada form Employee; foto kartu LOTOTO yang IN dengan lokasi tetap kecil agar nomor dan nama terlihat utuh. |
+| 2026-11-16 | LOTOTO: foto karyawan pada kartu Technician dan Supervisor sedikit diperbesar; foto di halaman Employees tidak lagi rusak (inisial bila file tidak ada); Follow Up supervisor kini dikirim lewat email ke karyawan, dengan jendela konfirmasi dan pilihan Kirim via WhatsApp / Nanti saja; pesan jelas bila link Follow Up tidak dapat dibuka. |
 | 2026-11-13 | LOTOTO: menyeragamkan ikon lokasi 11 px dan font lokasi 8 px untuk Technician, Supervisor, Spare, dan Tools saat IN. |
 | 2026-11-13 | LOTOTO: mengembalikan ikon lokasi ke bentuk map-pin sederhana, warna merah dengan outline kuning, ukuran 9 px dan jarak 4 px dari teks. |
 | 2026-11-13 | LOTOTO: mengganti ikon lokasi dengan pin merah solid berpusat kuning berukuran 22 px, dirapatkan 4 px ke teks lokasi. |

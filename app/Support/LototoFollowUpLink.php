@@ -27,6 +27,22 @@ class LototoFollowUpLink
         ], absolute: false));
     }
 
+    /** Why a link did not open, in words the person can act on (the page itself still shows nothing of the activity). */
+    public static function denialMessage(Request $request, LototoActivity $activity): string
+    {
+        if (! $request->hasValidSignature(false)) {
+            return $request->query('expires') !== null && (int) $request->query('expires') < now()->timestamp
+                ? 'Link Follow Up sudah kedaluwarsa. Minta supervisor mengirim ulang atau buka dari menu LOTOTO.'
+                : 'Link Follow Up tidak lengkap atau rusak. Salin ulang seluruh alamat dari email.';
+        }
+        $user = $request->user();
+        if ($user && ! $user->hasRole(RoleName::Guest->value)) {
+            return 'Link ini untuk supervisor yang bersangkutan, tetapi Anda sedang masuk dengan akun lain. Keluar (logout) lalu buka link lagi.';
+        }
+
+        return 'Link Follow Up ini bukan untuk Anda atau supervisor aktivitas ini sudah berganti.';
+    }
+
     /** The supervisor this request may act as, or null when the link must not open. */
     public static function supervisorFor(Request $request, LototoActivity $activity): ?Employee
     {

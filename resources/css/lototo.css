@@ -1567,8 +1567,8 @@ main:has(.lototo-page) > div {
 }
 
 .lototo-card .lototo-photo {
-    width: clamp(14px, 34cqi, 48px);
-    height: clamp(14px, 34cqi, 48px);
+    width: clamp(16px, 40cqi, 54px);
+    height: clamp(16px, 40cqi, 54px);
     flex: none;
     border: 1px solid #d4d4d4;
     border-radius: 3px;
