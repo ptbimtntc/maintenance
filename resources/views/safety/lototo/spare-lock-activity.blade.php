@@ -31,11 +31,12 @@
                 </svg>
             </a>
 
-            @if ($currentEmployee?->photo_path)
+            @if ($currentEmployee && ($photoUrl = \App\Support\LototoEmployeePhoto::url($currentEmployee)))
                 <img
-                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($currentEmployee->photo_path) }}"
+                    src="{{ $photoUrl }}"
                     alt=""
-                    class="h-12 w-12 shrink-0 border border-neutral-400 object-cover sm:h-16 sm:w-16"
+                    data-initials="{{ $employeeInitials }}"
+                    class="lototo-photo-img h-12 w-12 shrink-0 border border-neutral-400 object-cover sm:h-16 sm:w-16"
                 >
             @else
                 <div class="flex h-12 w-12 shrink-0 items-center sm:h-16 sm:w-16 justify-center border border-neutral-400 bg-neutral-200 text-lg font-bold text-neutral-700">

@@ -210,7 +210,7 @@ export function removeSlot(draft, key) {
     if (!found) throw new DraftError('Posisi tidak ditemukan pada draft.');
     const { category, slot } = found;
     if (slot.locked) {
-        throw new DraftError(`${CATEGORY_LABELS[category]} ${pad(slot.position)} memiliki aktivitas LOTOTO aktif, gembok yang sedang digunakan, atau Tools yang sedang IN, sehingga tidak dapat dihapus.`);
+        throw new DraftError(`Slot ${CATEGORY_LABELS[category]} ini memiliki aktivitas LOTOTO aktif, gembok yang sedang digunakan, atau Tools yang sedang IN, sehingga tidak dapat dihapus.`);
     }
     if (slot.id !== null) draft.removed.push(slot.id);
     draft.slots[category] = draft.slots[category].filter((candidate) => candidate.key !== key);
@@ -252,15 +252,15 @@ export function updateSlot(draft, saved, key, changes) {
             throw new DraftError(`Slot selebar ${span} kolom tidak muat pada pita ${CATEGORY_LABELS[slot.section]} (${width} kolom).`);
         }
         if (position !== slot.position && draft.slots[category].some((other) => other.key !== key && other.position === position)) {
-            throw new DraftError(`Posisi ${pad(position)} sudah dipakai pada ${CATEGORY_LABELS[category]}.`);
+            throw new DraftError(`Nomor slot ini sudah dipakai oleh slot lain pada ${CATEGORY_LABELS[category]}.`);
         }
     } else {
         const occupant = slotAt(draft, category, position);
         if (occupant && occupant.key !== key) {
             // A slot is never moved to another free index behind the user's back.
             throw new DraftError(category === found.category
-                ? `Posisi ${pad(position)} sudah dipakai pada ${CATEGORY_LABELS[category]}.`
-                : `Posisi ${pad(position)} pada ${CATEGORY_LABELS[category]} sudah terisi slot lain, jadi kategori tidak dapat diganti tanpa mengubah posisi. Slot tidak dipindahkan.`);
+                ? `Nomor slot ini sudah dipakai oleh slot lain pada ${CATEGORY_LABELS[category]}.`
+                : `Posisi yang sama pada ${CATEGORY_LABELS[category]} sudah terisi slot lain, jadi kategori tidak dapat diganti tanpa mengubah posisi. Slot tidak dipindahkan.`);
         }
     }
     const field = assignmentField(category);
@@ -329,11 +329,11 @@ export function describeChanges(layout, draft, label) {
     });
     (draft.removed ?? []).forEach((id) => {
         const original = saved.get(String(id));
-        lines.push(`Dihapus · ${CATEGORY_LABELS[original.category]} ${pad(original.position)}: ${label(original.category, original)}`);
+        lines.push(`Dihapus · ${CATEGORY_LABELS[original.category]}: ${label(original.category, original)}`);
     });
     CATEGORIES.forEach((category) => draft.slots[category].forEach((slot) => {
         const original = saved.get(slot.key);
-        const now = `${CATEGORY_LABELS[category]} ${pad(slot.position)}: ${label(category, slot)}${slot.is_enabled ? '' : ' (disabled)'}`;
+        const now = `${CATEGORY_LABELS[category]}: ${label(category, slot)}${slot.is_enabled ? '' : ' (disabled)'}`;
         if (!original) {
             lines.push(`Posisi baru · ${now}`);
             return;
@@ -343,7 +343,7 @@ export function describeChanges(layout, draft, label) {
             && (original[field] ?? null) === (slot[field] ?? null)
             && (category !== 'tool' || original.tool_column_span === slot.tool_column_span);
         if (!same) {
-            lines.push(`${CATEGORY_LABELS[original.category]} ${pad(original.position)} → ${now}`);
+            lines.push(`${CATEGORY_LABELS[original.category]}: ${label(original.category, original)} → ${now}`);
         }
     }));
 

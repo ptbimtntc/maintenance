@@ -34,8 +34,8 @@ export function createSlotDialog(form, { getOptions, isBusy }) {
         const band = CATEGORY_LABELS[slot.section ?? current.category];
         // Without stored cells (database not migrated yet) the board still draws a slot in its category's band.
         const text = slot.grid_row
-            ? `Slot tetap di pita ${band} dan urutannya; isinya menjadi ${CATEGORY_LABELS[target]}. Nomor ${pad(slot.position)} tetap; letak slot sesudahnya disesuaikan otomatis.`
-            : `Nomor ${pad(slot.position)} tetap; setelah disimpan slot tampil di pita ${CATEGORY_LABELS[target]} karena letak slot belum tersimpan di database.`;
+            ? `Slot tetap di pita ${band} dan urutannya; isinya menjadi ${CATEGORY_LABELS[target]}. Letak slot sesudahnya disesuaikan otomatis.`
+            : `Setelah disimpan slot tampil di pita ${CATEGORY_LABELS[target]} karena letak slot belum tersimpan di database.`;
         moveNote.textContent = target === current.category ? '' : text;
         moveNote.hidden = target === current.category;
     };
@@ -54,7 +54,7 @@ export function createSlotDialog(form, { getOptions, isBusy }) {
             select.replaceChildren(new Option('Set as Empty', ''));
             items.forEach((item) => {
                 const position = usedAt(field, item.id);
-                const option = new Option(text(item) + (position ? ` — dipakai di posisi ${pad(position)}` : ''), String(item.id));
+                const option = new Option(text(item) + (position ? ' — sudah dipakai di slot lain' : ''), String(item.id));
                 option.disabled = Boolean(position);
                 select.add(option);
             });
@@ -155,7 +155,7 @@ export function createSlotDialog(form, { getOptions, isBusy }) {
             // Every slot, Technician included, may change category in any band, unless something on it is IN.
             const canChangeCategory = !locked;
 
-            form.querySelector('[data-slot-dialog-title]').textContent = `${isNew ? 'Tambah' : 'Edit'} slot ${CATEGORY_LABELS[category]} ${pad(slot.position)}`;
+            form.querySelector('[data-slot-dialog-title]').textContent = `${isNew ? 'Tambah' : 'Edit'} slot ${CATEGORY_LABELS[category]}`;
             form.querySelector('[data-slot-dialog-locked]').hidden = !locked;
             fields.category.value = category;
             fields.category.disabled = !canChangeCategory;

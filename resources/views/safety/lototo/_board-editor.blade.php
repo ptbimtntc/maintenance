@@ -60,7 +60,7 @@
                     <option value="{{ $category }}">{{ $label }}</option>
                 @endforeach
             </select>
-            <span class="mt-1 block font-normal text-neutral-500">Kategori hanya dapat diganti untuk slot kosong, bukan posisi Technician. Nomor posisi slot tidak berubah.</span>
+            <span class="mt-1 block font-normal text-neutral-500">Slot dapat diganti kategorinya selama tidak sedang dipakai (aktivitas IN). Isinya dilepas dari slot dan letak slot sesudahnya disesuaikan otomatis.</span>
             <span class="mt-1 block font-normal text-blue-800" data-slot-dialog-move-note hidden></span>
         </label>
         <label class="block text-xs font-semibold text-neutral-700" data-slot-field="employee"><span data-slot-employee-label>Teknisi</span>

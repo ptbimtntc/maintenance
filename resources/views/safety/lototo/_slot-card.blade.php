@@ -18,9 +18,9 @@
 @elseif ($category === 'spare')
                 @php
                     $assignedSpareLock = $slot->spareLock;
-                    $spareLock = $slot->is_enabled || $assignedSpareLock?->currentActivity
-                        ? $assignedSpareLock
-                        : null;
+                    $spareActivity = $assignedSpareLock?->currentActivity;
+                    $spareActivity = $spareActivity?->status === 'in_progress' ? $spareActivity : null;
+                    $spareLock = $slot->is_enabled || $spareActivity ? $assignedSpareLock : null;
                     // The cell the board view gave this slot (stored grid_row / grid_column).
                     $gridColumn = (int) $slot->grid_column;
                     $gridRow = (int) $slot->grid_row;
@@ -36,7 +36,6 @@
                     </div>
                 @else
                     @php
-                        $spareActivity = $spareLock->currentActivity;
                         $spareEmployee = $spareActivity?->employee;
                     @endphp
                 <a
@@ -58,6 +57,8 @@
                         'in' => $spareActivity !== null,
                         'band' => 'SPARE',
                         'code' => $spareLock->code,
+                        // Place of work of the activity using this lock right now (current_activity_id), not an older one.
+                        'location' => $spareActivity ? trim((string) $spareActivity->location) : null,
                     ])
                 </a>
                 @endif
@@ -82,9 +83,18 @@
                                     >
                                         <span class="lototo-position-index">{{ sprintf('%02d', $slot->position) }}</span>
                                         @if ($toolOpen)
+                                            {{-- IN: the indicator and the place of work of the unfinished tool activity take the picture's place. --}}
                                             <span class="lototo-tool-status">IN</span>
-                                        @endif
-                                        @if ($tool?->image_path)
+                                            @if (filled(trim((string) $toolOpen->location)))
+                                                <span class="lototo-lock-location lototo-tool-location" title="{{ trim($toolOpen->location) }}">
+                                                    <svg class="lototo-location-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" fill="#dc2626" stroke="#facc15" stroke-linejoin="round" stroke-width="2" />
+                                                        <circle cx="12" cy="10" r="3" fill="#facc15" />
+                                                    </svg>
+                                                    <span class="lototo-lock-location__text">{{ trim($toolOpen->location) }}</span>
+                                                </span>
+                                            @endif
+                                        @elseif ($tool?->image_path)
                                             <img class="lototo-tool-image" src="{{ route('safety.lototo.tools.image', $tool) }}?v={{ $tool->updated_at?->timestamp }}" alt="" loading="lazy">
                                         @else
                                             <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">

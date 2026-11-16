@@ -77,27 +77,46 @@
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-2">
+                    @php
+                        // Neutral, read-only look shared by the two identity fields. readonly (not disabled) so the value is
+                        // still posted; the server does not trust it anyway (acting employee, signed QR identity, board from
+                        // the request's own board id).
+                        $fixedField = 'mt-1.5 block min-h-11 w-full cursor-not-allowed rounded-xl border-neutral-200 bg-neutral-100 text-base font-bold text-neutral-800 shadow-none focus:border-neutral-300 focus:ring-0';
+                        // The number is fixed whenever the system knows it (QR, own lock, open activity). Only when it does not
+                        // (a free spare lock started by a Safety manager) the manager enters the employee's number.
+                        $numberKnown = filled($lototoNumber);
+                    @endphp
                     <div>
-                        <label for="lototo_number" class="text-sm font-semibold text-neutral-700">No. LOTOTO <span class="text-red-600">*</span></label>
+                        <label for="lototo_number" class="text-sm font-semibold text-neutral-700">No. LOTOTO @unless ($numberKnown)<span class="text-red-600">*</span>@endunless</label>
                         <input
                             id="lototo_number"
                             name="lototo_number"
                             type="text"
                             value="{{ $lototoNumber }}"
-                            placeholder="Contoh: 01"
                             autocomplete="off"
-                            @readonly(filled($lototoNumber))
                             required
-                            class="mt-1.5 block min-h-11 w-full rounded-xl border-red-700 bg-red-600 text-base font-black tracking-wide text-white shadow-sm placeholder:font-semibold placeholder:text-red-100 focus:border-red-800 focus:ring-red-500"
+                            @if ($numberKnown)
+                                readonly
+                                aria-readonly="true"
+                                class="{{ $fixedField }}"
+                            @else
+                                placeholder="Contoh: 01"
+                                class="mt-1.5 block min-h-11 w-full rounded-xl border-neutral-300 text-base shadow-sm focus:border-yellow-500 focus:ring-yellow-500"
+                            @endif
                         >
                     </div>
 
                     <input type="hidden" name="lototo_board" value="{{ $lototoBoard }}">
                     <div>
-                        <span class="text-sm font-semibold text-neutral-700">LOTOTO Board</span>
-                        <p class="mt-1.5 flex min-h-11 items-center rounded-xl bg-neutral-100 px-3 text-sm font-bold text-neutral-800">
-                            {{ $spareLock ? 'GEMBOK SPARE '.$spareLock->code : $board->title }}
-                        </p>
+                        <label for="lototo_board_display" class="text-sm font-semibold text-neutral-700">LOTOTO Board</label>
+                        <input
+                            id="lototo_board_display"
+                            type="text"
+                            value="{{ $spareLock ? 'GEMBOK SPARE '.$spareLock->code : $board->title }}"
+                            readonly
+                            aria-readonly="true"
+                            class="{{ $fixedField }}"
+                        >
                     </div>
 
                     <fieldset class="sm:col-span-2">

@@ -23,27 +23,12 @@ class SpareLockController extends Controller
         $board = $spareLock->board;
         abort_unless($board, 404);
 
-        $canManageSafety = $request->user()->can(PermissionName::ManageSafety->value);
-        if (! $canManageSafety) {
-            $canSeeBoard = Employee::query()
-                ->where('business_unit_id', $board->business_unit_id)
-                ->visibleTo($request->user())
-                ->exists();
-            abort_unless($canSeeBoard, 404);
-
-            $visibleEmployee = $spareLock->currentActivity?->employee
-                ? Employee::query()->visibleTo($request->user())->whereKey($spareLock->currentActivity->employee_id)->exists()
-                : true;
-            if (! $visibleEmployee) {
-                $spareLock->currentActivity->setRelation('employee', null);
-            }
-        }
-
+        // Read only and open to everyone who may open LOTOTO (the ViewSafety route group), like the Guest Viewer and like
+        // the employee's own LOTOTO Activity page; nothing here changes data.
         return view('safety.lototo.spare-lock-activity', [
             'spareLock' => $spareLock,
             'board' => $board,
             'activities' => $spareLock->activities()
-                ->when(! $canManageSafety, fn ($query) => $query->whereHas('employee', fn ($employees) => $employees->visibleTo($request->user())))
                 ->with(['employee', 'spareLock', ...LototoActivity::feedbackRelations()])
                 ->latest('started_at')
                 ->paginate(20),

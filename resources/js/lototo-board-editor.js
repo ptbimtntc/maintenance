@@ -224,7 +224,7 @@ function initBoardEditor(page) {
             remove.type = 'button';
             remove.className = 'lototo-editor-remove';
             remove.textContent = '×';
-            remove.title = `Hapus slot ${CATEGORY_LABELS[found.category]} ${pad(found.slot.position)}`;
+            remove.title = `Hapus slot ${CATEGORY_LABELS[found.category]}`;
             remove.setAttribute('aria-label', remove.title);
             element.append(remove);
         }
@@ -233,7 +233,7 @@ function initBoardEditor(page) {
         button.type = 'button';
         button.className = 'lototo-editor-add';
         button.textContent = '+';
-        button.setAttribute('aria-label', `Isi slot ${CATEGORY_LABELS[element.dataset.slotCategory]} ${pad(element.dataset.slotPosition)}`);
+        button.setAttribute('aria-label', `Isi slot ${CATEGORY_LABELS[element.dataset.slotCategory]} kosong`);
         element.append(button);
     }
 
@@ -288,7 +288,7 @@ function initBoardEditor(page) {
             if (!changed) return;
             const marker = document.createElement('span');
             marker.className = 'lototo-editor-marker';
-            marker.textContent = (original && original.category !== found.category ? `Draft · ${CATEGORY_LABELS[found.category]} ${pad(found.slot.position)}: ` : 'Draft: ')
+            marker.textContent = (original && original.category !== found.category ? `Draft · ${CATEGORY_LABELS[found.category]}: ` : 'Draft: ')
                 + slotLabel(found.category, found.slot) + (found.slot.is_enabled ? '' : ' (disabled)');
             element.classList.add('lototo-editor-slot--changed');
             element.append(marker);
@@ -307,7 +307,7 @@ function initBoardEditor(page) {
                 if (saving) return;
                 const before = findSlot(draft, key);
                 if (values.category && before && values.category !== before.category && !isEmpty(before.slot)
-                    && !window.confirm(`Ganti kategori ${CATEGORY_LABELS[before.category]} ${pad(before.slot.position)} menjadi ${CATEGORY_LABELS[values.category]}? `
+                    && !window.confirm(`Ganti kategori slot ${CATEGORY_LABELS[before.category]} menjadi ${CATEGORY_LABELS[values.category]}? `
                         + `${slotLabel(before.category, before.slot)} dilepas dari slot ini setelah disimpan; data employee, gembok, Tool, dan riwayat LOTOTO tetap ada.`)) {
                     return;
                 }
@@ -416,7 +416,7 @@ function initBoardEditor(page) {
         const key = draftKeyFor(element);
         const found = key && findSlot(draft, key);
         if (!found) return;
-        const name = `${CATEGORY_LABELS[found.category]} ${pad(found.slot.position)}`;
+        const name = `${CATEGORY_LABELS[found.category]}`;
         const question = isEmpty(found.slot)
             ? `Hapus slot ${name}? Slot hilang dari board setelah disimpan dan slot sesudahnya merapat.`
             : `Hapus slot ${name} yang berisi ${slotLabel(found.category, found.slot)}? Slot hilang dari board setelah disimpan; data employee, gembok, Tool, dan riwayat LOTOTO tetap ada.`;
@@ -461,7 +461,7 @@ function initBoardEditor(page) {
             if (!isEditing()) return '';
             const slot = draftSlotsWith(kind === 'tool' ? 'tool_id' : 'spare_lock_id', item.id)[0];
 
-            return slot ? `${item.code} dipilih pada slot ${pad(slot.position)} di draft. Kosongkan slot itu lewat Edit Slot terlebih dahulu.` : '';
+            return slot ? `${item.code} dipilih pada sebuah slot di draft. Kosongkan slot itu lewat Edit Slot terlebih dahulu.` : '';
         },
         onTool: (change, tool) => {
             if (!isEditing()) return;

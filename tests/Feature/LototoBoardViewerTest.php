@@ -86,22 +86,26 @@ class LototoBoardViewerTest extends TestCase
             $this->assertStringNotContainsString($managerOnly, $staffPage);
         }
         $this->actingAs($staff)->getJson(route('safety.lototo.boards.layout', $this->board))->assertForbidden();
-        // Each employee's activity page keeps its own visibility rule.
+        // A colleague's LOTOTO Activity page is open to read, like for the Guest Viewer (LototoActivityAccessTest has the
+        // rest: nothing there can be changed).
         $other = LototoBoardSlot::query()->where('board_id', $this->board->id)->where('category', 'technician')->where('position', 2)->value('employee_id');
-        $this->actingAs($staff)->get(route('safety.lototo.show', ['employee' => $other, 'board' => $this->board->id]))->assertNotFound();
+        $this->actingAs($staff)->get(route('safety.lototo.show', ['employee' => $other, 'board' => $this->board->id]))->assertOk();
         // The administrator keeps the editor.
         $this->assertStringContainsString('data-board-edit-start', $this->actingAs($this->admin)->get(route('safety.lototo.boards.show', $this->board))->getContent());
     }
 
-    public function test_the_lototo_number_is_marked_red_on_the_board_and_the_form(): void
+    public function test_the_lototo_number_is_marked_red_on_the_board_but_the_form_fields_are_neutral_and_fixed(): void
     {
         $page = $this->actingAs($this->admin)->get(route('safety.lototo.boards.show', $this->board))->getContent();
         $this->assertMatchesRegularExpression('/<span class="lototo-number">07<\/span>/', $page);
         $css = file_get_contents(resource_path('css/lototo.css'));
         $this->assertMatchesRegularExpression('/\.lototo-card \.lototo-lock-plate \.lototo-number \{[^}]*background: #dc2626;[^}]*color: #fff;/s', $css);
 
+        // The form no longer uses the red background (cancelled): No. LOTOTO and LOTOTO Board are neutral, read-only fields.
         $form = $this->get(AllowLototoQrForm::url('safety.lototo.form', ['lototo_number' => '07', 'employee_id' => $this->own->id, 'board' => $this->board->id]))->getContent();
-        $this->assertMatchesRegularExpression('/id="lototo_number"[^>]*value="07"[^>]*class="[^"]*bg-red-600[^"]*text-white/s', $form);
+        $this->assertStringNotContainsString('bg-red-600', $form);
+        $this->assertMatchesRegularExpression('/<input[^>]*id="lototo_number"[^>]*value="07"[^>]*\sreadonly[^>]*bg-neutral-100/s', $form);
+        $this->assertMatchesRegularExpression('/<input[^>]*id="lototo_board_display"[^>]*readonly[^>]*bg-neutral-100/s', $form);
     }
 
     public function test_the_spare_lock_qr_opens_in_when_free_and_the_running_activity_when_in_use(): void

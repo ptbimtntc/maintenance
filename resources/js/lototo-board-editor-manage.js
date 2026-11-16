@@ -29,13 +29,16 @@ async function send(url, { method = 'POST', body = null } = {}) {
     return { error: answer.message || `Server mengembalikan kesalahan (${response.status}).` };
 }
 
+/** A slot is named by its category only ("Other / Tools 07" -> "Other / Tools"): slot numbers are not shown. */
+const slotName = (slot) => String(slot).replace(/\s+\d+$/, '');
+
 /** Why an item cannot be deleted, or '' when it can. */
-const blockedReason = (item, what) => (item.in ? `${what} sedang IN.` : item.history ? `${what} memiliki riwayat penggunaan.` : item.slot ? `Masih terpasang di slot ${item.slot}; kosongkan lewat Edit Slot dan simpan dulu.` : '');
+const blockedReason = (item, what) => (item.in ? `${what} sedang IN.` : item.history ? `${what} memiliki riwayat penggunaan.` : item.slot ? `Masih terpasang di slot ${slotName(item.slot)}; kosongkan lewat Edit Slot dan simpan dulu.` : '');
 
 const statusChips = (item) => [
     item.in ? '<span class="lototo-manage-chip lototo-manage-chip--in">IN</span>' : '<span class="lototo-manage-chip">OUT</span>',
     item.history ? '<span class="lototo-manage-chip">Ada riwayat</span>' : '',
-    item.slot ? `<span class="lototo-manage-chip lototo-manage-chip--slot">Slot ${escapeHtml(item.slot)}</span>` : '',
+    item.slot ? `<span class="lototo-manage-chip lototo-manage-chip--slot">Slot ${escapeHtml(slotName(item.slot))}</span>` : '',
 ].join('');
 
 export function createManagePopups({ toolsDialog, spareDialog, toolsUrl, spareLocksUrl, isBusy, onTool, onSpareLock, draftUse = () => '' }) {

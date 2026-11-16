@@ -13,6 +13,7 @@ use App\Models\LototoSupervisorFeedback;
 use App\Models\SpareLock;
 use App\Models\User;
 use App\Notifications\LototoSafetyAlert;
+use App\Support\LototoEmployeePhoto;
 use App\Support\LototoFollowUpLink;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -810,13 +812,17 @@ class LototoController extends Controller
         abort_unless($supervisor && $activity->employee()->where('supervisor_id', $supervisor->id)->exists(), 403);
     }
 
+    /**
+     * The LOTOTO Activity page of an employee: read only, and open to everyone who may open LOTOTO (the ViewSafety
+     * route group), like the Guest Viewer, so a signed-in user sees colleagues' activity too. It stays limited to the
+     * employees of the board's Business Unit; changing or managing anything is on other routes with their own rules.
+     */
     public function show(Request $request, Employee $employee): View
     {
         $board = $this->resolveBoard($request);
         $employee = Employee::query()
             ->with(['maintenanceArea', 'maintenanceTeam', 'position'])
             ->where('business_unit_id', $board->business_unit_id)
-            ->visibleTo($request->user())
             ->findOrFail($employee->id);
 
         return view('safety.lototo.activity', [
@@ -832,6 +838,19 @@ class LototoController extends Controller
                 ->latest('started_at')
                 ->paginate(20),
         ]);
+    }
+
+    /**
+     * An employee's photo for the board cards and activity pages, streamed by the application itself so it does not
+     * depend on the public/storage link or on APP_URL. 404 when the employee has no photo file (the page then shows
+     * initials; LototoEmployeePhoto only gives a URL for a file that exists).
+     */
+    public function photo(Employee $employee)
+    {
+        $path = LototoEmployeePhoto::path($employee);
+        abort_if($path === null, 404);
+
+        return Storage::disk('public')->response($path, null, ['Cache-Control' => 'private, max-age=86400']);
     }
 
     private function resolveBoard(Request $request): LototoBoard

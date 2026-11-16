@@ -52,7 +52,7 @@ test('editing the draft never touches the loaded layout', () => {
 
     assert.equal(source.slots.technician[1].employee_id, null);
     assert.equal(draft.slots.technician.find((s) => s.key === '2').employee_id, 12);
-    assert.deepEqual(describeChanges(source, draft, label), ['Technician 02 → Technician 02: 12']);
+    assert.deepEqual(describeChanges(source, draft, label), ['Technician: kosong → Technician: 12']);
 });
 
 test('technician positions are locked, other positions can move', () => {
@@ -144,7 +144,7 @@ test('new positions are added without an id and can be removed again; saved ones
     assert.equal(added.position, 3);
     assert.throws(() => addSlot(draft, 'technician', 3), DraftError);
     assert.equal(toPayload(draft).slots.technician.at(-1).id, null);
-    assert.deepEqual(describeChanges(source, draft, label), ['Posisi baru · Technician 03: kosong']);
+    assert.deepEqual(describeChanges(source, draft, label), ['Posisi baru · Technician: kosong']);
     assert.throws(() => removeNewSlot(draft, '1'), DraftError);
     removeNewSlot(draft, added.key);
     assert.deepEqual(describeChanges(source, draft, label), []);
@@ -275,7 +275,7 @@ test('a slot of any category can be removed and the slots after it close up; IN 
     assert.equal(payload.slots.supervisor.some((s) => s.id === 9), false);
     // Supervisor 10 closes up from 1:5 to 1:3; numbers stay.
     assert.deepEqual(payload.slots.supervisor.map((s) => [s.id, s.position, `${s.grid_row}:${s.grid_column}`]), [[3, 1, '1:1'], [4, 2, '1:2'], [10, 10, '1:3']]);
-    assert.deepEqual(describeChanges(source, draft, label), ['Dihapus · Supervisor 09: kosong']);
+    assert.deepEqual(describeChanges(source, draft, label), ['Dihapus · Supervisor: kosong']);
     // A Technician slot holding an employee can be removed (the editor asks first); Technician 02 moves to 1:1.
     removeSlot(draft, '1');
     assert.deepEqual(toPayload(draft).slots.technician.map((s) => [s.id, `${s.grid_row}:${s.grid_column}`]), [[2, '1:1']]);

@@ -158,9 +158,10 @@ class LototoBoardSettingsController extends Controller
     public function printPhoto(Request $request, Employee $employee)
     {
         $this->authorizeQrViewer($request);
-        abort_unless(filled($employee->photo_path) && Storage::disk('public')->exists($employee->photo_path), 404);
+        $path = \App\Support\LototoEmployeePhoto::path($employee);
+        abort_if($path === null, 404);
 
-        return Storage::disk('public')->response($employee->photo_path, null, ['Cache-Control' => 'private, max-age=300']);
+        return Storage::disk('public')->response($path, null, ['Cache-Control' => 'private, max-age=300']);
     }
 
     /**

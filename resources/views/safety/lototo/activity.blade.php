@@ -24,11 +24,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 18l-6-6 6-6" />
                 </svg>
             </a>
-            @if ($employee->photo_path)
+            @if ($photoUrl = \App\Support\LototoEmployeePhoto::url($employee))
                 <img
-                    src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($employee->photo_path) }}"
+                    src="{{ $photoUrl }}"
                     alt=""
-                    class="h-12 w-12 shrink-0 border border-neutral-400 object-cover sm:h-16 sm:w-16"
+                    data-initials="{{ $initials }}"
+                    class="lototo-photo-img h-12 w-12 shrink-0 border border-neutral-400 object-cover sm:h-16 sm:w-16"
                 >
             @else
                 <div class="flex h-12 w-12 shrink-0 items-center sm:h-16 sm:w-16 justify-center border border-neutral-400 bg-neutral-200 text-lg font-bold text-neutral-700">

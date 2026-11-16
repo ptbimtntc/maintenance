@@ -1,6 +1,6 @@
 {{-- QR print designs (Print Out.docx, Desain 1-5) for the QR records of this board (resources/js/lototo-print.js).
      "Download QR" on a record opens this popup: choose the record, tick designs, preview them filled with that record,
-     download one PDF whose pages have each design's printed size. QR URLs are the ones the QR cards above use. --}}
+     download each as a PNG image (600 dpi, one file per design). QR URLs are the ones the QR cards above use. --}}
 @php
     $printRecords = collect();
     foreach ($qrGroups as $qrGroup) {
@@ -50,7 +50,7 @@
         <header class="lototo-print-dialog__header">
             <div>
                 <h2 id="lototo-print-title" class="text-base font-bold text-neutral-900">Download QR — desain cetak</h2>
-                <p class="text-xs text-neutral-600">Pilih identitas dan desain. Preview memakai data record terpilih; file PDF memakai ukuran cetak asli setiap desain (cetak dengan skala 100% / Actual size).</p>
+                <p class="text-xs text-neutral-600">Pilih identitas dan desain. Preview memakai data record terpilih; file PNG (satu file per desain, 600 dpi) menyimpan ukuran cetak asli setiap desain; cetak dengan skala 100% / Actual size.</p>
             </div>
             <label class="lototo-print-dialog__identity">
                 <span>Identitas QR</span>

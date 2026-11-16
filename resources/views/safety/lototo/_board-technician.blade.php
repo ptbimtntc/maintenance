@@ -4,9 +4,7 @@
 @endphp
 <section class="lototo-main-group lototo-technician-group" style="grid-row: 1 / span {{ $mainRows }};">
     @if ($board->component_settings['technician'] ?? true)
-    <div class="lototo-vertical-label lototo-vertical-label--technician">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path stroke-linecap="round" d="M8 10V7a4 4 0 1 1 8 0v3"/></svg>
-        <span>TECHNICIAN</span>
+    <div class="lototo-vertical-label lototo-vertical-label--technician"><span>TECHNICIAN</span>
     </div>
     <header class="lototo-section-heading lototo-section-heading--technician">
         <span class="lototo-heading-name">

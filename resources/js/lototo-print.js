@@ -1,11 +1,11 @@
 import { DESIGNS } from './lototo-print-designs';
-import { buildPdf } from './lototo-print-pdf';
+import { canvasToPng } from './lototo-print-png';
 
 /**
  * "Download QR" popup on LOTOTO Settings (partial _print-designs): one QR record at a time (chosen with the button
  * or the identity list), the five print designs previewed with that record's own name, number, photo and QR, and
- * the ticked designs downloaded as one PDF whose pages have each design's printed size. The preview and the PDF
- * come from the same SVG template.
+ * the ticked designs downloaded as PNG images, one file per design, 600 dpi (sharp enough to print and to scan, with
+ * the printed size stored in the file). The preview and the PNG come from the same SVG template.
  */
 
 const DPI = 600;
@@ -63,7 +63,7 @@ function initPrintDesigns(dialog) {
     function updateButtons() {
         const selected = checks().filter((box) => box.checked && !box.disabled).length;
         downloadButton.disabled = busy || selected === 0;
-        downloadButton.textContent = busy ? 'Membuat PDF…' : (selected ? `Download (${selected} desain)` : 'Download');
+        downloadButton.textContent = busy ? 'Membuat PNG…' : (selected ? `Download PNG (${selected} desain)` : 'Download PNG');
     }
 
     /** Fills every preview with the chosen record; designs not made for its kind are shown but cannot be ticked. */
@@ -102,7 +102,7 @@ function initPrintDesigns(dialog) {
         if (!dialog.open) dialog.showModal();
     }
 
-    /** One design drawn at 600 dpi: RGB bytes and the pixel size of its page. */
+    /** One design drawn at 600 dpi on a white canvas, as PNG bytes. */
     async function rasterize(design, data) {
         const pixelWidth = Math.round((design.width / 25.4) * DPI);
         const pixelHeight = Math.round((design.height / 25.4) * DPI);
@@ -118,15 +118,8 @@ function initPrintDesigns(dialog) {
             context.fillStyle = '#FFFFFF';
             context.fillRect(0, 0, pixelWidth, pixelHeight);
             context.drawImage(image, 0, 0, pixelWidth, pixelHeight);
-            const rgba = context.getImageData(0, 0, pixelWidth, pixelHeight).data;
-            const rgb = new Uint8Array(pixelWidth * pixelHeight * 3);
-            for (let source = 0, target = 0; source < rgba.length; source += 4, target += 3) {
-                rgb[target] = rgba[source];
-                rgb[target + 1] = rgba[source + 1];
-                rgb[target + 2] = rgba[source + 2];
-            }
 
-            return { widthMm: design.width, heightMm: design.height, pixelWidth, pixelHeight, rgb };
+            return await canvasToPng(canvas, DPI);
         } finally {
             URL.revokeObjectURL(url);
         }
@@ -147,18 +140,21 @@ function initPrintDesigns(dialog) {
         showMessage('');
         try {
             const data = { ...record, photo: await photoOf(record) };
-            const pages = [];
-            for (const design of chosen) pages.push(await rasterize(design, data));
-            const pdf = await buildPdf(pages, { title: `LOTOTO QR ${record.number} ${record.name}` });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(new Blob([pdf], { type: 'application/pdf' }));
-            link.download = `lototo-qr-${record.kind}-${record.number}-desain-${chosen.map((design) => design.id).join('-')}.pdf`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
-            document.body.append(link);
-            link.click();
-            link.remove();
-            setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+            // One PNG file per design, made one at a time (a 600 dpi picture is large) and saved one after another.
+            // A browser may ask once to allow several downloads from this page.
+            for (const [index, design] of chosen.entries()) {
+                const png = await rasterize(design, data);
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(new Blob([png], { type: 'image/png' }));
+                link.download = `lototo-qr-${record.kind}-${record.number}-desain-${design.id}.png`.toLowerCase().replace(/[^a-z0-9.-]+/g, '-');
+                document.body.append(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+                if (index < chosen.length - 1) await new Promise((resolve) => { setTimeout(resolve, 400); });
+            }
         } catch (exception) {
-            showMessage(`PDF tidak dapat dibuat: ${exception.message}`);
+            showMessage(`PNG tidak dapat dibuat: ${exception.message}`);
         } finally {
             setBusy(false);
         }

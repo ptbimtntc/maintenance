@@ -41,6 +41,11 @@
             </span>
         @endif
 
-        @include('safety.lototo._lock', ['employee' => $employee, 'in' => (bool) $activeActivity])
+        @include('safety.lototo._lock', [
+            'employee' => $employee,
+            'in' => (bool) $activeActivity,
+            // An employee who is IN (Technician or Supervisor) shows the place of work of that open activity.
+            'location' => $activeActivity ? trim((string) $activeActivity->location) : null,
+        ])
     </a>
 @endif

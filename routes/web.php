@@ -418,6 +418,10 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ViewSafety->value]
         Route::get('/lototo/spare-lock/{spareLock}', [SpareLockController::class, 'show'])
             ->name('lototo.spare-locks.show');
 
+        // Employee photo for the board cards and activity pages (same origin; no public/storage link needed).
+        Route::get('/lototo/employees/{employee}/photo', [LototoController::class, 'photo'])
+            ->name('lototo.employee-photo');
+
         Route::get('/lototo/follow-up/{activity}', [LototoController::class, 'followUp'])
             ->name('lototo.follow-up');
         Route::post('/lototo/follow-up/{activity}', [LototoController::class, 'submitFollowUp'])
