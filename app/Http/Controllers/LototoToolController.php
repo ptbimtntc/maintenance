@@ -165,17 +165,22 @@ class LototoToolController extends Controller
         ]);
     }
 
-    public function form(Request $request, LototoTool $tool): View
+    public function form(Request $request, LototoTool $tool): View|RedirectResponse
     {
         $board = $this->toolBoard($request, $tool);
         $tool->load('openActivity.startedBy');
+
+        $activities = $tool->activities()->with(['startedBy', 'endedBy'])->latest('started_at')->latest('id')->paginate(\App\Models\LototoActivity::PER_PAGE)->withQueryString();
+        if ($activities->isEmpty() && $activities->currentPage() > 1) {
+            return redirect()->to($activities->url($activities->lastPage()));
+        }
 
         return view('safety.lototo.tool-form', [
             'tool' => $tool,
             'board' => $board->load('businessUnit'),
             'openActivity' => $tool->openActivity,
             'canFinish' => $tool->openActivity && $this->canFinish($request, $tool->openActivity),
-            'activities' => $tool->activities()->with(['startedBy', 'endedBy'])->latest('started_at')->latest('id')->paginate(20),
+            'activities' => $activities,
         ]);
     }
 

@@ -131,7 +131,7 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="px-5 py-3">{{ $activities->appends(['board' => $board->id])->links() }}</div>
+                <div class="px-5 py-3">{{ $activities->appends(['board' => $board->id])->links('safety.lototo._pagination') }}</div>
             @endif
         </section>
 

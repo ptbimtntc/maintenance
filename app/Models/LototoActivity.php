@@ -96,6 +96,45 @@ class LototoActivity extends Model
             : ['supervisorFollowUpBy'];
     }
 
+    /**
+     * Where the supervisor feedback of this activity stands, read from what is stored (never from the page):
+     * 'awaiting' = feedback was requested (a NO in the checklist and/or the technician's feedback) and no reply exists,
+     * 'given' = the supervisor has replied (a history row, or the reply stored on the activity), 'none' = nothing was requested.
+     * One activity has one feedback process, however many checklist answers are NO. The technician's answers are never changed.
+     */
+    public function supervisorFeedbackState(): string
+    {
+        if ($this->supervisorReplies()->isNotEmpty() || $this->supervisor_follow_up_status === 'completed') {
+            return 'given';
+        }
+
+        return $this->supervisor_follow_up_status === 'pending' ? 'awaiting' : 'none';
+    }
+
+    /**
+     * Whether this user may give the feedback button's feedback now: a signed-in account (not the read-only Guest) whose
+     * employee is the supervisor of this activity's technician, while the feedback is still awaited. The same relation
+     * the follow-up page and its POST enforce in the backend (LototoController::authorizeFollowUp).
+     */
+    public function canGiveSupervisorFeedback(?\App\Models\User $user): bool
+    {
+        return $this->supervisorFeedbackState() === 'awaiting' && static::isSupervisorOf($user, $this->employee);
+    }
+
+    /** A signed-in, non-Guest account whose own employee record is the supervisor of this employee. */
+    public static function isSupervisorOf(?\App\Models\User $user, ?Employee $technician): bool
+    {
+        if (! $user || ! $technician || $user->hasRole(\App\Enums\RoleName::Guest->value)) {
+            return false;
+        }
+        $supervisorId = $user->employee?->id;
+
+        return $supervisorId !== null && (int) $technician->supervisor_id === (int) $supervisorId;
+    }
+
+    /** Activities per page on every LOTOTO Activity page (Technician, Supervisor, Spare, Tools). */
+    public const PER_PAGE = 10;
+
     /** The five checklist answers as [field => label], in the order of the form and the email. */
     public const CHECKLIST = [
         'knows_procedure' => 'Saya tahu bagaimana melakukan pekerjaan ini',

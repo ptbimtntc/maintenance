@@ -17,7 +17,7 @@ use Illuminate\View\View;
 
 class SpareLockController extends Controller
 {
-    public function show(Request $request, SpareLock $spareLock): View
+    public function show(Request $request, SpareLock $spareLock): View|\Illuminate\Http\RedirectResponse
     {
         $spareLock->load(['board.businessUnit', 'currentActivity.employee']);
         $board = $spareLock->board;
@@ -25,14 +25,17 @@ class SpareLockController extends Controller
 
         // Read only and open to everyone who may open LOTOTO (the ViewSafety route group), like the Guest Viewer and like
         // the employee's own LOTOTO Activity page; nothing here changes data.
-        return view('safety.lototo.spare-lock-activity', [
-            'spareLock' => $spareLock,
-            'board' => $board,
-            'activities' => $spareLock->activities()
-                ->with(['employee', 'spareLock', ...LototoActivity::feedbackRelations()])
-                ->latest('started_at')
-                ->paginate(20),
-        ]);
+        $activities = $spareLock->activities()
+            ->with(['employee', 'spareLock', ...LototoActivity::feedbackRelations()])
+            ->latest('started_at')
+            ->latest('id')
+            ->paginate(LototoActivity::PER_PAGE)
+            ->withQueryString();
+        if ($activities->isEmpty() && $activities->currentPage() > 1) {
+            return redirect()->to($activities->url($activities->lastPage()));
+        }
+
+        return view('safety.lototo.spare-lock-activity', ['spareLock' => $spareLock, 'board' => $board, 'activities' => $activities]);
     }
 
     /**

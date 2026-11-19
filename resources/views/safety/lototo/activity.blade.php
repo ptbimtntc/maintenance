@@ -66,7 +66,7 @@
         ])
 
         @if ($activities->hasPages())
-            <div class="border-t border-neutral-200 px-4 py-3">{{ $activities->links() }}</div>
+            <div class="border-t border-neutral-200 px-4 py-3">{{ $activities->links('safety.lototo._pagination') }}</div>
         @endif
     </section>
 </x-app-layout>

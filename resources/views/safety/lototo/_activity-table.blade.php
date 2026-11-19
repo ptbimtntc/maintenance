@@ -25,7 +25,11 @@
             $activity->safe_hands,
         ];
 
-        return compact('isCurrentSpareActivity', 'startedAt', 'endedAt', 'durationMinutes', 'answers');
+        // A NO stays a NO (the technician's answer is never changed). Its mark is red until the supervisor has given the
+        // feedback this activity asked for, then green: green only says the feedback was given, not that the work is safe.
+        $feedbackGiven = $activity->supervisorFeedbackState() === 'given';
+
+        return compact('isCurrentSpareActivity', 'startedAt', 'endedAt', 'durationMinutes', 'answers', 'feedbackGiven');
     };
     $checkLabels = [
         'Saya tahu bagaimana melakukan pekerjaan ini',
@@ -43,17 +47,17 @@
                 @if ($showTechnician)
                     <th class="w-[12%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">TEKNISI</th>
                 @endif
-                <th class="w-[9%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">MESIN / LOKASI</th>
+                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">MESIN / LOKASI</th>
                 <th class="w-[11%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">START</th>
                 <th class="w-[11%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">END</th>
                 <th class="w-[6%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">HOURS</th>
-                <th class="w-[18%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">AKTIVITAS PEKERJAAN</th>
-                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA TAHU BAGAIMANA MELAKUKAN PEKERJAAN INI</th>
-                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA MELAKUKAN STANDAR LOTOTO</th>
-                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA MENGGUNAKAN APD DENGAN BAIK DAN BENAR</th>
-                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">TOOLS SAYA AMAN UNTUK DIGUNAKAN</th>
-                <th class="w-[8%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">JARI / TANGAN SAYA AMAN (TIDAK DALAM LoF)</th>
-                <th class="w-[5%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">FEEDBACK</th>
+                <th class="w-[15%] border border-neutral-900 px-2 py-3" style="background-color: #2874b8;">AKTIVITAS PEKERJAAN</th>
+                <th class="w-[7%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA TAHU BAGAIMANA MELAKUKAN PEKERJAAN INI</th>
+                <th class="w-[7%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA MELAKUKAN STANDAR LOTOTO</th>
+                <th class="w-[7%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">SAYA MENGGUNAKAN APD DENGAN BAIK DAN BENAR</th>
+                <th class="w-[7%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">TOOLS SAYA AMAN UNTUK DIGUNAKAN</th>
+                <th class="w-[7%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">JARI / TANGAN SAYA AMAN (TIDAK DALAM LoF)</th>
+                <th class="w-[14%] border border-neutral-900 px-2 py-3" style="background-color: #ff592e;">FEEDBACK</th>
             </tr>
         </thead>
         <tbody>
@@ -115,8 +119,10 @@
                         <td class="border border-neutral-200 px-2 py-3">
                             @if ($answer)
                                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-600" aria-label="Ya"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12l4 4L19 6" /></svg></span>
+                            @elseif ($feedbackGiven)
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-500 text-emerald-600" aria-label="Tidak, feedback supervisor sudah diberikan" title="Jawaban teknisi: Tidak. Feedback supervisor sudah diberikan (bukan berarti pekerjaan aman)." data-answer-no-followed-up><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" /></svg></span>
                             @else
-                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-500 text-red-600" aria-label="Tidak"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" /></svg></span>
+                                <span class="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-500 text-red-600" aria-label="Tidak" data-answer-no><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" /></svg></span>
                             @endif
                         </td>
                     @endforeach
@@ -195,8 +201,10 @@
                         <span class="min-w-0 text-neutral-700">{{ $checkLabels[$index] }}</span>
                         @if ($answer)
                             <span class="shrink-0 font-black text-emerald-700" aria-label="Ya">YA</span>
+                        @elseif ($feedbackGiven)
+                            <span class="shrink-0 text-right font-black text-emerald-700" aria-label="Tidak, feedback supervisor sudah diberikan" data-answer-no-followed-up>TIDAK<span class="block text-[10px] font-semibold">feedback sudah diberikan</span></span>
                         @else
-                            <span class="shrink-0 font-black text-red-600" aria-label="Tidak">TIDAK</span>
+                            <span class="shrink-0 font-black text-red-600" aria-label="Tidak" data-answer-no>TIDAK</span>
                         @endif
                     </li>
                 @endforeach

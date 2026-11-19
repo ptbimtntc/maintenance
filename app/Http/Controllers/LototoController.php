@@ -856,9 +856,7 @@ class LototoController extends Controller
 
     private function authorizeFollowUp(Request $request, LototoActivity $activity): void
     {
-        $supervisor = $request->user()->employee;
-
-        abort_unless($supervisor && $activity->employee()->where('supervisor_id', $supervisor->id)->exists(), 403);
+        abort_unless(LototoActivity::isSupervisorOf($request->user(), $activity->employee), 403);
     }
 
     /**
@@ -866,7 +864,7 @@ class LototoController extends Controller
      * route group), like the Guest Viewer, so a signed-in user sees colleagues' activity too. It stays limited to the
      * employees of the board's Business Unit; changing or managing anything is on other routes with their own rules.
      */
-    public function show(Request $request, Employee $employee): View
+    public function show(Request $request, Employee $employee): View|RedirectResponse
     {
         $board = $this->resolveBoard($request);
         $employee = Employee::query()
@@ -874,19 +872,23 @@ class LototoController extends Controller
             ->where('business_unit_id', $board->business_unit_id)
             ->findOrFail($employee->id);
 
-        return view('safety.lototo.activity', [
-            'employee' => $employee,
-            'board' => $board,
-            'activities' => LototoActivity::query()
+        $activities = LototoActivity::query()
                 ->where('employee_id', $employee->id)
                 ->where('board', $board->code)
                 // Personal records. Outstanding activities saved before the spare got its own record carry the
                 // spare's id on the personal record itself; they are personal history too.
                 ->where(fn ($query) => $query->whereNull('spare_lock_id')->orWhere('outcome', 'outstanding'))
-                ->with(['spareLock', ...LototoActivity::feedbackRelations()])
+                ->with(['employee', 'spareLock', ...LototoActivity::feedbackRelations()])
                 ->latest('started_at')
-                ->paginate(20),
-        ]);
+                ->latest('id')
+                ->paginate(LototoActivity::PER_PAGE)
+                ->withQueryString();
+        // A page number past the end (e.g. the list got shorter) goes to the last page instead of showing nothing.
+        if ($activities->isEmpty() && $activities->currentPage() > 1) {
+            return redirect()->to($activities->url($activities->lastPage()));
+        }
+
+        return view('safety.lototo.activity', ['employee' => $employee, 'board' => $board, 'activities' => $activities]);
     }
 
     /**
