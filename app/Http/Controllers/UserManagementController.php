@@ -125,4 +125,37 @@ class UserManagementController extends Controller
 
         return redirect()->route('admin.users.edit', $user)->with('status', 'User updated.');
     }
+
+    /**
+     * Administrator-only ("superadmin"): resets any user's password without
+     * needing to know their current one. Gated by the `role:Administrator`
+     * route middleware, stricter than the ManageUsers permission the rest of
+     * this controller uses, since a non-admin ManageUsers holder shouldn't
+     * be able to take over another account.
+     */
+    public function resetPassword(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user->forceFill(['password' => Hash::make($data['password'])])->save();
+
+        return redirect()->route('admin.users.edit', $user)->with('status', "Password for {$user->name} has been reset.");
+    }
+
+    /**
+     * Administrator-only ("superadmin"): deletes a user account outright.
+     * Blocked against self-deletion so an admin can't lock themselves out.
+     */
+    public function destroy(Request $request, User $user): RedirectResponse
+    {
+        if ($request->user()->is($user)) {
+            return redirect()->route('admin.users.index')->with('status', 'You cannot delete your own account.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users.index')->with('status', 'User deleted.');
+    }
 }

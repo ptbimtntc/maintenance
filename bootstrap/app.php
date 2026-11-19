@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'menu.edit' => EnsureMenuEditPermission::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
         ]);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsurePasswordIsChanged::class);
         $middleware->appendToGroup('web', \App\Http\Middleware\EnsureMenuVisible::class);

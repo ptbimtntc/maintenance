@@ -80,6 +80,16 @@
                             </td>
                             <td class="px-3 py-2 text-right">
                                 <a href="{{ route('admin.users.edit', $user) }}" class="text-neutral-600 hover:underline">Manage</a>
+                                @role(\App\Enums\RoleName::Administrator->value)
+                                    @unless ($user->is(auth()->user()))
+                                        <form method="POST" action="{{ route('admin.users.destroy', $user) }}" class="inline"
+                                              onsubmit="return confirm('Delete {{ $user->name }}? This cannot be undone.');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="ml-3 text-danger-600 hover:underline">Delete</button>
+                                        </form>
+                                    @endunless
+                                @endrole
                             </td>
                         </tr>
                     @endforeach

@@ -431,9 +431,13 @@ Catatan perubahan yang tidak bisa dihapus: siapa membuat/mengubah/menghapus data
 3. Opsional: pilih **Link to Employee Record** (hanya karyawan yang belum punya akun) agar akun terhubung ke data karyawan. Bisa juga dihubungkan belakangan lewat form Employee.
 4. Simpan; akun langsung dapat dipakai login.
 
+Gunakan kotak **pencarian nama/email** di atas daftar untuk cepat menemukan pengguna (bisa dikombinasikan dengan filter role, departemen, dan posisi).
+
 **Mengubah pengguna** — buka **Edit**:
 - ubah role,
 - atur **hak edit per menu** (Employees, Organization, Job Descriptions, Skills & Competencies, Training, Certificates, Development Plans). Mencentang berarti boleh edit; tidak mencentang berarti read-only (disimpan sebagai penolakan eksplisit).
+
+**Reset Password & Delete User** (khusus role **Administrator**): di halaman **Edit** pengguna tersedia bagian untuk mengatur ulang password pengguna lain tanpa perlu tahu password lamanya, serta menghapus akun secara permanen. Tombol **Delete** juga tersedia langsung dari daftar User Management. Administrator tidak bisa menghapus akunnya sendiri.
 
 ### Menu Visibility
 Atur menu sidebar yang tampil per pengguna. Menu yang disembunyikan juga tidak bisa dibuka lewat URL. Tersedia pengaturan massal untuk banyak pengguna sekaligus.
@@ -492,6 +496,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 |---|---|
 | 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
 | 2026-11-19 | Tombol **Login** di pojok kanan atas (saat sebagai tamu) kini membuka form login melayang (overlay) sehingga pengguna tetap di halaman yang sedang dibuka; halaman login penuh tetap tersedia. |
+| 2026-11-19 | User Management: ditambahkan kotak pencarian nama/email (klarifikasi), serta fitur **Reset Password** dan **Delete User** khusus role Administrator. |
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |

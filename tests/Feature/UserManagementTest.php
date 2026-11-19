@@ -213,4 +213,66 @@ class UserManagementTest extends TestCase
 
         $this->assertFalse($manager->fresh()->canEditMenu(MenuKey::Employees));
     }
+
+    public function test_an_administrator_can_reset_another_users_password(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $staff = User::factory()->create(['email' => 'staff@example.com']);
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($admin)->post(route('admin.users.reset-password', $staff), [
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ]);
+
+        $response->assertRedirect(route('admin.users.edit', $staff));
+
+        $this->post(route('login'), ['email' => 'staff@example.com', 'password' => 'newpassword123'])
+            ->assertRedirect(route('dashboard'));
+    }
+
+    public function test_a_non_administrator_cannot_reset_passwords_or_delete_users(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        $manager->givePermissionTo(\App\Enums\PermissionName::ManageUsers->value);
+
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $this->actingAs($manager)->post(route('admin.users.reset-password', $staff), [
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ])->assertForbidden();
+
+        $this->actingAs($manager)->delete(route('admin.users.destroy', $staff))->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $staff->id]);
+    }
+
+    public function test_an_administrator_can_delete_another_user(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($admin)->delete(route('admin.users.destroy', $staff));
+
+        $response->assertRedirect(route('admin.users.index'));
+        $this->assertDatabaseMissing('users', ['id' => $staff->id]);
+    }
+
+    public function test_an_administrator_cannot_delete_their_own_account(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $this->actingAs($admin)->delete(route('admin.users.destroy', $admin));
+
+        $this->assertDatabaseHas('users', ['id' => $admin->id]);
+    }
 }

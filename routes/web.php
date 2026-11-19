@@ -2,6 +2,7 @@
 
 use App\Enums\MenuKey;
 use App\Enums\PermissionName;
+use App\Enums\RoleName;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CompetencyGapAnalysisController;
@@ -340,6 +341,14 @@ Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value
         Route::post('/', [UserManagementController::class, 'store'])->name('store');
         Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
         Route::put('/{user}', [UserManagementController::class, 'update'])->name('update');
+    });
+
+Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value, 'role:'.RoleName::Administrator->value])
+    ->prefix('admin/users')
+    ->name('admin.users.')
+    ->group(function () {
+        Route::post('/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('reset-password');
+        Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
     });
 
 Route::middleware(['auth', 'verified', 'can:'.PermissionName::ManageUsers->value])
