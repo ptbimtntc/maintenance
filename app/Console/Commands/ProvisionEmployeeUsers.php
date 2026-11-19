@@ -2,11 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\RoleName;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\EmployeeUserProvisioner;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class ProvisionEmployeeUsers extends Command
@@ -20,46 +19,37 @@ class ProvisionEmployeeUsers extends Command
         $created = collect();
 
         Employee::query()->whereNull('user_id')->with('position')->orderBy('employee_number')->each(function (Employee $employee) use ($created) {
-            $username = mb_strtolower(trim($employee->employee_number));
-            $email = $employee->email ?: Str::slug($username).'@employees.mpd.local';
+            $role = EmployeeUserProvisioner::roleFor($employee);
 
-            if (User::where('username', $username)->orWhere('email', $email)->exists()) {
+            if ($this->option('dry-run')) {
+                $username = mb_strtolower(trim($employee->employee_number));
+                $email = $employee->email ?: Str::slug($username).'@employees.mpd.local';
+
+                if (User::where('username', $username)->orWhere('email', $email)->exists()) {
+                    $this->warn("Skipped {$employee->employee_number}: a login with that NIK already exists.");
+
+                    return;
+                }
+
+                $created->push([$employee->employee_number, $employee->full_name, $employee->position?->title ?? '-', $role->value]);
+
+                return;
+            }
+
+            $user = EmployeeUserProvisioner::provision($employee);
+
+            if (! $user) {
                 $this->warn("Skipped {$employee->employee_number}: a login with that NIK already exists.");
 
                 return;
             }
 
-            $role = self::roleFor($employee);
             $created->push([$employee->employee_number, $employee->full_name, $employee->position?->title ?? '-', $role->value]);
-
-            if ($this->option('dry-run')) {
-                return;
-            }
-
-            $user = new User(['name' => $employee->full_name, 'email' => $email, 'password' => $employee->employee_number, 'must_change_password' => true]);
-            $user->username = $username;
-            $user->email_verified_at = now();
-            $user->save();
-            $user->assignRole($role->value);
-
-            $employee->forceFill(['user_id' => $user->id])->save();
         });
 
         $this->table(['NIK', 'Name', 'Position', 'Role'], $created->all());
         $this->info(($this->option('dry-run') ? 'Would create ' : 'Created ').$created->count().' login(s).');
 
         return self::SUCCESS;
-    }
-
-    public static function roleFor(Employee $employee): RoleName
-    {
-        $title = mb_strtolower((string) $employee->position?->title);
-
-        return match (true) {
-            str_contains($title, 'manager'), str_contains($title, 'superintendent') => RoleName::MaintenanceManager,
-            str_contains($title, 'supervisor') => RoleName::MaintenanceSupervisor,
-            str_contains($title, 'trainer'), str_contains($title, 'specialist') => RoleName::PeopleDevelopment,
-            default => RoleName::MaintenanceStaff,
-        };
     }
 }

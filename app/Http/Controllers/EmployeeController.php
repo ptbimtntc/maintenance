@@ -21,6 +21,7 @@ use App\Models\Shift;
 use App\Models\Setting;
 use App\Models\Skill;
 use App\Models\SkillPosition;
+use App\Services\EmployeeUserProvisioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -256,7 +257,13 @@ class EmployeeController extends Controller
         $this->storeUploadedPhoto($request, $employee);
         $employee->generateOnboardingToken();
 
-        return redirect()->route('employees.show', $employee)->with('status', 'Employee created.');
+        $user = EmployeeUserProvisioner::provision($employee);
+
+        $status = $user
+            ? "Employee created. Login account created (username/password awal: {$employee->employee_number}, wajib ganti password saat login pertama)."
+            : 'Employee created. Akun login tidak dibuat otomatis karena NIK/email sudah dipakai akun lain — hubungkan manual lewat User Management.';
+
+        return redirect()->route('employees.show', $employee)->with('status', $status);
     }
 
     /**

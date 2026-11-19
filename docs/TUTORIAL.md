@@ -173,6 +173,7 @@ Catatan komunikasi antar-shift (serah terima).
 **Menambah karyawan**
 1. Klik **Add Employee**, isi formulir, simpan.
 2. Anda juga bisa **impor** banyak karyawan sekaligus lewat fitur import.
+3. Akun login untuk karyawan baru **dibuat otomatis** saat disimpan: username dan password awal memakai NIK, role ditentukan dari posisi karyawan, dan akun wajib mengganti password saat login pertama. Jika NIK/email tersebut sudah dipakai akun lain, pembuatan otomatis dilewati — hubungkan manual lewat User Management.
 
 **Menghapus** — centang beberapa baris lalu **Delete Selected**. Setiap baris diperiksa haknya satu per satu.
 <!-- /only -->
@@ -446,7 +447,7 @@ Atur menu sidebar yang tampil per pengguna. Menu yang disembunyikan juga tidak b
 Atur izin tiap role, atau **Reset to default** untuk mengembalikan ke bawaan.
 
 ### Provisioning akun karyawan
-Akun login untuk karyawan dapat dibuat massal lewat perintah artisan `app:provision-employee-users`; akun tersebut wajib mengganti password saat login pertama.
+Sejak karyawan baru otomatis mendapat akun login saat dibuat, perintah artisan `app:provision-employee-users` sekarang dipakai untuk **backfill** saja — membuatkan login massal untuk karyawan lama yang masih belum punya akun (mis. data sebelum fitur otomatis ini ada). Akun yang dibuat wajib mengganti password saat login pertama.
 
 ### Tugas terjadwal
 Perintah harian yang berjalan otomatis: notifikasi kedaluwarsa sertifikat dan pengingat sesi training, ringkasan mingguan untuk supervisor, serta laporan gabungan lewat email.
@@ -497,6 +498,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 | 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
 | 2026-11-19 | Tombol **Login** di pojok kanan atas (saat sebagai tamu) kini membuka form login melayang (overlay) sehingga pengguna tetap di halaman yang sedang dibuka; halaman login penuh tetap tersedia. |
 | 2026-11-19 | User Management: ditambahkan kotak pencarian nama/email (klarifikasi), serta fitur **Reset Password** dan **Delete User** khusus role Administrator. |
+| 2026-11-19 | Pembuatan data karyawan baru kini otomatis membuat akun login (username/password awal = NIK); `app:provision-employee-users` kini khusus untuk backfill karyawan lama. |
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
