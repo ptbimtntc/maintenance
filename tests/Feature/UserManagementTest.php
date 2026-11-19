@@ -214,6 +214,37 @@ class UserManagementTest extends TestCase
         $this->assertFalse($manager->fresh()->canEditMenu(MenuKey::Employees));
     }
 
+    public function test_an_administrator_can_view_the_edit_page_with_reset_password_and_delete_sections(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.edit', $staff));
+
+        $response->assertOk();
+        $response->assertSee('Reset Password');
+        $response->assertSee('Delete User');
+    }
+
+    public function test_a_non_administrator_does_not_see_reset_password_or_delete_sections(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        $manager->givePermissionTo(\App\Enums\PermissionName::ManageUsers->value);
+
+        $staff = User::factory()->create();
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($manager)->get(route('admin.users.edit', $staff));
+
+        $response->assertOk();
+        $response->assertDontSee('Reset Password');
+        $response->assertDontSee('Delete User');
+    }
+
     public function test_an_administrator_can_reset_another_users_password(): void
     {
         $admin = User::factory()->create();

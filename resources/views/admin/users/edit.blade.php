@@ -95,7 +95,7 @@
                       onsubmit="return confirm('Delete {{ $user->name }}? This cannot be undone.');">
                     @csrf
                     @method('DELETE')
-                    <x-button type="submit" variant="danger" @disabled($user->is(auth()->user()))>Delete User</x-button>
+                    <x-button type="submit" variant="danger" :disabled="$user->is(auth()->user())">Delete User</x-button>
                 </form>
             </div>
         @endrole
