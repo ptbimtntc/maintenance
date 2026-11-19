@@ -7,8 +7,17 @@ $alignmentClasses = match ($align) {
     default => 'ltr:origin-top-right rtl:origin-top-left end-0',
 };
 
+// Tailwind's JIT scanner only generates a class if it appears literally in
+// source somewhere, so the numeric width prop must be mapped to an explicit
+// w-* string here rather than built dynamically (e.g. 'w-'.$width), or the
+// class never gets compiled into the CSS.
 $width = match ($width) {
     '48' => 'w-48',
+    '56' => 'w-56',
+    '64' => 'w-64',
+    '72' => 'w-72',
+    '80' => 'w-80',
+    '96' => 'w-96',
     default => $width,
 };
 @endphp

@@ -95,7 +95,7 @@
                 $unreadCount = Auth::user()->unreadNotifications()->count();
             @endphp
 
-            <x-dropdown align="right" width="80">
+            <x-dropdown align="right" width="96">
                 <x-slot name="trigger">
                     <button type="button" class="relative text-neutral-400 hover:text-neutral-600" title="{{ $unreadCount > 0 ? $unreadCount.' unread notification(s)' : 'Notifications (no unread items)' }}">
                         <span class="sr-only">Notifications</span>
