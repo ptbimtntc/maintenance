@@ -12,20 +12,81 @@
         </h1>
 
         <div class="flex items-center gap-4">
-            @if (Auth::guest())
-                <x-button variant="secondary" size="sm" href="{{ route('login') }}">
+            @if (Auth::guest() || Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
+                {{-- Anonymous visitors and the shared read-only Guest account
+                     log in from a floating modal, so they stay on the page
+                     they're viewing. --}}
+                <x-button variant="secondary" size="sm" x-on:click="$dispatch('open-modal', 'login-modal')">
                     {{ __('Login') }}
                 </x-button>
-            @elseif (Auth::user()->hasRole(\App\Enums\RoleName::Guest->value))
-                {{-- The visitor is signed into the shared read-only Guest
-                     account, which the "guest" middleware still counts as
-                     authenticated - log it out first so /login is reachable. --}}
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <x-button variant="secondary" size="sm" type="submit">
-                        {{ __('Login') }}
-                    </x-button>
-                </form>
+
+                <x-modal name="login-modal" maxWidth="md" focusable>
+                    <form
+                        method="POST"
+                        action="{{ route('login.modal') }}"
+                        class="p-6"
+                        x-data="{
+                            loading: false,
+                            error: '',
+                            async submit(event) {
+                                this.loading = true;
+                                this.error = '';
+                                try {
+                                    const response = await fetch(event.target.action, {
+                                        method: 'POST',
+                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                        body: new FormData(event.target),
+                                    });
+                                    if (response.ok) {
+                                        window.location.reload();
+                                        return;
+                                    }
+                                    const data = await response.json().catch(() => ({}));
+                                    this.error = data.errors?.email?.[0] ?? data.message ?? 'Login failed. Please try again.';
+                                } catch (e) {
+                                    this.error = 'Could not reach the server. Please try again.';
+                                }
+                                this.loading = false;
+                            },
+                        }"
+                        x-on:submit.prevent="submit($event)"
+                    >
+                        @csrf
+
+                        <h2 class="text-lg font-medium text-neutral-900">{{ __('Log in') }}</h2>
+                        <p class="mt-1 text-sm text-neutral-600">You'll stay on this page after logging in.</p>
+
+                        <div class="mt-4">
+                            <x-input-label for="modal_login_email" value="Email or NIK" />
+                            <x-text-input id="modal_login_email" class="mt-1 block w-full" type="text" name="email" required autocomplete="username" />
+                        </div>
+
+                        <div class="mt-4">
+                            <x-input-label for="modal_login_password" :value="__('Password')" />
+                            <x-text-input id="modal_login_password" class="mt-1 block w-full" type="password" name="password" required autocomplete="current-password" />
+                        </div>
+
+                        <p x-show="error" x-text="error" class="mt-2 text-sm text-danger-600" style="display: none;"></p>
+
+                        <div class="mt-4 flex items-center justify-between">
+                            <label for="modal_login_remember" class="inline-flex items-center">
+                                <input id="modal_login_remember" type="checkbox" class="rounded border-neutral-300 text-brand-600 shadow-sm focus:ring-brand-500" name="remember">
+                                <span class="ms-2 text-sm text-neutral-600">{{ __('Remember me') }}</span>
+                            </label>
+
+                            @if (Route::has('password.request'))
+                                <a class="text-sm text-neutral-600 underline hover:text-neutral-900" href="{{ route('password.request') }}">
+                                    {{ __('Forgot your password?') }}
+                                </a>
+                            @endif
+                        </div>
+
+                        <div class="mt-6 flex justify-end gap-3">
+                            <x-button variant="secondary" x-on:click="$dispatch('close')">{{ __('Cancel') }}</x-button>
+                            <x-primary-button x-bind:disabled="loading">{{ __('Log in') }}</x-primary-button>
+                        </div>
+                    </form>
+                </x-modal>
             @endif
 
             @auth

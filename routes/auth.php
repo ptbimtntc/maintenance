@@ -12,6 +12,11 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
+// Not inside the "guest" group: the top-bar login modal is also used by the
+// shared Guest account, which that middleware counts as authenticated.
+Route::post('login/modal', [AuthenticatedSessionController::class, 'storeModal'])
+    ->name('login.modal');
+
 Route::middleware('guest')->group(function () {
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');

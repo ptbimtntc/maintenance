@@ -117,4 +117,49 @@ class GuestAccessTest extends TestCase
 
         $this->assertFalse($guest->fresh()->canEditMenu(\App\Enums\MenuKey::Employees));
     }
+
+    public function test_topbar_login_button_opens_a_modal_for_the_guest_account(): void
+    {
+        $this->post(route('guest-login'));
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(route('login.modal'), false)
+            ->assertSee("open-modal', 'login-modal'", false);
+    }
+
+    public function test_guest_can_log_in_from_the_modal_without_leaving_the_page(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-pass']);
+        $this->post(route('guest-login'));
+
+        $this->postJson(route('login.modal'), ['email' => $user->email, 'password' => 'secret-pass'])
+            ->assertOk()
+            ->assertJson(['ok' => true]);
+
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_wrong_password_in_the_modal_keeps_the_guest_session(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-pass']);
+        $this->post(route('guest-login'));
+        $guest = auth()->user();
+
+        $this->postJson(route('login.modal'), ['email' => $user->email, 'password' => 'wrong'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('email');
+
+        $this->assertAuthenticatedAs($guest);
+    }
+
+    public function test_modal_login_is_refused_for_an_already_logged_in_real_account(): void
+    {
+        $user = User::factory()->create(['password' => 'secret-pass']);
+        $other = User::factory()->create(['password' => 'secret-pass']);
+
+        $this->actingAs($user)
+            ->postJson(route('login.modal'), ['email' => $other->email, 'password' => 'secret-pass'])
+            ->assertForbidden();
+    }
 }

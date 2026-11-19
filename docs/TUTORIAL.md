@@ -26,6 +26,8 @@ Di dalam aplikasi, daftar isi dan isi panduan **otomatis disesuaikan dengan akse
 
 Jika email sudah diisi pada data Employee, email tersebut menjadi email akun dan dapat dipakai untuk login maupun menerima notifikasi. Login dengan NIK tetap tersedia.
 
+Dari dalam aplikasi sebagai tamu, tombol **Login** di pojok kanan atas membuka form login melayang (tanpa pindah halaman); lihat *Panduan Tamu*.
+
 Pilihan lain di halaman login:
 - **Continue browsing as guest** — masuk sebagai tamu, hanya bisa **melihat** data, tidak bisa mengubah apa pun.
 - **Forgot password** — minta tautan reset password lewat email.
@@ -117,6 +119,7 @@ Anda masuk sebagai **tamu**. Akun tamu dipakai bersama dan bersifat **hanya-liha
 - Anda dapat melihat data di menu yang tersedia di sidebar, tetapi **tidak dapat menambah, mengubah, atau menghapus** apa pun — apa pun pengaturannya.
 - Halaman Profile, Face Login, Task, dan Shift Comm tidak tersedia untuk tamu.
 - Gunakan filter, pencarian, dan ekspor di halaman daftar untuk menelusuri data.
+- Untuk login ke akun pribadi, klik tombol **Login** di pojok kanan atas: form login muncul melayang di atas halaman, sehingga Anda tidak keluar dari halaman yang sedang dibuka. Setelah berhasil, halaman dimuat ulang dengan akun Anda; bila salah password, pesan error tampil di form dan Anda tetap sebagai tamu.
 - Untuk mendapat akun pribadi dengan hak lebih luas, hubungi Administrator atau HR.
 
 ---
@@ -488,6 +491,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
 | 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
+| 2026-11-19 | Tombol **Login** di pojok kanan atas (saat sebagai tamu) kini membuka form login melayang (overlay) sehingga pengguna tetap di halaman yang sedang dibuka; halaman login penuh tetap tersedia. |
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
