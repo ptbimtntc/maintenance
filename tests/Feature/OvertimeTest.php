@@ -244,6 +244,28 @@ class OvertimeTest extends TestCase
         $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     }
 
+    public function test_the_index_can_be_filtered_by_more_than_one_supervisor_at_once(): void
+    {
+        $hr = User::factory()->create();
+        $hr->assignRole(RoleName::PeopleDevelopment->value);
+
+        [, $supervisorA, $reportA] = $this->makeSupervisorWithReport();
+        [, $supervisorB, $reportB] = $this->makeSupervisorWithReport();
+        [, , $reportC] = $this->makeSupervisorWithReport();
+
+        $entryA = OvertimeEntry::factory()->create(['employee_id' => $reportA->id]);
+        $entryB = OvertimeEntry::factory()->create(['employee_id' => $reportB->id]);
+        $entryC = OvertimeEntry::factory()->create(['employee_id' => $reportC->id]);
+
+        $response = $this->actingAs($hr)->get(route('overtime.index', [
+            'supervisor_id' => [$supervisorA->id, $supervisorB->id],
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('entries', fn ($entries) => $entries->pluck('id')->sort()->values()->all()
+            === collect([$entryA->id, $entryB->id])->sort()->values()->all());
+    }
+
     public function test_the_create_form_only_lists_active_employees_and_defaults_to_the_bekaert_source(): void
     {
         $admin = User::factory()->create();

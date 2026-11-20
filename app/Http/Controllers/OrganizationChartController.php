@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Concerns\FiltersByMultipleIds;
 use App\Enums\PermissionName;
 use App\Models\BusinessUnit;
 use App\Models\Department;
@@ -33,6 +34,8 @@ use Illuminate\View\View;
  */
 class OrganizationChartController extends Controller
 {
+    use FiltersByMultipleIds;
+
     /** Scope shown on a first visit; matched case-insensitively by name. */
     private const DEFAULT_BUSINESS_UNITS = ['Tire Cord', 'Half Product'];
 
@@ -195,19 +198,6 @@ class OrganizationChartController extends Controller
         return Employee::withoutGlobalScope(ExcludePlantManagerScope::class)
             ->with(['skillPosition', 'position'])
             ->find($employee->supervisor_id);
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function idList(mixed $value): array
-    {
-        return collect(is_array($value) ? $value : [$value])
-            ->filter(fn ($id) => is_numeric($id))
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
     }
 
     /**

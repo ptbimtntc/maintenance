@@ -8,6 +8,8 @@ use Illuminate\View\View;
 
 class AuditLogController extends Controller
 {
+    use \App\Concerns\FiltersByMultipleIds;
+
     /**
      * A read-only audit trail for administrators: who created, changed, or
      * deleted which record, and when. Restricted to the same permission
@@ -20,10 +22,13 @@ class AuditLogController extends Controller
             ->distinct()
             ->pluck('auditable_type');
 
+        $types = $this->valueList($request->input('auditable_type'));
+        $actions = $this->valueList($request->input('action'));
+
         $logs = AuditLog::query()
             ->with('user')
-            ->when($request->filled('auditable_type'), fn ($q) => $q->where('auditable_type', $request->string('auditable_type')))
-            ->when($request->filled('action'), fn ($q) => $q->where('action', $request->string('action')))
+            ->when($types !== [], fn ($q) => $q->whereIn('auditable_type', $types))
+            ->when($actions !== [], fn ($q) => $q->whereIn('action', $actions))
             ->orderByDesc('created_at')
             ->paginate(30)
             ->withQueryString();
@@ -31,7 +36,7 @@ class AuditLogController extends Controller
         return view('audit-logs.index', [
             'logs' => $logs,
             'auditableTypes' => $auditableTypes,
-            'filters' => $request->only(['auditable_type', 'action']),
+            'filters' => ['auditable_type' => $types, 'action' => $actions],
         ]);
     }
 }

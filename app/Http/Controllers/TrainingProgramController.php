@@ -18,13 +18,18 @@ use Illuminate\View\View;
 
 class TrainingProgramController extends Controller
 {
+    use \App\Concerns\FiltersByMultipleIds;
+
     public function index(Request $request): View
     {
+        $statuses = $this->valueList($request->input('status'));
+        $categoryIds = $this->idList($request->input('training_category_id'));
+
         $programs = TrainingProgram::query()
             ->with(['trainingCategory', 'trainingType'])
             ->withCount('sessions')
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('training_category_id'), fn ($q) => $q->where('training_category_id', $request->integer('training_category_id')))
+            ->when($statuses !== [], fn ($q) => $q->whereIn('status', $statuses))
+            ->when($categoryIds !== [], fn ($q) => $q->whereIn('training_category_id', $categoryIds))
             ->orderBy('title')
             ->paginate(15)
             ->withQueryString();
@@ -33,7 +38,7 @@ class TrainingProgramController extends Controller
             'programs' => $programs,
             'categories' => TrainingCategory::where('is_active', true)->orderBy('name')->get(),
             'statuses' => TrainingProgram::STATUSES,
-            'filters' => $request->only(['status', 'training_category_id']),
+            'filters' => ['status' => $statuses, 'training_category_id' => $categoryIds],
         ]);
     }
 

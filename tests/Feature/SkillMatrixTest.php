@@ -25,6 +25,29 @@ class SkillMatrixTest extends TestCase
         $this->seed(RolesAndPermissionsSeeder::class);
     }
 
+    public function test_the_matrix_can_be_filtered_by_more_than_one_position_at_once(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        Skill::factory()->create(['is_active' => true]);
+
+        $positionA = Position::factory()->create(['title' => 'Mechanical Technician']);
+        $positionB = Position::factory()->create(['title' => 'Electrical Technician']);
+        $positionC = Position::factory()->create(['title' => 'Supervisor']);
+
+        Employee::factory()->create(['full_name' => 'Tech A', 'position_id' => $positionA->id]);
+        Employee::factory()->create(['full_name' => 'Tech B', 'position_id' => $positionB->id]);
+        Employee::factory()->create(['full_name' => 'Tech C', 'position_id' => $positionC->id]);
+
+        $response = $this->actingAs($admin)->get(route('skill-matrix.index', [
+            'position_id' => [$positionA->id, $positionB->id],
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Tech A')->assertSee('Tech B')->assertDontSee('Tech C');
+    }
+
     public function test_guests_cannot_view_the_skill_matrix(): void
     {
         $response = $this->get(route('skill-matrix.index'));

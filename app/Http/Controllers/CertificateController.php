@@ -22,8 +22,28 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class CertificateController extends Controller
 {
     use ExportsSpreadsheet;
+    use \App\Concerns\FiltersByMultipleIds;
 
     private const DISK = 'local';
+
+    /**
+     * Each status bucket is more than a single column match (e.g. "expired"
+     * is verified + past its expiry date), so selecting several at once
+     * ORs their individual condition closures together instead of a plain
+     * whereIn() on one column.
+     *
+     * @return array<string, \Closure>
+     */
+    private function certificateStatusConditions(\Illuminate\Support\Carbon $today, \Illuminate\Support\Carbon $soonCutoff): array
+    {
+        return [
+            'pending_verification' => fn ($q) => $q->where('verification_status', 'pending_verification'),
+            'expired' => fn ($q) => $q->where('verification_status', 'verified')->whereDate('expiry_date', '<', $today),
+            'expiring_soon' => fn ($q) => $q->where('verification_status', 'verified')->whereBetween('expiry_date', [$today, $soonCutoff]),
+            'no_expiry' => fn ($q) => $q->where('verification_status', 'verified')->whereNull('expiry_date'),
+            'valid' => fn ($q) => $q->where('verification_status', 'verified')->whereDate('expiry_date', '>', $soonCutoff),
+        ];
+    }
 
     /**
      * Column headers the "Import XLSX" upload is expected to have, in this
@@ -39,6 +59,9 @@ class CertificateController extends Controller
 
     public function index(Request $request): View|StreamedResponse
     {
+        $certificateTypeIds = $this->idList($request->input('certificate_type_id'));
+        $statuses = $this->valueList($request->input('status'));
+
         $query = Certificate::query()
             ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'certificateType'])
@@ -46,19 +69,21 @@ class CertificateController extends Controller
                 'employee',
                 fn ($eq) => $eq->search($request->string('employee_search')->toString())
             ))
-            ->when($request->filled('certificate_type_id'), fn ($q) => $q->where('certificate_type_id', $request->integer('certificate_type_id')));
+            ->when($certificateTypeIds !== [], fn ($q) => $q->whereIn('certificate_type_id', $certificateTypeIds));
 
         $today = now()->startOfDay();
         $soonCutoff = $today->copy()->addDays(Certificate::expiringSoonDays());
+        $statusConditions = $this->certificateStatusConditions($today, $soonCutoff);
 
-        match ($request->string('status')->toString()) {
-            'pending_verification' => $query->where('verification_status', 'pending_verification'),
-            'expired' => $query->where('verification_status', 'verified')->whereDate('expiry_date', '<', $today),
-            'expiring_soon' => $query->where('verification_status', 'verified')->whereBetween('expiry_date', [$today, $soonCutoff]),
-            'no_expiry' => $query->where('verification_status', 'verified')->whereNull('expiry_date'),
-            'valid' => $query->where('verification_status', 'verified')->whereDate('expiry_date', '>', $soonCutoff),
-            default => null,
-        };
+        $query->when($statuses !== [], function ($q) use ($statuses, $statusConditions) {
+            $q->where(function ($outer) use ($statuses, $statusConditions) {
+                foreach ($statuses as $status) {
+                    if (isset($statusConditions[$status])) {
+                        $outer->orWhere(fn ($inner) => $statusConditions[$status]($inner));
+                    }
+                }
+            });
+        });
 
         if ($request->string('export') == 'xlsx') {
             $statusLabels = Certificate::statusLabels();
@@ -84,7 +109,11 @@ class CertificateController extends Controller
             'certificates' => $certificates,
             'certificateTypes' => CertificateType::where('is_active', true)->orderBy('name')->get(),
             'statusLabels' => Certificate::statusLabels(),
-            'filters' => $request->only(['employee_search', 'certificate_type_id', 'status']),
+            'filters' => [
+                'employee_search' => $request->string('employee_search')->toString(),
+                'certificate_type_id' => $certificateTypeIds,
+                'status' => $statuses,
+            ],
         ]);
     }
 
@@ -103,15 +132,18 @@ class CertificateController extends Controller
         $window = $request->string('window')->toString();
         $window = in_array($window, self::RECERTIFICATION_WINDOWS, true) ? $window : '60';
 
+        $maintenanceTeamIds = $this->idList($request->input('maintenance_team_id'));
+        $certificateTypeIds = $this->idList($request->input('certificate_type_id'));
+
         $scoped = fn () => Certificate::query()
             ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->where('verification_status', 'verified')
             ->whereNotNull('expiry_date')
-            ->when($request->filled('maintenance_team_id'), fn ($q) => $q->whereHas(
+            ->when($maintenanceTeamIds !== [], fn ($q) => $q->whereHas(
                 'employee',
-                fn ($eq) => $eq->where('maintenance_team_id', $request->integer('maintenance_team_id'))
+                fn ($eq) => $eq->whereIn('maintenance_team_id', $maintenanceTeamIds)
             ))
-            ->when($request->filled('certificate_type_id'), fn ($q) => $q->where('certificate_type_id', $request->integer('certificate_type_id')))
+            ->when($certificateTypeIds !== [], fn ($q) => $q->whereIn('certificate_type_id', $certificateTypeIds))
             ->when($request->filled('employee_search'), fn ($q) => $q->whereHas(
                 'employee',
                 fn ($eq) => $eq->search($request->string('employee_search')->toString())
@@ -158,7 +190,11 @@ class CertificateController extends Controller
             'window' => $window,
             'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
             'certificateTypes' => CertificateType::where('is_active', true)->orderBy('name')->get(),
-            'filters' => $request->only(['maintenance_team_id', 'certificate_type_id', 'employee_search']),
+            'filters' => [
+                'maintenance_team_id' => $maintenanceTeamIds,
+                'certificate_type_id' => $certificateTypeIds,
+                'employee_search' => $request->string('employee_search')->toString(),
+            ],
         ]);
     }
 

@@ -15,6 +15,7 @@ use Illuminate\View\View;
 class SkillMatrixController extends Controller
 {
     use \App\Concerns\ExportsSpreadsheet;
+    use \App\Concerns\FiltersByMultipleIds;
 
     /**
      * Build an employee x skill competency matrix.
@@ -28,12 +29,17 @@ class SkillMatrixController extends Controller
     {
         $exporting = $request->string('export')->toString() === 'xlsx';
 
+        $maintenanceAreaIds = $this->idList($request->input('maintenance_area_id'));
+        $maintenanceTeamIds = $this->idList($request->input('maintenance_team_id'));
+        $positionIds = $this->idList($request->input('position_id'));
+        $skillCategoryIds = $this->idList($request->input('skill_category_id'));
+
         $employees = Employee::query()
             ->visibleTo($request->user())
             ->with(['position.skillRequirements.requiredCompetencyLevel', 'maintenanceArea', 'maintenanceTeam'])
-            ->when($request->filled('maintenance_area_id'), fn ($q) => $q->where('maintenance_area_id', $request->integer('maintenance_area_id')))
-            ->when($request->filled('maintenance_team_id'), fn ($q) => $q->where('maintenance_team_id', $request->integer('maintenance_team_id')))
-            ->when($request->filled('position_id'), fn ($q) => $q->where('position_id', $request->integer('position_id')))
+            ->when($maintenanceAreaIds !== [], fn ($q) => $q->whereIn('maintenance_area_id', $maintenanceAreaIds))
+            ->when($maintenanceTeamIds !== [], fn ($q) => $q->whereIn('maintenance_team_id', $maintenanceTeamIds))
+            ->when($positionIds !== [], fn ($q) => $q->whereIn('position_id', $positionIds))
             ->search($request->string('search')->toString())
             ->orderBy('full_name')
             ;
@@ -42,8 +48,8 @@ class SkillMatrixController extends Controller
 
         $skillsQuery = Skill::where('is_active', true);
 
-        if ($request->filled('skill_category_id')) {
-            $skillsQuery->where('skill_category_id', $request->integer('skill_category_id'));
+        if ($skillCategoryIds !== []) {
+            $skillsQuery->whereIn('skill_category_id', $skillCategoryIds);
         }
 
         $skills = $skillsQuery->orderBy('name')->get();
@@ -112,7 +118,13 @@ class SkillMatrixController extends Controller
             'maintenanceTeams' => MaintenanceTeam::where('is_active', true)->orderBy('name')->get(),
             'positions' => Position::where('is_active', true)->orderBy('title')->get(),
             'skillCategories' => SkillCategory::where('is_active', true)->orderBy('name')->get(),
-            'filters' => $request->only(['search', 'maintenance_area_id', 'maintenance_team_id', 'position_id', 'skill_category_id']),
+            'filters' => [
+                'search' => $request->string('search')->toString(),
+                'maintenance_area_id' => $maintenanceAreaIds,
+                'maintenance_team_id' => $maintenanceTeamIds,
+                'position_id' => $positionIds,
+                'skill_category_id' => $skillCategoryIds,
+            ],
         ]);
     }
 }

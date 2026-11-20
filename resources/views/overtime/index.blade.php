@@ -46,17 +46,10 @@ $statusStyles = [
         @if ($manage)
             <x-filter-panel :active-count="collect($filters)->filter(fn ($v) => filled($v))->count()">
                 <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-3">
-                    <select name="supervisor_id" class="rounded-md border-neutral-300 text-sm py-1.5">
-                        <option value="">All Supervisors</option>
-                        @foreach ($supervisors as $supervisor)
-                            <option value="{{ $supervisor->id }}" @selected(($filters['supervisor_id'] ?? null) == $supervisor->id)>{{ $supervisor->full_name }}</option>
-                        @endforeach
-                    </select>
-                    <select name="submission" class="rounded-md border-neutral-300 text-sm py-1.5">
-                        <option value="">All</option>
-                        <option value="pending" @selected(($filters['submission'] ?? null) === 'pending')>Not Submitted to HR</option>
-                        <option value="submitted" @selected(($filters['submission'] ?? null) === 'submitted')>Submitted to HR</option>
-                    </select>
+                    <x-multi-select-filter name="supervisor_id" label="All Supervisors"
+                        :options="$supervisors->pluck('full_name', 'id')" :selected="$filters['supervisor_id'] ?? []" />
+                    <x-multi-select-filter name="submission" label="All"
+                        :options="['pending' => 'Not Submitted to HR', 'submitted' => 'Submitted to HR']" :selected="$filters['submission'] ?? []" />
                     <div class="flex gap-2">
                         <x-button size="sm" type="submit">Filter</x-button>
                         <x-button variant="secondary" size="sm" href="{{ route('overtime.index') }}">Reset</x-button>

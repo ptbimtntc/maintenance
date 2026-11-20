@@ -20,6 +20,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 class TrainingRecordController extends Controller
 {
     use ExportsSpreadsheet;
+    use \App\Concerns\FiltersByMultipleIds;
 
     /**
      * Column headers the "Import XLSX" upload is expected to have, in this
@@ -32,6 +33,8 @@ class TrainingRecordController extends Controller
 
     public function index(Request $request): View|\Symfony\Component\HttpFoundation\StreamedResponse
     {
+        $completionStatuses = $this->valueList($request->input('completion_status'));
+
         $query = TrainingRecord::query()
             ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with(['employee', 'trainingProgram', 'trainingType'])
@@ -39,7 +42,7 @@ class TrainingRecordController extends Controller
                 'employee',
                 fn ($eq) => $eq->search($request->string('employee_search')->toString())
             ))
-            ->when($request->filled('completion_status'), fn ($q) => $q->where('completion_status', $request->string('completion_status')));
+            ->when($completionStatuses !== [], fn ($q) => $q->whereIn('completion_status', $completionStatuses));
 
         if ($request->string('export') == 'xlsx') {
             $header = ['Employee', 'Program', 'Date', 'Hours', 'Attendance', 'Completion', 'Score'];
@@ -61,7 +64,10 @@ class TrainingRecordController extends Controller
         return view('training.records.index', [
             'records' => $records,
             'completionStatuses' => TrainingRecord::COMPLETION_STATUSES,
-            'filters' => $request->only(['employee_search', 'completion_status']),
+            'filters' => [
+                'employee_search' => $request->string('employee_search')->toString(),
+                'completion_status' => $completionStatuses,
+            ],
         ]);
     }
 

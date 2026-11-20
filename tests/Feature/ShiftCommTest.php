@@ -171,6 +171,10 @@ class ShiftCommTest extends TestCase
             ->assertSee('M-NO')->assertDontSee('M-PROG');
         $this->actingAs($user)->get(route('shift-comm.index', ['relay' => 'next_shift']))
             ->assertSee('M-NEXT')->assertDontSee('M-PROG')->assertDontSee('M-NO');
+
+        // Multiple values at once: both relay statuses selected together.
+        $this->actingAs($user)->get(route('shift-comm.index', ['relay' => ['in_progress', 'next_shift']]))
+            ->assertSee('M-PROG')->assertSee('M-NEXT')->assertDontSee('M-NO');
     }
 
     public function test_repeat_torsion_shaft_warning_rolls_7_days_from_latest_record(): void

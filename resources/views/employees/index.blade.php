@@ -45,55 +45,33 @@
         @php
             $activeFieldClass = 'border-brand-300 bg-brand-50 text-brand-800 font-medium ring-1 ring-brand-200 shadow-sm';
             $defaultFieldClass = 'border-neutral-300 hover:border-accent-400';
-            $filterActiveCount = collect($filters)->filter(fn ($value) => filled($value))->count();
+            $filterActiveCount = collect($filters)->except('applied')->filter(fn ($value) => filled($value))->count();
         @endphp
 
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
+                <input type="hidden" name="applied" value="1">
+
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK or name..."
                        class="col-span-1 rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 sm:col-span-2 lg:col-span-2 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
 
-                <select name="business_unit_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['business_unit_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Business Units</option>
-                    @foreach ($businessUnits as $businessUnit)
-                        <option value="{{ $businessUnit->id }}" @selected(($filters['business_unit_id'] ?? null) == $businessUnit->id)>{{ $businessUnit->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="business_unit_id" label="All Business Units"
+                    :options="$businessUnits->pluck('name', 'id')" :selected="$filters['business_unit_id'] ?? []" />
 
-                <select name="employment_type_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_type_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Employment Types</option>
-                    @foreach ($employmentTypes as $type)
-                        <option value="{{ $type->id }}" @selected(($filters['employment_type_id'] ?? null) == $type->id)>{{ $type->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="employment_type_id" label="All Employment Types"
+                    :options="$employmentTypes->pluck('name', 'id')" :selected="$filters['employment_type_id'] ?? []" />
 
-                <select name="employment_source_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_source_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Employment Sources</option>
-                    @foreach ($employmentSources as $source)
-                        <option value="{{ $source->id }}" @selected(($filters['employment_source_id'] ?? null) == $source->id)>{{ $source->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="employment_source_id" label="All Employment Sources"
+                    :options="$employmentSources->pluck('name', 'id')" :selected="$filters['employment_source_id'] ?? []" />
 
-                <select name="employment_status_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employment_status_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Statuses</option>
-                    @foreach ($employmentStatuses as $status)
-                        <option value="{{ $status->id }}" @selected(($filters['employment_status_id'] ?? null) == $status->id)>{{ $status->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="employment_status_id" label="All Statuses"
+                    :options="$employmentStatuses->pluck('name', 'id')" :selected="$filters['employment_status_id'] ?? []" />
 
-                <select name="supervisor_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['supervisor_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Supervisors</option>
-                    @foreach ($supervisors as $supervisor)
-                        <option value="{{ $supervisor->id }}" @selected(($filters['supervisor_id'] ?? null) == $supervisor->id)>{{ $supervisor->full_name }} ({{ $supervisor->employee_number }})</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="supervisor_id" label="All Supervisors"
+                    :options="$supervisors->mapWithKeys(fn ($s) => [$s->id => $s->full_name.' ('.$s->employee_number.')'])" :selected="$filters['supervisor_id'] ?? []" />
 
-                <select name="shift_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['shift_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Shifts</option>
-                    @foreach ($shifts as $shift)
-                        <option value="{{ $shift->id }}" @selected(($filters['shift_id'] ?? null) == $shift->id)>{{ $shift->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="shift_id" label="All Shifts"
+                    :options="$shifts->pluck('name', 'id')" :selected="$filters['shift_id'] ?? []" />
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-6">
                     <x-button size="sm" type="submit">Filter</x-button>

@@ -153,8 +153,9 @@ Catatan komunikasi antar-shift (serah terima).
 3. Masukkan **Machine No.**; kolom **Machine Type** di sampingnya akan terisi otomatis secara read-only berdasarkan nomor/tipe mesin (dapat memilih saran mesin yang tersedia).
 4. Isi status dan catatan, lalu simpan.
 5. Entri dapat dibuka dan diedit oleh pembuatnya atau Administrator selama umur record (sejak waktu dibuat / created_at) belum melampaui batas waktu toleransi edit (*edit grace period window*). Parameter batas waktu ini dapat dikonfigurasi secara fleksibel dalam satuan jam melalui **Master Data → Shift Comm Parameters** (default: 24 jam). Jika umur record telah melampaui batas tersebut, tombol **Edit** akan otomatis disembunyikan dan akses update diblokir. Tombol **Delete** hanya muncul dan dapat diakses oleh pengguna dengan role **Administrator**.
-6. Pengguna dengan peran **Administrator** memiliki akses khusus untuk melakukan **Export XLSX** (mengunduh data sesuai filter aktif) dan **Import XLSX** (mengunggah/memperbarui data Shift Comm melalui file Excel). Tombol aksi dan modal impor disembunyikan untuk peran selain Administrator.
-7. Bila ada mesin dengan problem Torsion Shaft berulang (ambang batas kejadian dan rentang rolling days dapat diatur dinamis di Master Data, default: minimal 4 kali dalam rentang rolling 7 hari terakhir), bar notifikasi peringatan muncul tepat di atas kontrol filter sebagai komponen dropdown overlay. Ketika diklik, panel rincian terbuka melayang di atas konten (overlay) tanpa menggeser tata letak halaman. Di dalamnya, pesan utama menampilkan peringatan umum dan daftar setiap nomor mesin yang bermasalah disertai rentang tanggal kejadian aktualnya masing-masing ([Tanggal Awal] s/d [Tanggal Akhir]). Setiap nomor mesin dapat diklik untuk langsung menyaring dan menampilkan rincian record laporan problem mesin tersebut pada tabel utama Shift Comm (dengan filter nomor mesin dan kategori Torsion Shaft aktif). Komponen ini otomatis tersembunyi jika tidak ada problem berulang.
+6. Filter **Shift**, **Torsion Shaft**, dan **Estafet Torsion Shaft** bisa memilih lebih dari satu nilai sekaligus.
+7. Pengguna dengan peran **Administrator** memiliki akses khusus untuk melakukan **Export XLSX** (mengunduh data sesuai filter aktif) dan **Import XLSX** (mengunggah/memperbarui data Shift Comm melalui file Excel). Tombol aksi dan modal impor disembunyikan untuk peran selain Administrator.
+8. Bila ada mesin dengan problem Torsion Shaft berulang (ambang batas kejadian dan rentang rolling days dapat diatur dinamis di Master Data, default: minimal 4 kali dalam rentang rolling 7 hari terakhir), bar notifikasi peringatan muncul tepat di atas kontrol filter sebagai komponen dropdown overlay. Ketika diklik, panel rincian terbuka melayang di atas konten (overlay) tanpa menggeser tata letak halaman. Di dalamnya, pesan utama menampilkan peringatan umum dan daftar setiap nomor mesin yang bermasalah disertai rentang tanggal kejadian aktualnya masing-masing ([Tanggal Awal] s/d [Tanggal Akhir]). Setiap nomor mesin dapat diklik untuk langsung menyaring dan menampilkan rincian record laporan problem mesin tersebut pada tabel utama Shift Comm (dengan filter nomor mesin dan kategori Torsion Shaft aktif). Komponen ini otomatis tersembunyi jika tidak ada problem berulang.
 <!-- /only -->
 
 ---
@@ -235,6 +236,7 @@ Pencatatan lembur oleh atasan untuk bawahan langsungnya.
 3. Jika disetujui, entri dapat diedit lalu otomatis terkunci kembali.
 
 **Pengelola Overtime**
+- Filter **Supervisor** dan **Status Submission** bisa memilih lebih dari satu nilai sekaligus.
 - Grafik *Overtime Trend* 6 bulan terakhir.
 - **Export Selected (.xlsx)** dan **Mark Selected as Submitted to HR**. Tanpa pilihan, tombol memproses semua entri yang belum diserahkan.
 <!-- /only -->
@@ -271,7 +273,7 @@ Halaman landing berisi:
 ### Skill Matrix
 Matriks karyawan × skill yang membandingkan level saat ini dengan level yang disyaratkan.
 - **Gap = required − current.**
-- Filter berdasarkan area, tim, posisi, kategori skill.
+- Filter berdasarkan area, tim, posisi, kategori skill — tiap filter bisa memilih lebih dari satu nilai sekaligus.
 - Status per karyawan: *Meets*, *Development Required*, *Assessment Incomplete*, *No Requirements Defined*.
 <!-- /only -->
 
@@ -317,13 +319,14 @@ Melihat jadwal dalam dua tampilan: **list** dan **grid bulanan** (navigasi antar
 
 <!-- only:training-records -->
 ### Training Records
-Riwayat training per karyawan: program, tanggal, jam, kehadiran/status, skor/hasil, level kompetensi sebelum–sesudah, dan referensi sertifikat. Ada indeks global yang bisa dicari, impor, dan ekspor. Total jam training tampil di profil karyawan.
+Riwayat training per karyawan: program, tanggal, jam, kehadiran/status, skor/hasil, level kompetensi sebelum–sesudah, dan referensi sertifikat. Ada indeks global yang bisa dicari, difilter (**Completion Status**, bisa pilih lebih dari satu), impor, dan ekspor. Total jam training tampil di profil karyawan.
 <!-- /only -->
 
 <!-- only:certificates -->
 ### Certificates
 - **Menambah** — dari profil karyawan (tab Certificates) atau impor massal. Isi tipe, nomor, penerbit, tanggal terbit dan kedaluwarsa, lalu unggah file (**PDF/JPG/PNG, maks 5 MB**). File disimpan privat dan hanya bisa diunduh lewat aplikasi oleh pihak yang berhak.
 - **Status** dihitung otomatis dari tanggal kedaluwarsa: *Valid*, *Expiring Soon*, *Expired*, *No Expiry*, *Pending Verification*. Sertifikat yang sekadar diunggah tidak otomatis dianggap valid.
+- Filter **Certificate Type** dan **Status** bisa memilih lebih dari satu nilai sekaligus (begitu juga **Maintenance Team** di halaman Recertification).
 - **Verifikasi publik** — halaman publik (tanpa login) untuk memverifikasi sertifikat lewat QR.
 <!-- /only -->
 
@@ -339,7 +342,7 @@ Daftar penandatangan yang dipakai pada sertifikat. Tambah/ubah lewat formulir di
 
 <!-- only:development-plans -->
 ### Development Plans
-Rencana pengembangan per karyawan: tujuan, gap kompetensi terkait, level saat ini vs target, jenis aksi (training formal, OJT, coaching, mentoring, job rotation, self-learning, practical assessment, cross-training, sertifikasi), mentor, rekomendasi program, prioritas, status, progres, dan catatan manajer/karyawan. Dibuat dari profil karyawan atau halaman indeks.
+Rencana pengembangan per karyawan: tujuan, gap kompetensi terkait, level saat ini vs target, jenis aksi (training formal, OJT, coaching, mentoring, job rotation, self-learning, practical assessment, cross-training, sertifikasi), mentor, rekomendasi program, prioritas, status, progres, dan catatan manajer/karyawan. Dibuat dari profil karyawan atau halaman indeks. Filter **Status** dan **Priority** di halaman indeks bisa memilih lebih dari satu nilai sekaligus.
 <!-- /only -->
 
 ---

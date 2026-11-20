@@ -34,6 +34,25 @@ class AuditLogTest extends TestCase
         $this->actingAs($admin)->get(route('audit-logs.index'))->assertOk();
     }
 
+    public function test_the_log_can_be_filtered_by_more_than_one_action_at_once(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $employee = Employee::factory()->create();
+        AuditLog::query()->delete();
+        AuditLog::create(['auditable_type' => Employee::class, 'auditable_id' => $employee->id, 'action' => 'created', 'user_id' => $admin->id, 'changes' => []]);
+        AuditLog::create(['auditable_type' => Employee::class, 'auditable_id' => $employee->id, 'action' => 'updated', 'user_id' => $admin->id, 'changes' => []]);
+        AuditLog::create(['auditable_type' => Employee::class, 'auditable_id' => $employee->id, 'action' => 'deleted', 'user_id' => $admin->id, 'changes' => []]);
+
+        $response = $this->actingAs($admin)->get(route('audit-logs.index', [
+            'action' => ['created', 'deleted'],
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('logs', fn ($logs) => $logs->pluck('action')->sort()->values()->all() === ['created', 'deleted']);
+    }
+
     public function test_creating_an_employee_writes_an_audit_log_entry(): void
     {
         $admin = User::factory()->create();

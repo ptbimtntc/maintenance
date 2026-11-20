@@ -126,6 +126,23 @@ class CertificateTest extends TestCase
         $this->assertSame('pending_verification', $certificate->status());
     }
 
+    public function test_the_index_status_filter_accepts_more_than_one_status_at_once(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $expired = Certificate::factory()->create(['name' => 'Expired Cert', 'expiry_date' => now()->subDay(), 'verification_status' => 'verified']);
+        $pending = Certificate::factory()->create(['name' => 'Pending Cert', 'verification_status' => 'pending_verification']);
+        $valid = Certificate::factory()->create(['name' => 'Valid Cert', 'expiry_date' => now()->addYear(), 'verification_status' => 'verified']);
+
+        $response = $this->actingAs($admin)->get(route('certificates.index', [
+            'status' => ['expired', 'pending_verification'],
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Expired Cert')->assertSee('Pending Cert')->assertDontSee('Valid Cert');
+    }
+
     public function test_staff_cannot_download_another_employees_certificate(): void
     {
         $staff = User::factory()->create();

@@ -63,18 +63,10 @@ $windowLabels = [
             <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-4">
                 <input type="hidden" name="window" value="{{ $window }}">
                 <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employee_search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
-                <select name="maintenance_team_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['maintenance_team_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Teams</option>
-                    @foreach ($maintenanceTeams as $team)
-                        <option value="{{ $team->id }}" @selected(($filters['maintenance_team_id'] ?? null) == $team->id)>{{ $team->name }}</option>
-                    @endforeach
-                </select>
-                <select name="certificate_type_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['certificate_type_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Types</option>
-                    @foreach ($certificateTypes as $type)
-                        <option value="{{ $type->id }}" @selected(($filters['certificate_type_id'] ?? null) == $type->id)>{{ $type->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="maintenance_team_id" label="All Teams"
+                    :options="$maintenanceTeams->pluck('name', 'id')" :selected="$filters['maintenance_team_id'] ?? []" />
+                <x-multi-select-filter name="certificate_type_id" label="All Types"
+                    :options="$certificateTypes->pluck('name', 'id')" :selected="$filters['certificate_type_id'] ?? []" />
                 <div class="flex gap-2">
                     <x-button size="sm" type="submit">Filter</x-button>
                     <x-button variant="secondary" size="sm" href="{{ route('certificates.recertification', ['window' => $window]) }}">Reset</x-button>

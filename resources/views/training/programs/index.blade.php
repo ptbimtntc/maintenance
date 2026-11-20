@@ -24,18 +24,10 @@ $statusStyles = ['draft' => 'bg-neutral-100 text-neutral-700', 'active' => 'bg-s
 
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-4">
-                <select name="training_category_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['training_category_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Categories</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->id }}" @selected(($filters['training_category_id'] ?? null) == $category->id)>{{ $category->name }}</option>
-                    @endforeach
-                </select>
-                <select name="status" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['status'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Statuses</option>
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status }}" @selected(($filters['status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="training_category_id" label="All Categories"
+                    :options="$categories->pluck('name', 'id')" :selected="$filters['training_category_id'] ?? []" />
+                <x-multi-select-filter name="status" label="All Statuses"
+                    :options="collect($statuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])" :selected="$filters['status'] ?? []" />
                 <div class="flex gap-2">
                     <x-button size="sm" type="submit">Filter</x-button>
                     <x-button variant="secondary" size="sm" href="{{ route('training.programs.index') }}">Reset</x-button>

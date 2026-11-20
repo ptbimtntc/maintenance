@@ -33,6 +33,7 @@ use PhpOffice\PhpSpreadsheet\Reader\Xlsx as XlsxReader;
 class EmployeeController extends Controller
 {
     use ExportsSpreadsheet;
+    use \App\Concerns\FiltersByMultipleIds;
 
     /**
      * Column headers shared by export and import, in this exact order, so
@@ -110,23 +111,29 @@ class EmployeeController extends Controller
 
         $query->visibleTo($user);
 
+        $businessUnitIds = $this->idList($request->input('business_unit_id'));
+        $employmentTypeIds = $this->idList($request->input('employment_type_id'));
+        $employmentSourceIds = $this->idList($request->input('employment_source_id'));
+        $supervisorIds = $this->idList($request->input('supervisor_id'));
+        $shiftIds = $this->idList($request->input('shift_id'));
+
         // The Status filter defaults to "Active" whenever the request
         // doesn't explicitly mention it at all (a fresh visit, or the
-        // Reset link) - explicitly picking "All Statuses" sends the field
-        // as an empty string, which $request->has() still sees as present,
-        // so that choice is respected instead of being overridden back to
-        // the default.
-        $statusFilterId = $request->has('employment_status_id')
-            ? $request->string('employment_status_id')->toString()
-            : (string) (EmploymentStatus::where('code', 'ACTIVE')->value('id') ?? '');
+        // Reset link) - the form posts a hidden "applied=1" field, so an
+        // explicit choice of "All Statuses" (nothing ticked) can be told
+        // apart from that first visit and is respected instead of being
+        // overridden back to the default.
+        $statusFilterIds = $request->boolean('applied')
+            ? $this->idList($request->input('employment_status_id'))
+            : array_filter([EmploymentStatus::where('code', 'ACTIVE')->value('id')]);
 
         $query->search($request->string('search')->toString())
-            ->when($request->filled('business_unit_id'), fn ($q) => $q->where('business_unit_id', $request->integer('business_unit_id')))
-            ->when($request->filled('employment_type_id'), fn ($q) => $q->where('employment_type_id', $request->integer('employment_type_id')))
-            ->when($request->filled('employment_source_id'), fn ($q) => $q->where('employment_source_id', $request->integer('employment_source_id')))
-            ->when($statusFilterId !== '', fn ($q) => $q->where('employment_status_id', $statusFilterId))
-            ->when($request->filled('supervisor_id'), fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')))
-            ->when($request->filled('shift_id'), fn ($q) => $q->where('shift_id', $request->integer('shift_id')));
+            ->when($businessUnitIds !== [], fn ($q) => $q->whereIn('business_unit_id', $businessUnitIds))
+            ->when($employmentTypeIds !== [], fn ($q) => $q->whereIn('employment_type_id', $employmentTypeIds))
+            ->when($employmentSourceIds !== [], fn ($q) => $q->whereIn('employment_source_id', $employmentSourceIds))
+            ->when($statusFilterIds !== [], fn ($q) => $q->whereIn('employment_status_id', $statusFilterIds))
+            ->when($supervisorIds !== [], fn ($q) => $q->whereIn('supervisor_id', $supervisorIds))
+            ->when($shiftIds !== [], fn ($q) => $q->whereIn('shift_id', $shiftIds));
 
         if ($request->string('export') == 'xlsx') {
             $rows = $query->orderBy('full_name')->get()->map(fn (Employee $e) => [
@@ -162,22 +169,20 @@ class EmployeeController extends Controller
         }
 
         $filters = [
-            ...$request->only([
-                'search', 'business_unit_id', 'employment_type_id', 'employment_source_id', 'supervisor_id', 'shift_id',
-            ]),
-            'employment_status_id' => $statusFilterId,
+            'search' => $request->string('search')->toString(),
+            'business_unit_id' => $businessUnitIds,
+            'employment_type_id' => $employmentTypeIds,
+            'employment_source_id' => $employmentSourceIds,
+            'employment_status_id' => $statusFilterIds,
+            'supervisor_id' => $supervisorIds,
+            'shift_id' => $shiftIds,
+            'applied' => 1,
         ];
 
-        // Built from $filters (not ->withQueryString()): the "All Statuses"
-        // option submits employment_status_id as an empty string, which the
-        // ConvertEmptyStringsToNull middleware turns into null on the
-        // request before pagination links are built. withQueryString()
-        // would then drop that null-valued key from page 2+ links, making
-        // the "no explicit status" default-to-Active logic above silently
-        // reassert itself - which paginates against the wrong result count
-        // and shows an empty page 2. $statusFilterId is already resolved to
-        // the real string ('' included), so appending it directly keeps
-        // "All Statuses" honored across pages.
+        // Built from $filters (not ->withQueryString()): since "applied=1"
+        // is always appended, an explicit "All Statuses" (nothing ticked)
+        // stays distinguishable from a first visit on page 2+ links too -
+        // see the default-to-Active comment above.
         $employees = $query->orderBy('full_name')->paginate(15)->appends($filters);
 
         return view('employees.index', [

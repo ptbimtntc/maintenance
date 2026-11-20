@@ -87,6 +87,25 @@ class UserManagementTest extends TestCase
         $response->assertSee('Sam Supervisor')->assertDontSee('Toni Technician');
     }
 
+    public function test_the_user_list_can_be_filtered_by_more_than_one_role_at_once(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $manager = User::factory()->create(['name' => 'Manny Manager']);
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+        $supervisor = User::factory()->create(['name' => 'Sue Supervisor']);
+        $supervisor->assignRole(RoleName::MaintenanceSupervisor->value);
+        $staff = User::factory()->create(['name' => 'Stan Staff']);
+        $staff->assignRole(RoleName::MaintenanceStaff->value);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index', [
+            'role' => [RoleName::MaintenanceManager->value, RoleName::MaintenanceSupervisor->value],
+        ]));
+
+        $response->assertSee('Manny Manager')->assertSee('Sue Supervisor')->assertDontSee('Stan Staff');
+    }
+
     public function test_an_administrator_can_change_a_users_role_and_menu_grants(): void
     {
         $admin = User::factory()->create();

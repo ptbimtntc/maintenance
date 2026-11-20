@@ -15,13 +15,18 @@ use Illuminate\View\View;
 
 class EmployeeDevelopmentPlanController extends Controller
 {
+    use \App\Concerns\FiltersByMultipleIds;
+
     public function index(Request $request): View
     {
+        $statuses = $this->valueList($request->input('status'));
+        $priorities = $this->valueList($request->input('priority'));
+
         $plans = EmployeeDevelopmentPlan::query()
             ->whereHas('employee', fn ($eq) => $eq->visibleTo($request->user()))
             ->with('employee')
-            ->when($request->filled('status'), fn ($q) => $q->where('status', $request->string('status')))
-            ->when($request->filled('priority'), fn ($q) => $q->where('priority', $request->string('priority')))
+            ->when($statuses !== [], fn ($q) => $q->whereIn('status', $statuses))
+            ->when($priorities !== [], fn ($q) => $q->whereIn('priority', $priorities))
             ->orderByDesc('created_at')
             ->paginate(15)
             ->withQueryString();
@@ -30,7 +35,7 @@ class EmployeeDevelopmentPlanController extends Controller
             'plans' => $plans,
             'statuses' => EmployeeDevelopmentPlan::STATUSES,
             'priorities' => EmployeeDevelopmentPlan::PRIORITIES,
-            'filters' => $request->only(['status', 'priority']),
+            'filters' => ['status' => $statuses, 'priority' => $priorities],
         ]);
     }
 

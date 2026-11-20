@@ -50,12 +50,8 @@ $completionStyles = ['completed' => 'bg-success-100 text-success-800', 'incomple
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-3">
                 <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employee_search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
-                <select name="completion_status" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['completion_status'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Completion Statuses</option>
-                    @foreach ($completionStatuses as $status)
-                        <option value="{{ $status }}" @selected(($filters['completion_status'] ?? null) === $status)>{{ ucfirst($status) }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="completion_status" label="All Completion Statuses"
+                    :options="collect($completionStatuses)->mapWithKeys(fn ($s) => [$s => ucfirst($s)])" :selected="$filters['completion_status'] ?? []" />
                 <div class="flex gap-2">
                     <x-button size="sm" type="submit">Filter</x-button>
                     <x-button variant="secondary" size="sm" href="{{ route('training.records.index') }}">Reset</x-button>

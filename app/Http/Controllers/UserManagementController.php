@@ -24,18 +24,30 @@ use Illuminate\View\View;
  */
 class UserManagementController extends Controller
 {
+    use \App\Concerns\FiltersByMultipleIds;
+
     public function index(Request $request): View
     {
-        $filters = $request->only(['search', 'role', 'department_id', 'position_id']);
+        $search = trim((string) $request->query('search', ''));
+        $roles = $this->valueList($request->input('role'));
+        $departmentIds = $this->idList($request->input('department_id'));
+        $positionIds = $this->idList($request->input('position_id'));
+
+        $filters = [
+            'search' => $search,
+            'role' => $roles,
+            'department_id' => $departmentIds,
+            'position_id' => $positionIds,
+        ];
 
         $users = User::query()
             ->with(['roles', 'employee.position', 'employee.department'])
-            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
+            ->when($search !== '', fn ($q) => $q->where(
                 fn ($q) => $q->where('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%")
             ))
-            ->when($filters['role'] ?? null, fn ($q, $role) => $q->role($role))
-            ->when($filters['department_id'] ?? null, fn ($q, $id) => $q->whereHas('employee', fn ($q) => $q->where('department_id', $id)))
-            ->when($filters['position_id'] ?? null, fn ($q, $id) => $q->whereHas('employee', fn ($q) => $q->where('position_id', $id)))
+            ->when($roles !== [], fn ($q) => $q->role($roles))
+            ->when($departmentIds !== [], fn ($q) => $q->whereHas('employee', fn ($q) => $q->whereIn('department_id', $departmentIds)))
+            ->when($positionIds !== [], fn ($q) => $q->whereHas('employee', fn ($q) => $q->whereIn('position_id', $positionIds)))
             ->orderBy('name')
             ->paginate(20)
             ->appends($filters);

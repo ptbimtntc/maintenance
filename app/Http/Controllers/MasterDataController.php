@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 class MasterDataController extends Controller
 {
     use ExportsSpreadsheet;
+    use \App\Concerns\FiltersByMultipleIds;
 
     /**
      * How the landing page groups the master data types. Any type not
@@ -107,7 +108,7 @@ class MasterDataController extends Controller
                     'config' => $config,
                     'records' => new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25),
                     'search' => '',
-                    'machineTypeFilter' => '',
+                    'machineTypeFilters' => [],
                     'availableMachineTypes' => collect(),
                     'from' => $this->originFor($request),
                     'migrationPending' => true,
@@ -115,7 +116,7 @@ class MasterDataController extends Controller
             }
 
             $search = trim((string) $request->query('q', ''));
-            $machineTypeFilter = trim((string) $request->query('machine_type', ''));
+            $machineTypeFilters = $this->valueList($request->input('machine_type'));
 
             $records = $model::query()
                 ->when($search !== '', function ($q) use ($search) {
@@ -125,7 +126,7 @@ class MasterDataController extends Controller
                             ->orWhere('machine_type', 'like', "%{$search}%");
                     });
                 })
-                ->when($machineTypeFilter !== '', fn ($q) => $q->where('machine_type', $machineTypeFilter))
+                ->when($machineTypeFilters !== [], fn ($q) => $q->whereIn('machine_type', $machineTypeFilters))
                 ->orderBy('machine_no')
                 ->paginate(25)
                 ->withQueryString();
@@ -146,7 +147,7 @@ class MasterDataController extends Controller
                 'config' => $config,
                 'records' => $records,
                 'search' => $search,
-                'machineTypeFilter' => $machineTypeFilter,
+                'machineTypeFilters' => $machineTypeFilters,
                 'availableMachineTypes' => $availableMachineTypes,
                 'from' => $this->originFor($request),
                 'migrationPending' => false,

@@ -30,33 +30,17 @@ $statusLabels = [
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search employee..."
                        class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
 
-                <select name="maintenance_area_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['maintenance_area_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Areas</option>
-                    @foreach ($maintenanceAreas as $area)
-                        <option value="{{ $area->id }}" @selected(($filters['maintenance_area_id'] ?? null) == $area->id)>{{ $area->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="maintenance_area_id" label="All Areas"
+                    :options="$maintenanceAreas->pluck('name', 'id')" :selected="$filters['maintenance_area_id'] ?? []" />
 
-                <select name="maintenance_team_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['maintenance_team_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Teams</option>
-                    @foreach ($maintenanceTeams as $team)
-                        <option value="{{ $team->id }}" @selected(($filters['maintenance_team_id'] ?? null) == $team->id)>{{ $team->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="maintenance_team_id" label="All Teams"
+                    :options="$maintenanceTeams->pluck('name', 'id')" :selected="$filters['maintenance_team_id'] ?? []" />
 
-                <select name="position_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['position_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Positions</option>
-                    @foreach ($positions as $position)
-                        <option value="{{ $position->id }}" @selected(($filters['position_id'] ?? null) == $position->id)>{{ $position->title }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="position_id" label="All Positions"
+                    :options="$positions->pluck('title', 'id')" :selected="$filters['position_id'] ?? []" />
 
-                <select name="skill_category_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['skill_category_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Skill Categories</option>
-                    @foreach ($skillCategories as $category)
-                        <option value="{{ $category->id }}" @selected(($filters['skill_category_id'] ?? null) == $category->id)>{{ $category->name }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="skill_category_id" label="All Skill Categories"
+                    :options="$skillCategories->pluck('name', 'id')" :selected="$filters['skill_category_id'] ?? []" />
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-5">
                     <x-button size="sm" type="submit">Filter</x-button>

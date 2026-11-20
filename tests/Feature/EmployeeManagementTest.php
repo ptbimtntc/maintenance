@@ -371,7 +371,7 @@ class EmployeeManagementTest extends TestCase
             'shift_id' => $shift->id,
             'supervisor_id' => $supervisor->id,
         ] as $field => $value) {
-            $response = $this->actingAs($admin)->get(route('employees.index', [$field => $value]));
+            $response = $this->actingAs($admin)->get(route('employees.index', [$field => $value, 'applied' => 1]));
 
             $response->assertOk();
             $response->assertViewHas('employees', fn ($employees) => $employees->total() === 1
@@ -413,11 +413,35 @@ class EmployeeManagementTest extends TestCase
         $response = $this->actingAs($admin)->get(route('employees.index'));
         $response->assertViewHas('employees', fn ($employees) => $employees->total() === 1
             && $employees->first()->id === $activeEmployee->id);
-        $response->assertViewHas('filters', fn ($filters) => (string) $filters['employment_status_id'] === (string) $activeStatus->id);
+        $response->assertViewHas('filters', fn ($filters) => $filters['employment_status_id'] === [$activeStatus->id]);
 
-        // Explicitly requesting "All Statuses" (empty value, but present) is respected.
-        $allResponse = $this->actingAs($admin)->get(route('employees.index', ['employment_status_id' => '']));
+        // Explicitly requesting "All Statuses" (nothing ticked, but the form's
+        // hidden "applied" field is present) is respected.
+        $allResponse = $this->actingAs($admin)->get(route('employees.index', ['applied' => '1']));
         $allResponse->assertViewHas('employees', fn ($employees) => $employees->total() === 2);
+    }
+
+    public function test_index_filters_accept_multiple_values(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $unitA = \App\Models\BusinessUnit::factory()->create();
+        $unitB = \App\Models\BusinessUnit::factory()->create();
+        $unitC = \App\Models\BusinessUnit::factory()->create();
+
+        $matchA = Employee::factory()->create(['business_unit_id' => $unitA->id]);
+        $matchB = Employee::factory()->create(['business_unit_id' => $unitB->id]);
+        Employee::factory()->create(['business_unit_id' => $unitC->id]);
+
+        $response = $this->actingAs($admin)->get(route('employees.index', [
+            'business_unit_id' => [$unitA->id, $unitB->id],
+            'applied' => 1,
+        ]));
+
+        $response->assertOk();
+        $response->assertViewHas('employees', fn ($employees) => $employees->total() === 2
+            && $employees->pluck('id')->sort()->values()->all() === collect([$matchA->id, $matchB->id])->sort()->values()->all());
     }
 
     public function test_a_manager_can_bulk_delete_selected_employees(): void

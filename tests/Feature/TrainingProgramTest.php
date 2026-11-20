@@ -28,6 +28,23 @@ class TrainingProgramTest extends TestCase
         $response->assertRedirect('/guest-login');
     }
 
+    public function test_the_programs_list_can_be_filtered_by_more_than_one_status(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole(RoleName::MaintenanceManager->value);
+
+        TrainingProgram::factory()->create(['title' => 'Draft Program', 'status' => 'draft']);
+        TrainingProgram::factory()->create(['title' => 'Active Program', 'status' => 'active']);
+        TrainingProgram::factory()->create(['title' => 'Inactive Program', 'status' => 'inactive']);
+
+        $response = $this->actingAs($manager)->get(route('training.programs.index', [
+            'status' => ['draft', 'active'],
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Draft Program')->assertSee('Active Program')->assertDontSee('Inactive Program');
+    }
+
     public function test_maintenance_staff_cannot_open_or_create_programs(): void
     {
         $staff = User::factory()->create();

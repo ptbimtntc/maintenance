@@ -2,7 +2,7 @@
 $backRoute = route('organization.landing');
 $backLabel = 'Back to Master Data';
 $originQuery = array_filter(['from' => $from]);
-$hasFilters = filled($search) || filled($machineTypeFilter);
+$hasFilters = filled($search) || count($machineTypeFilters) > 0;
 @endphp
 
 <x-app-layout>
@@ -79,14 +79,8 @@ $hasFilters = filled($search) || filled($machineTypeFilter);
                 </div>
 
                 <div class="sm:w-64">
-                    <select name="machine_type"
-                            onchange="this.form.submit()"
-                            class="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500">
-                        <option value="">All Machine Types</option>
-                        @foreach ($availableMachineTypes as $mType)
-                            <option value="{{ $mType }}" @selected($machineTypeFilter === $mType)>{{ $mType }}</option>
-                        @endforeach
-                    </select>
+                    <x-multi-select-filter name="machine_type" label="All Machine Types"
+                        :options="$availableMachineTypes->mapWithKeys(fn ($t) => [$t => $t])" :selected="$machineTypeFilters" />
                 </div>
 
                 <div class="flex items-center gap-2">

@@ -16,18 +16,10 @@ $actionStyles = ['created' => 'bg-success-100 text-success-800', 'updated' => 'b
 
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-3">
-                <select name="auditable_type" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['auditable_type'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Record Types</option>
-                    @foreach ($auditableTypes as $type)
-                        <option value="{{ $type }}" @selected(($filters['auditable_type'] ?? null) === $type)>{{ class_basename($type) }}</option>
-                    @endforeach
-                </select>
-                <select name="action" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['action'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Actions</option>
-                    <option value="created" @selected(($filters['action'] ?? null) === 'created')>Created</option>
-                    <option value="updated" @selected(($filters['action'] ?? null) === 'updated')>Updated</option>
-                    <option value="deleted" @selected(($filters['action'] ?? null) === 'deleted')>Deleted</option>
-                </select>
+                <x-multi-select-filter name="auditable_type" label="All Record Types"
+                    :options="collect($auditableTypes)->mapWithKeys(fn ($t) => [$t => class_basename($t)])" :selected="$filters['auditable_type'] ?? []" />
+                <x-multi-select-filter name="action" label="All Actions"
+                    :options="['created' => 'Created', 'updated' => 'Updated', 'deleted' => 'Deleted']" :selected="$filters['action'] ?? []" />
                 <div class="flex gap-2">
                     <x-button size="sm" type="submit">Filter</x-button>
                     <x-button variant="secondary" size="sm" href="{{ route('audit-logs.index') }}">Reset</x-button>

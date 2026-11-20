@@ -81,4 +81,24 @@ class TrainingRecordTest extends TestCase
         $response->assertOk();
         $response->assertSee('Total training hours recorded: 10');
     }
+
+    public function test_the_records_list_can_be_filtered_by_more_than_one_completion_status(): void
+    {
+        $hr = User::factory()->create();
+        $hr->assignRole(RoleName::PeopleDevelopment->value);
+
+        $completed = Employee::factory()->create(['full_name' => 'Completed Carl']);
+        $completed->trainingRecords()->create(['training_date' => now(), 'duration_hours' => 2, 'attendance_status' => 'attended', 'completion_status' => 'completed']);
+        $failed = Employee::factory()->create(['full_name' => 'Failed Fay']);
+        $failed->trainingRecords()->create(['training_date' => now(), 'duration_hours' => 2, 'attendance_status' => 'attended', 'completion_status' => 'failed']);
+        $incomplete = Employee::factory()->create(['full_name' => 'Incomplete Ike']);
+        $incomplete->trainingRecords()->create(['training_date' => now(), 'duration_hours' => 2, 'attendance_status' => 'attended', 'completion_status' => 'incomplete']);
+
+        $response = $this->actingAs($hr)->get(route('training.records.index', [
+            'completion_status' => ['completed', 'failed'],
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Completed Carl')->assertSee('Failed Fay')->assertDontSee('Incomplete Ike');
+    }
 }

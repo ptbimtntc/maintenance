@@ -17,31 +17,49 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class ShiftCommController extends Controller
 {
     use ExportsSpreadsheet;
-    public function index(Request $request): View
+    use \App\Concerns\FiltersByMultipleIds;
+
+    /**
+     * @return array{0: \Illuminate\Database\Eloquent\Builder, 1: array}
+     */
+    private function filteredShiftComms(Request $request): array
     {
-        $this->authorize('viewAny', ShiftComm::class);
+        $shifts = $this->valueList($request->input('shift'));
+        $torsionValues = array_values(array_intersect($this->valueList($request->input('torsion')), ['0', '1']));
+        $relayStatuses = array_values(array_intersect($this->valueList($request->input('relay')), array_keys(ShiftComm::TORSION_RELAY_STATUSES)));
 
         $filters = [
             'date' => $request->string('date')->toString(),
-            'shift' => $request->string('shift')->toString(),
-            'torsion' => $request->string('torsion')->toString(),
-            'relay' => $request->string('relay')->toString(),
+            'shift' => $shifts,
+            'torsion' => $torsionValues,
+            'relay' => $relayStatuses,
             'q' => trim($request->string('q')->toString()),
         ];
 
-        $comms = ShiftComm::query()
+        $query = ShiftComm::query()
             ->with('creator')
             ->when($filters['date'], fn ($q, $v) => $q->whereDate('comm_date', $v))
-            ->when($filters['shift'], fn ($q, $v) => $q->where('shift', $v))
-            ->when(in_array($filters['torsion'], ['1', '0'], true), fn ($q) => $q->where('is_torsion_shaft', (bool) $filters['torsion']))
-            ->when(array_key_exists($filters['relay'], ShiftComm::TORSION_RELAY_STATUSES), fn ($q) => $q->where('torsion_relay_status', $filters['relay']))
+            ->when($shifts !== [], fn ($q) => $q->whereIn('shift', $shifts))
+            ->when($torsionValues !== [], fn ($q) => $q->whereIn('is_torsion_shaft', array_map(fn ($v) => (bool) $v, $torsionValues)))
+            ->when($relayStatuses !== [], fn ($q) => $q->whereIn('torsion_relay_status', $relayStatuses))
             ->when($filters['q'], fn ($q, $v) => $q->where(function ($w) use ($v) {
                 $w->where('comm_number', 'like', "%{$v}%")
                     ->orWhere('machine_no', 'like', "%{$v}%")
                     ->orWhere('machine_type', 'like', "%{$v}%")
                     ->orWhere('construction', 'like', "%{$v}%")
                     ->orWhere('problem', 'like', "%{$v}%");
-            }))
+            }));
+
+        return [$query, $filters];
+    }
+
+    public function index(Request $request): View
+    {
+        $this->authorize('viewAny', ShiftComm::class);
+
+        [$query, $filters] = $this->filteredShiftComms($request);
+
+        $comms = $query
             ->orderByDesc('comm_date')
             ->orderByDesc('comm_number')
             ->paginate(20)
@@ -54,27 +72,9 @@ class ShiftCommController extends Controller
     {
         $this->authorize('export', ShiftComm::class);
 
-        $filters = [
-            'date' => $request->string('date')->toString(),
-            'shift' => $request->string('shift')->toString(),
-            'torsion' => $request->string('torsion')->toString(),
-            'relay' => $request->string('relay')->toString(),
-            'q' => trim($request->string('q')->toString()),
-        ];
+        [$query] = $this->filteredShiftComms($request);
 
-        $comms = ShiftComm::query()
-            ->with('creator')
-            ->when($filters['date'], fn ($q, $v) => $q->whereDate('comm_date', $v))
-            ->when($filters['shift'], fn ($q, $v) => $q->where('shift', $v))
-            ->when(in_array($filters['torsion'], ['1', '0'], true), fn ($q) => $q->where('is_torsion_shaft', (bool) $filters['torsion']))
-            ->when(array_key_exists($filters['relay'], ShiftComm::TORSION_RELAY_STATUSES), fn ($q) => $q->where('torsion_relay_status', $filters['relay']))
-            ->when($filters['q'], fn ($q, $v) => $q->where(function ($w) use ($v) {
-                $w->where('comm_number', 'like', "%{$v}%")
-                    ->orWhere('machine_no', 'like', "%{$v}%")
-                    ->orWhere('machine_type', 'like', "%{$v}%")
-                    ->orWhere('construction', 'like', "%{$v}%")
-                    ->orWhere('problem', 'like', "%{$v}%");
-            }))
+        $comms = $query
             ->orderByDesc('comm_date')
             ->orderByDesc('comm_number')
             ->get();

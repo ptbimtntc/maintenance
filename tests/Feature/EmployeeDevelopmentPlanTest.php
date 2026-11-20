@@ -28,6 +28,23 @@ class EmployeeDevelopmentPlanTest extends TestCase
         $response->assertRedirect('/guest-login');
     }
 
+    public function test_the_list_can_be_filtered_by_more_than_one_priority_at_once(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        EmployeeDevelopmentPlan::factory()->create(['development_objective' => 'Low Plan', 'priority' => 'low']);
+        EmployeeDevelopmentPlan::factory()->create(['development_objective' => 'Medium Plan', 'priority' => 'medium']);
+        EmployeeDevelopmentPlan::factory()->create(['development_objective' => 'High Plan', 'priority' => 'high']);
+
+        $response = $this->actingAs($admin)->get(route('development-plans.index', [
+            'priority' => ['low', 'high'],
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Low Plan')->assertSee('High Plan')->assertDontSee('Medium Plan');
+    }
+
     public function test_manager_can_create_a_development_plan(): void
     {
         $manager = User::factory()->create();

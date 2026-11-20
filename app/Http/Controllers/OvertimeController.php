@@ -22,6 +22,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class OvertimeController extends Controller
 {
     use ExportsSpreadsheet, PrunesNotificationLinks;
+    use \App\Concerns\FiltersByMultipleIds;
 
     /**
      * Logging overtime for your own team is a fact of being that team's
@@ -52,17 +53,22 @@ class OvertimeController extends Controller
 
         abort_unless($manage || ($supervisor && $supervisor->directReports()->exists()), 403);
 
+        $supervisorIds = $this->idList($request->input('supervisor_id'));
+        $submissionValues = array_values(array_intersect($this->valueList($request->input('submission')), ['submitted', 'pending']));
+
         if ($manage) {
             $query = OvertimeEntry::query()->with(['employee.supervisor', 'createdBy']);
 
-            if ($request->filled('supervisor_id')) {
-                $query->whereHas('employee', fn ($q) => $q->where('supervisor_id', $request->integer('supervisor_id')));
+            if ($supervisorIds !== []) {
+                $query->whereHas('employee', fn ($q) => $q->whereIn('supervisor_id', $supervisorIds));
             }
 
-            if ($request->string('submission') == 'submitted') {
-                $query->whereNotNull('submitted_to_hr_at');
-            } elseif ($request->string('submission') == 'pending') {
-                $query->whereNull('submitted_to_hr_at');
+            // Both selected (or neither) means "show everything" either way,
+            // so only a single explicit choice narrows the query.
+            if (count($submissionValues) === 1) {
+                $submissionValues[0] === 'submitted'
+                    ? $query->whereNotNull('submitted_to_hr_at')
+                    : $query->whereNull('submitted_to_hr_at');
             }
 
             $entries = $query->orderByDesc('start_at')->get();
@@ -103,7 +109,7 @@ class OvertimeController extends Controller
             'notSubmittedCount' => $entries->whereNull('submitted_to_hr_at')->count(),
             'trendLabels' => $trendLabels,
             'trendValues' => $trendValues,
-            'filters' => $request->only(['supervisor_id', 'submission']),
+            'filters' => ['supervisor_id' => $supervisorIds, 'submission' => $submissionValues],
         ]);
     }
 

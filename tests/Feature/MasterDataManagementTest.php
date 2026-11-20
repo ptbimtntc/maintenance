@@ -265,6 +265,11 @@ class MasterDataManagementTest extends TestCase
         $filteredResponse->assertOk();
         $filteredResponse->assertSee('50-TD01');
         $filteredResponse->assertDontSee('50-TD02');
+
+        $multiFilteredResponse = $this->actingAs($admin)->get(route('organization.index', ['machines-cb', 'machine_type' => ['Strander', 'Buncher']]));
+        $multiFilteredResponse->assertOk();
+        $multiFilteredResponse->assertSee('50-TD01');
+        $multiFilteredResponse->assertSee('50-TD02');
     }
 
     public function test_administrator_can_create_machine_in_cb(): void

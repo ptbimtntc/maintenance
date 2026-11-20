@@ -69,36 +69,31 @@
                 </div>
                 <div>
                     <label class="block text-[11px] font-medium text-neutral-500">Shift</label>
-                    <select name="shift" onchange="this.form.submit()" class="mt-0.5 block rounded-md border-neutral-300 text-sm">
-                        <option value="">All Shifts</option>
-                        @foreach (\App\Models\ShiftComm::SHIFTS as $value => $label)
-                            <option value="{{ $value }}" @selected($filters['shift'] == $value)>{{ $label }}</option>
-                        @endforeach
-                    </select>
+                    <div class="mt-0.5 w-40">
+                        <x-multi-select-filter name="shift" label="All Shifts"
+                            :options="\App\Models\ShiftComm::SHIFTS" :selected="$filters['shift']" />
+                    </div>
                 </div>
                 <div>
                     <label class="block text-[11px] font-medium text-neutral-500">Search</label>
                     <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="ID, machine, construction, problem" class="mt-0.5 block w-64 rounded-md border-neutral-300 text-sm">
                 </div>
                 <div class="self-start pt-[1.125rem]">
-                    <x-filter-panel label="TS filter" :active-count="(int) ($filters['torsion'] !== '') + (int) ($filters['relay'] !== '')">
+                    <x-filter-panel label="TS filter" :active-count="count($filters['torsion']) + count($filters['relay'])">
                         <div class="flex flex-wrap items-end gap-2.5">
-                        <div>
+                        <div class="w-40">
                             <label class="block text-[11px] font-medium text-neutral-500">Torsion Shaft</label>
-                            <select name="torsion" onchange="this.form.submit()" class="mt-0.5 block rounded-md border-neutral-300 text-sm">
-                                <option value="">Semua</option>
-                                <option value="1" @selected($filters['torsion'] === '1')>YA</option>
-                                <option value="0" @selected($filters['torsion'] === '0')>TIDAK</option>
-                            </select>
+                            <div class="mt-0.5">
+                                <x-multi-select-filter name="torsion" label="Semua"
+                                    :options="['1' => 'YA', '0' => 'TIDAK']" :selected="$filters['torsion']" />
+                            </div>
                         </div>
-                        <div>
+                        <div class="w-48">
                             <label class="block text-[11px] font-medium text-neutral-500">Estafet Torsion Shaft</label>
-                            <select name="relay" onchange="this.form.submit()" class="mt-0.5 block rounded-md border-neutral-300 text-sm">
-                                <option value="">Semua</option>
-                                @foreach (\App\Models\ShiftComm::TORSION_RELAY_STATUSES as $key => $label)
-                                    <option value="{{ $key }}" @selected($filters['relay'] === $key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
+                            <div class="mt-0.5">
+                                <x-multi-select-filter name="relay" label="Semua"
+                                    :options="\App\Models\ShiftComm::TORSION_RELAY_STATUSES" :selected="$filters['relay']" />
+                            </div>
                         </div>
                         </div>
                     </x-filter-panel>

@@ -56,18 +56,10 @@ $statusStyles = [
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-4">
                 <input type="text" name="employee_search" value="{{ $filters['employee_search'] ?? '' }}" placeholder="Search employee..." class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['employee_search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
-                <select name="certificate_type_id" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['certificate_type_id'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Types</option>
-                    @foreach ($certificateTypes as $type)
-                        <option value="{{ $type->id }}" @selected(($filters['certificate_type_id'] ?? null) == $type->id)>{{ $type->name }}</option>
-                    @endforeach
-                </select>
-                <select name="status" class="rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 {{ filled($filters['status'] ?? null) ? $activeFieldClass : $defaultFieldClass }}">
-                    <option value="">All Statuses</option>
-                    @foreach ($statusLabels as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['status'] ?? null) === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                <x-multi-select-filter name="certificate_type_id" label="All Types"
+                    :options="$certificateTypes->pluck('name', 'id')" :selected="$filters['certificate_type_id'] ?? []" />
+                <x-multi-select-filter name="status" label="All Statuses"
+                    :options="$statusLabels" :selected="$filters['status'] ?? []" />
                 <div class="flex gap-2">
                     <x-button size="sm" type="submit">Filter</x-button>
                     <x-button variant="secondary" size="sm" href="{{ route('certificates.index') }}">Reset</x-button>
