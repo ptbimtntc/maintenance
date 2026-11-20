@@ -53,6 +53,18 @@ $originQuery = array_filter(['from' => $from]);
             <div class="rounded-md border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-800">{{ session('import_errors') }}</div>
         @endif
 
+        <form method="GET" action="{{ route('organization.index', [$type, ...$originQuery]) }}" class="flex items-center gap-2">
+            @foreach ($originQuery as $key => $value)
+                <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+            @endforeach
+            <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Search name or code..."
+                   class="w-full max-w-xs rounded-md border-neutral-300 text-sm transition focus:border-brand-500 focus:ring-brand-500 sm:w-72" />
+            <x-button size="sm" type="submit">Search</x-button>
+            @if (($search ?? '') !== '')
+                <x-button variant="secondary" size="sm" href="{{ route('organization.index', [$type, ...$originQuery]) }}">Reset</x-button>
+            @endif
+        </form>
+
         <div class="overflow-x-auto rounded-lg border border-neutral-200 bg-white shadow-md">
             <table class="min-w-full divide-y divide-neutral-200 text-sm">
                 <thead class="border-b-2 border-brand-500 bg-brand-50">

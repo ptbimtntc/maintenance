@@ -67,6 +67,35 @@ class MasterDataManagementTest extends TestCase
         $this->assertDatabaseHas('departments', ['name' => 'Quality Assurance', 'code' => 'QA01']);
     }
 
+    public function test_the_departments_list_can_be_searched_by_name_or_code(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        Department::factory()->create(['name' => 'Quality Assurance', 'code' => 'QA01']);
+        Department::factory()->create(['name' => 'Human Resources', 'code' => 'HR01']);
+
+        $byName = $this->actingAs($admin)->get(route('organization.index', ['departments', 'search' => 'quality']));
+        $byName->assertSee('Quality Assurance')->assertDontSee('Human Resources');
+
+        $byCode = $this->actingAs($admin)->get(route('organization.index', ['departments', 'search' => 'HR01']));
+        $byCode->assertSee('Human Resources')->assertDontSee('Quality Assurance');
+    }
+
+    public function test_search_works_on_a_master_data_type_without_a_code_column(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        \App\Models\CompetencyLevel::factory()->create(['name' => 'Beginner', 'level_number' => 1]);
+        \App\Models\CompetencyLevel::factory()->create(['name' => 'Expert', 'level_number' => 5]);
+
+        $response = $this->actingAs($admin)->get(route('organization.index', ['competency-levels', 'search' => 'beginner']));
+
+        $response->assertOk();
+        $response->assertSee('Beginner')->assertDontSee('Expert');
+    }
+
     public function test_duplicate_department_code_is_rejected(): void
     {
         $admin = User::factory()->create();

@@ -153,15 +153,28 @@ class MasterDataController extends Controller
             ]);
         }
 
+        $search = trim((string) $request->query('search', ''));
+        $hasCode = \Illuminate\Support\Facades\Schema::hasColumn((new $model)->getTable(), 'code');
+
         $records = $model::query()
             ->when($config['parent'] ?? null, fn ($q, $parent) => $q->with($this->parentRelationName($parent)))
+            ->when($search !== '', function ($q) use ($search, $config, $hasCode) {
+                $q->where(function ($query) use ($search, $config, $hasCode) {
+                    $query->where($config['name_field'], 'like', "%{$search}%");
+                    if ($hasCode) {
+                        $query->orWhere('code', 'like', "%{$search}%");
+                    }
+                });
+            })
             ->orderBy($config['name_field'])
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         return view('organization.index', [
             'type' => $type,
             'config' => $config,
             'records' => $records,
+            'search' => $search,
             'from' => $this->originFor($request),
         ]);
     }

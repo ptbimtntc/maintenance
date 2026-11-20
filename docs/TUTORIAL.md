@@ -215,7 +215,8 @@ Plant Manager (pemimpin tertinggi) **tidak muncul** di daftar Employees maupun t
 ### Master Data
 Hanya untuk pengguna dengan izin master data (default: Administrator). Dari landing page pilih jenis data: departemen, divisi, area maintenance, tim, posisi, business unit, skill position, employment type/source/status, shift, lokasi, kategori skill, level kompetensi, machine database (Machine Database C&B dan Machine Database WWD), serta konfigurasi **Shift Comm Parameters** (pengaturan Rolling Days dan Threshold Kejadian problem berulang TS).
 - **Create**, **Edit**, nonaktifkan, atau **Delete** data.
-- Khusus Machine Database: dapat mencari berdasarkan nomor mesin, functional location, atau tipe mesin, memfilter berdasarkan tipe mesin, serta input Machine Type dilengkapi saran otomatis dari tipe mesin yang sudah ada.
+- Setiap submenu punya kotak **pencarian** (berdasarkan nama dan kode, bila jenis data itu punya kolom kode).
+- Khusus Machine Database: pencarian berdasarkan nomor mesin, functional location, atau tipe mesin, memfilter berdasarkan tipe mesin, serta input Machine Type dilengkapi saran otomatis dari tipe mesin yang sudah ada.
 - Tersedia **Import** dan **Export** XLSX per jenis data.
 <!-- /only -->
 
@@ -499,6 +500,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 | 2026-11-19 | Tombol **Login** di pojok kanan atas (saat sebagai tamu) kini membuka form login melayang (overlay) sehingga pengguna tetap di halaman yang sedang dibuka; halaman login penuh tetap tersedia. |
 | 2026-11-19 | User Management: ditambahkan kotak pencarian nama/email (klarifikasi), serta fitur **Reset Password** dan **Delete User** khusus role Administrator. |
 | 2026-11-19 | Pembuatan data karyawan baru kini otomatis membuat akun login (username/password awal = NIK); `app:provision-employee-users` kini khusus untuk backfill karyawan lama. |
+| 2026-11-20 | Master Data: setiap submenu kini punya kotak pencarian (nama/kode). |
 | 2026-11-13 | Halaman Profile: ditambah fitur unggah/hapus foto profil (tampil di menu pengguna); pendaftaran Face Login sementara disembunyikan dari halaman Profile (panduan Face Login ikut disembunyikan dari Help). |
 | 2026-11-13 | Menu pengguna (pojok kanan atas) kini punya menu **Change Password** tersendiri; bagian *Update Password* dihapus dari halaman Profile. Login pertama dengan password awal kini diarahkan ke Change Password. |
 | 2026-11-11 | Shift Comm: Menambahkan konfigurasi dinamis batas waktu edit (*edit grace period window*) dalam satuan jam di Master Data; tombol edit otomatis tersembunyi dan update diblokir bila umur record melampaui batas. |
