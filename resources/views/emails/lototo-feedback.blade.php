@@ -6,6 +6,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>LOTOTO &amp; LMRA FEEDBACK</title>
+    <style>
+        /* The button keeps its colours in every link state (visited links are purple by default in many mail clients). */
+        a.follow-up-btn, a.follow-up-btn:link, a.follow-up-btn:visited, a.follow-up-btn:hover, a.follow-up-btn:active { color: #ffffff !important; background: #1c1917 !important; text-decoration: none !important; }
+    </style>
 </head>
 <body style="margin:0;padding:0;background:#f5f5f4;font-family:Arial,Helvetica,sans-serif;color:#1c1917;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f4;padding:24px 12px;">
@@ -20,7 +24,7 @@
                 </tr>
                 <tr>
                     <td style="padding:16px 24px 0;">
-                        <p style="margin:0;padding:10px 14px;border-radius:8px;background:#fef3c7;border:1px solid #fcd34d;color:#78350f;font-size:14px;font-weight:bold;">
+                        <p style="margin:0;color:#1c1917;font-size:14px;font-weight:bold;">
                             Perlu feedback / follow-up supervisor
                         </p>
                         @if ($supervisor)
@@ -40,11 +44,7 @@
                                 <tr>
                                     <td style="width:130px;padding:6px 0;vertical-align:top;color:#78716c;font-weight:bold;">{{ $label }}</td>
                                     <td style="padding:6px 0;vertical-align:top;font-weight:bold;color:#1c1917;">
-                                        @if ($label === 'Nomor LOTOTO')
-                                            <span style="display:inline-block;padding:2px 10px;border-radius:6px;background:#dc2626;color:#ffffff;font-weight:900;">{{ $value }}</span>
-                                        @else
-                                            {{ $value }}
-                                        @endif
+                                        {{ $value }}
                                     </td>
                                 </tr>
                             @endforeach
@@ -75,7 +75,7 @@
                 </tr>
                 <tr>
                     <td align="center" style="padding:22px 24px;">
-                        <a href="{{ $link }}" style="display:inline-block;padding:14px 28px;border-radius:10px;background:#1c1917;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;">LINK TO FOLLOW UP</a>
+                        <a class="follow-up-btn" href="{{ $link }}" style="display:inline-block;padding:14px 28px;border-radius:10px;background:#1c1917;color:#ffffff !important;font-size:15px;font-weight:bold;text-decoration:none;">LINK TO FOLLOW UP</a>
                         <p style="margin:12px 0 0;font-size:12px;color:#78716c;">Link berlaku {{ \App\Support\LototoFollowUpLink::VALID_DAYS }} hari dan hanya untuk Anda sebagai supervisor karyawan ini.</p>
                         <p style="margin:6px 0 0;font-size:11px;color:#a8a29e;word-break:break-all;">{{ $link }}</p>
                     </td>

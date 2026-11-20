@@ -145,10 +145,16 @@ class LototoSupervisorFeedbackTest extends TestCase
 
             return true;
         });
-        foreach (['LOTOTO &amp; LMRA FEEDBACK', 'Perlu feedback / follow-up supervisor', 'Budi Teknisi', '>07<', 'Test machine', 'Test maintenance work', 'Kunci torsi retak.', 'LINK TO FOLLOW UP',
+        foreach (['LOTOTO &amp; LMRA FEEDBACK', 'Perlu feedback / follow-up supervisor', 'Budi Teknisi', 'Test machine', 'Test maintenance work', 'Kunci torsi retak.', 'LINK TO FOLLOW UP',
             '1. Saya tahu bagaimana melakukan pekerjaan ini', '5. Jari / tangan saya AMAN (tidak dalam LoF)'] as $text) {
             $this->assertStringContainsString($text, $html);
         }
+        // Plain text: the label has no yellow block and the LOTOTO number no red block; the button keeps its colours when visited.
+        $this->assertDoesNotMatchRegularExpression('/background:#fef3c7[^"]*">\s*Perlu feedback/s', $html);
+        $this->assertMatchesRegularExpression('/font-weight:bold;color:#1c1917;">\s*07\s*<\/td>/', $html);
+        $this->assertDoesNotMatchRegularExpression('/<span[^>]*background:#dc2626[^>]*>\s*07/', $html);
+        $this->assertStringContainsString('a.follow-up-btn:visited', $html);
+        $this->assertMatchesRegularExpression('/class="follow-up-btn"[^>]*color:#ffffff !important/', $html);
         // Answer 4 (NO) is red; answer 1 (YES) is not.
         $this->assertMatchesRegularExpression('/background:#fef2f2;color:#b91c1c;[^"]*">\s*4\. Saya memiliki tools.*?background:#dc2626;color:#ffffff;">\s*TIDAK/s', $html);
         $this->assertDoesNotMatchRegularExpression('/#b91c1c;[^"]*">\s*1\. Saya tahu/s', $html);
