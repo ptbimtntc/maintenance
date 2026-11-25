@@ -11,7 +11,7 @@
     "name": "rolldown-runtime"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Z1MPbW63.css",
+    "file": "assets/app-Du2G5fOD.css",
     "name": "app",
     "names": [
       "app.css"
@@ -20,7 +20,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-k_VApQzX.js",
+    "file": "assets/app-FXLuoXq6.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -30,10 +30,17 @@
     "dynamicImports": [
       "resources/js/face-login.js",
       "resources/js/training-checkin.js",
+      "resources/js/employee-gallery.js",
       "resources/js/task-board.js",
       "resources/js/lototo.js",
       "resources/js/news-editor.js"
     ]
+  },
+  "resources/js/employee-gallery.js": {
+    "file": "assets/employee-gallery-4N8ioHvY.js",
+    "name": "employee-gallery",
+    "src": "resources/js/employee-gallery.js",
+    "isDynamicEntry": true
   },
   "resources/js/face-login.js": {
     "file": "assets/face-login-QqtgmKmO.js",
@@ -57,7 +64,7 @@
     "isDynamicEntry": true
   },
   "resources/js/lototo-print.js": {
-    "file": "assets/lototo-print-CVGZDB0G.js",
+    "file": "assets/lototo-print-C2j95_-9.js",
     "name": "lototo-print",
     "src": "resources/js/lototo-print.js",
     "isDynamicEntry": true,
@@ -67,7 +74,7 @@
     ]
   },
   "resources/js/lototo.js": {
-    "file": "assets/lototo-Cu8dijVi.js",
+    "file": "assets/lototo-rB6NEoQb.js",
     "name": "lototo",
     "src": "resources/js/lototo.js",
     "isDynamicEntry": true,

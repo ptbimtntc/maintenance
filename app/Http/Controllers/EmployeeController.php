@@ -40,6 +40,9 @@ class EmployeeController extends Controller
      * a file downloaded via "Export XLSX" can be edited and re-uploaded via
      * "Import XLSX" to bulk-update the same employees without reshaping it.
      */
+    /** Most cards the Employees gallery view renders; beyond that, filters narrow it down. */
+    private const GALLERY_LIMIT = 500;
+
     private const IMPORT_COLUMNS = [
         'Employee Number', 'Nomor LOTOTO', 'ID SAP', 'Full Name', 'Business Unit', 'Department', 'Maintenance Team',
         'Position', 'Skill Position', 'Employment Type', 'Employment Source', 'Management',
@@ -183,10 +186,23 @@ class EmployeeController extends Controller
         // is always appended, an explicit "All Statuses" (nothing ticked)
         // stays distinguishable from a first visit on page 2+ links too -
         // see the default-to-Active comment above.
-        $employees = $query->orderBy('full_name')->paginate(15)->appends($filters);
+        // Gallery (photo cards, the default) or the classic paginated table.
+        $view = $request->query('view') === 'table' ? 'table' : 'gallery';
+
+        $employees = (clone $query)->orderBy('full_name')->paginate(15)
+            ->appends($view === 'table' ? $filters + ['view' => 'table'] : $filters);
+
+        // The gallery scrolls through every match rather than 15 per page;
+        // capped so a huge unfiltered list can't produce an endless page.
+        $galleryEmployees = $view === 'gallery'
+            ? (clone $query)->orderBy('full_name')->limit(self::GALLERY_LIMIT)->get()
+            : collect();
 
         return view('employees.index', [
+            'view' => $view,
             'employees' => $employees,
+            'galleryEmployees' => $galleryEmployees,
+            'galleryLimit' => self::GALLERY_LIMIT,
             'businessUnits' => BusinessUnit::where('is_active', true)->orderBy('name')->get(),
             'employmentTypes' => EmploymentType::where('is_active', true)->orderBy('name')->get(),
             'employmentSources' => EmploymentSource::where('is_active', true)->orderBy('name')->get(),

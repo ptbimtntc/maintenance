@@ -174,7 +174,10 @@ Catatan komunikasi antar-shift (serah terima).
 <!-- only:employees -->
 ### Employees (Database Karyawan)
 **Melihat dan mencari**
-- Daftar menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift. Foto ditampilkan langsung oleh aplikasi (juga di detail Employee, bagan organisasi, Task, dan halaman verifikasi sertifikat); bila file foto belum ada atau tidak dapat dimuat, tampil inisial nama (bukan gambar rusak). Pada form tambah/ubah Employee, foto yang baru dipilih langsung tampil sebagai pratinjau sebelum disimpan.
+- Ada dua tampilan, dipilih lewat tombol **Gallery | Table** di kiri atas. Filter yang sedang aktif tetap berlaku saat berpindah tampilan.
+  - **Gallery** (default) — kartu foto karyawan bertumpuk dalam 3D. **Scroll ke bawah/atas** untuk menggeser kartu satu per satu; nama, NIK, dan posisi kartu yang sedang di depan tampil di bawah, beserta urutannya (mis. *07 / 28*). Arahkan kursor ke kartu untuk memperbesar dan melihat **NIK serta nama**; klik kartu untuk membuka profil karyawan. Gallery menampilkan semua karyawan hasil filter (maksimal 500 — gunakan filter atau tampilan Table untuk sisanya). Jika animasi dimatikan di perangkat (*reduce motion*), Gallery tampil sebagai grid foto biasa.
+  - **Table** — daftar berhalaman seperti sebelumnya.
+- Tampilan Table menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift. Foto ditampilkan langsung oleh aplikasi (juga di detail Employee, bagan organisasi, Task, dan halaman verifikasi sertifikat); bila file foto belum ada atau tidak dapat dimuat, tampil inisial nama (bukan gambar rusak). Pada form tambah/ubah Employee, foto yang baru dipilih langsung tampil sebagai pratinjau sebelum disimpan.
 - Cari berdasarkan NIK atau nama.
 - Filter: Business Unit, Department, Employment Type, Employment Source, Employment Status (default **Active**), Supervisor, dan Shift. Beberapa filter bisa dipilih lebih dari satu nilai.
 
@@ -184,7 +187,7 @@ Catatan komunikasi antar-shift (serah terima).
 2. Anda juga bisa **impor** banyak karyawan sekaligus lewat fitur import.
 3. Akun login untuk karyawan baru **dibuat otomatis** saat disimpan: username dan password awal memakai NIK, role ditentukan dari posisi karyawan, dan akun wajib mengganti password saat login pertama. Jika NIK/email tersebut sudah dipakai akun lain, pembuatan otomatis dilewati — hubungkan manual lewat User Management.
 
-**Menghapus** — centang beberapa baris lalu **Delete Selected**. Setiap baris diperiksa haknya satu per satu.
+**Menghapus** — di tampilan **Table**, centang beberapa baris lalu **Delete Selected**. Setiap baris diperiksa haknya satu per satu.
 <!-- /only -->
 
 **Profil karyawan** (klik nama) memakai tab:
@@ -507,6 +510,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-25 | Employees: tampilan **Gallery** (default, kartu foto 3D yang bergeser saat di-scroll, hover menampilkan NIK & nama) dan **Table** (daftar seperti sebelumnya). Delete Selected ada di tampilan Table. |
 | 2026-11-25 | Link dari email (mis. task) saat belum login kini membuka halaman login lalu kembali ke halaman yang dituju, termasuk setelah ganti password pertama kali; sebelumnya muncul 403. |
 | 2026-11-25 | Tabel daftar: sorotan baris, bayangan penanda geser horizontal, judul kolom tetap terlihat. Form: kolom aktif bergaris oranye, kolom yang salah ditandai merah (bagian *Mengenal Tampilan*). |
 | 2026-11-25 | Tampilan baru halaman baca News: judul di atas gambar, perkiraan waktu baca, garis progres baca, dan daftar **More news** (bagian *Dashboard*). |

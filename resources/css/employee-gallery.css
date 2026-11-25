@@ -1,0 +1,337 @@
+/*
+ * Employees "Gallery" view (resources/views/employees/_gallery.blade.php).
+ *
+ * Light, warm stage in the login page's palette (brand-50 -> neutral-50 ->
+ * accent-50 with soft orange/blue glows), so it sits naturally in the app.
+ *
+ * Base styles = a plain photo grid (no JS / reduced motion).
+ * .is-3d (added by resources/js/employee-gallery.js) = a tall section with
+ * a sticky dark stage; the script positions every card in 3D from the scroll
+ * position, one card stepping forward per --step of scroll.
+ */
+
+.employee-gallery {
+    --step: 120px;
+    --stage-h: max(480px, calc(100vh - 8rem));
+    --card-w: clamp(150px, 17vw, 240px);
+}
+
+.employee-gallery__viewport {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid #ebe9e5;
+    background: linear-gradient(135deg, #fff4f0 0%, #fbfbfa 50%, #f2fbfe 100%);
+    padding: 1.25rem;
+    box-shadow: 0 20px 40px -28px rgb(33 31 28 / 0.35);
+}
+
+/* Soft brand glows drifting behind the cards (motion-blob from motion.css). */
+.employee-gallery__blob {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(60px);
+    pointer-events: none;
+}
+
+.employee-gallery__blob--orange {
+    top: -6rem;
+    left: -4rem;
+    width: 26rem;
+    height: 26rem;
+    background: rgb(255 181 155 / 0.55);
+}
+
+.employee-gallery__blob--blue {
+    right: -5rem;
+    bottom: -7rem;
+    width: 30rem;
+    height: 30rem;
+    background: rgb(153 222 248 / 0.5);
+}
+
+.employee-gallery__glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgb(33 31 28 / 0.09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+.employee-gallery__stage {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+/* ---- Card ------------------------------------------------------------- */
+
+.employee-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    border-radius: 16px;
+    outline: none;
+}
+
+.employee-card__inner {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    background: #fff;
+    box-shadow:
+        0 0 0 1px rgb(33 31 28 / 0.06),
+        0 22px 40px -14px rgb(61 57 52 / 0.45);
+    transition:
+        transform 380ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 380ms ease;
+}
+
+/* Depth haze set by the script (--shade 0..1): cards further back fade into the light stage. */
+.employee-card__inner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: #fbfbfa;
+    opacity: var(--shade, 0);
+    pointer-events: none;
+    transition: opacity 200ms linear;
+}
+
+.employee-card__initials {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2rem, 4vw, 3.25rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #cc3d12;
+    background: linear-gradient(160deg, #ffd3c2, #cceefc);
+}
+
+.employee-card__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 400ms ease;
+}
+
+.employee-card__photo.is-loaded {
+    opacity: 1;
+}
+
+.employee-card__info {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 2.5rem 0.9rem 0.85rem;
+    color: #fff;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.4) 60%, transparent);
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+    transition:
+        opacity 250ms ease,
+        transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.employee-card__nik {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #ffb59b;
+}
+
+.employee-card__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.employee-card:hover .employee-card__inner,
+.employee-card:focus-visible .employee-card__inner {
+    transform: scale(1.07);
+    box-shadow:
+        0 0 0 2px #ff602c,
+        0 30px 50px -16px rgb(61 57 52 / 0.55);
+}
+
+.employee-card:hover .employee-card__inner::after,
+.employee-card:focus-visible .employee-card__inner::after {
+    opacity: 0;
+}
+
+.employee-card:hover .employee-card__info,
+.employee-card:focus-visible .employee-card__info {
+    opacity: 1;
+    transform: none;
+}
+
+/* Caption + hint only make sense on the 3D stage. */
+.employee-gallery__caption,
+.employee-gallery__hint {
+    display: none;
+}
+
+/* ---- 3D stage ----------------------------------------------------------- */
+
+.employee-gallery.is-3d {
+    height: calc(var(--stage-h) + (var(--count) - 1) * var(--step));
+}
+
+.employee-gallery.is-3d .employee-gallery__viewport {
+    position: sticky;
+    top: 1rem;
+    height: var(--stage-h);
+    padding: 0;
+}
+
+.employee-gallery.is-3d .employee-gallery__stage {
+    position: absolute;
+    inset: 0;
+    display: block;
+    perspective: 1500px;
+    perspective-origin: 50% 35%;
+}
+
+.employee-gallery.is-3d .employee-card {
+    position: absolute;
+    left: 50%;
+    top: 45%;
+    width: var(--card-w);
+    margin-left: calc(var(--card-w) / -2);
+    margin-top: calc(var(--card-w) * -2 / 3);
+    visibility: hidden;
+    will-change: transform, opacity;
+}
+
+/* A hovered card comes to the front of the stack. */
+.employee-gallery.is-3d .employee-card:hover,
+.employee-gallery.is-3d .employee-card:focus-visible {
+    z-index: 5000 !important;
+}
+
+.employee-gallery.is-3d .employee-gallery__caption {
+    position: absolute;
+    inset: auto 1.5rem 1.25rem;
+    z-index: 6000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #211f1c;
+    pointer-events: none;
+}
+
+.employee-gallery__caption-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(1.05rem, 2vw, 1.5rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.employee-gallery__caption-meta {
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    color: #7a7267;
+}
+
+.employee-gallery__caption-meta [data-gallery-nik] {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #f04d1b;
+}
+
+.employee-gallery__counter {
+    flex-shrink: 0;
+    text-align: right;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.employee-gallery__bar {
+    display: block;
+    width: 7rem;
+    height: 2px;
+    margin-top: 0.4rem;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgb(33 31 28 / 0.1);
+}
+
+.employee-gallery__bar > span {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, #ff602c, #fda92e);
+}
+
+.employee-gallery.is-3d .employee-gallery__hint {
+    position: absolute;
+    top: 1.25rem;
+    left: 50%;
+    z-index: 6000;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    font-size: 0.75rem;
+    color: #5c564d;
+    background: rgb(255 255 255 / 0.7);
+    border: 1px solid #ebe9e5;
+    box-shadow: 0 4px 12px -6px rgb(33 31 28 / 0.2);
+    backdrop-filter: blur(6px);
+    pointer-events: none;
+    transition: opacity 400ms ease;
+}
+
+.employee-gallery__hint.is-hidden {
+    opacity: 0;
+}
+
+@media (max-width: 640px) {
+    .employee-gallery {
+        --step: 95px;
+        --card-w: 46vw;
+    }
+
+    .employee-gallery__stage {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .employee-gallery__blob--orange {
+        width: 14rem;
+        height: 14rem;
+        opacity: 0.7;
+    }
+
+    .employee-gallery__blob--blue {
+        width: 16rem;
+        height: 16rem;
+        opacity: 0.7;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .employee-card__inner,
+    .employee-card__info {
+        transition: none;
+    }
+}

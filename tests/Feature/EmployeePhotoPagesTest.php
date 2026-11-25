@@ -42,10 +42,11 @@ class EmployeePhotoPagesTest extends TestCase
 
     public function test_employee_pages_use_the_app_photo_route_or_initials_and_never_the_storage_link(): void
     {
-        $index = $this->actingAs($this->admin)->get(route('employees.index', ['search' => 'Aa']))->assertOk()->getContent();
+        $index = $this->actingAs($this->admin)->get(route('employees.index', ['search' => 'Aa', 'view' => 'table']))->assertOk()->getContent();
+        $gallery = $this->actingAs($this->admin)->get(route('employees.index', ['search' => 'Aa']))->assertOk()->getContent();
         $show = $this->actingAs($this->admin)->get(route('employees.show', $this->withPhoto))->assertOk()->getContent();
         $edit = $this->actingAs($this->admin)->get(route('employees.edit', $this->withPhoto))->assertOk()->getContent();
-        foreach ([$index, $show, $edit] as $html) {
+        foreach ([$index, $gallery, $show, $edit] as $html) {
             $this->assertStringContainsString('/employees/'.$this->withPhoto->id.'/photo?v=', $html);
             $this->assertStringNotContainsString('/storage/employee-photos', $html);
             $this->assertStringNotContainsString('\1', $html, 'no stray text next to the photo');
@@ -57,6 +58,10 @@ class EmployeePhotoPagesTest extends TestCase
         $this->assertStringContainsString('onerror=', $index);
         // The file that is gone shows initials, not an image.
         $this->assertStringNotContainsString('/employees/'.$this->withoutFile->id.'/photo', $index);
+        // Gallery (default view): same photo route, requested lazily via data-src, initials underneath.
+        $this->assertStringContainsString('data-src="/employees/'.$this->withPhoto->id.'/photo?v=', $gallery);
+        $this->assertStringContainsString('employee-card__initials', $gallery);
+        $this->assertStringNotContainsString('/employees/'.$this->withoutFile->id.'/photo', $gallery);
         $this->actingAs($this->admin)->get(route('employees.show', $this->withoutFile))->assertOk()->assertDontSee('/photo?v=', false);
         // Add and edit forms: preview of a newly chosen file.
         foreach ([$edit, $this->actingAs($this->admin)->get(route('employees.create'))->assertOk()->getContent()] as $form) {

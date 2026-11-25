@@ -3,7 +3,26 @@
 
     <div class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-3">
+                {{-- Gallery (default) / Table switch; keeps the current filters. --}}
+                @php
+                    $viewQuery = fn ($target) => array_merge($filters, $target === 'table' ? ['view' => 'table'] : []);
+                @endphp
+                <div class="inline-flex rounded-lg border border-neutral-200 bg-white p-0.5 shadow-sm" role="group" aria-label="Choose view">
+                    @foreach (['gallery' => ['Gallery', 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z'], 'table' => ['Table', 'M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5']] as $key => [$label, $icon])
+                        <a href="{{ route('employees.index', $viewQuery($key)) }}"
+                           @if ($view === $key) aria-current="page" @endif
+                           @class([
+                               'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition',
+                               'bg-neutral-900 text-white shadow-sm' => $view === $key,
+                               'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900' => $view !== $key,
+                           ])>
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $icon }}" /></svg>
+                            {{ $label }}
+                        </a>
+                    @endforeach
+                </div>
+
                 <p class="text-sm text-neutral-500">{{ $employees->total() }} employee(s) found.</p>
                 <x-read-only-badge menu="employees" />
             </div>
@@ -51,6 +70,9 @@
         <x-filter-panel :active-count="$filterActiveCount">
             <form method="GET" action="{{ route('employees.index') }}" class="grid grid-cols-1 gap-2.5 rounded-lg border border-neutral-200 bg-white p-3 shadow-sm sm:grid-cols-2 lg:grid-cols-6">
                 <input type="hidden" name="applied" value="1">
+                @if ($view === 'table')
+                    <input type="hidden" name="view" value="table">
+                @endif
 
                 <input type="text" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Search NIK or name..."
                        class="col-span-1 rounded-md text-sm py-1.5 transition focus:border-brand-500 focus:ring-brand-500 sm:col-span-2 lg:col-span-2 {{ filled($filters['search'] ?? null) ? $activeFieldClass : $defaultFieldClass }}" />
@@ -75,11 +97,14 @@
 
                 <div class="col-span-1 flex gap-2 sm:col-span-2 lg:col-span-6">
                     <x-button size="sm" type="submit">Filter</x-button>
-                    <x-button variant="secondary" size="sm" href="{{ route('employees.index') }}">Reset</x-button>
+                    <x-button variant="secondary" size="sm" href="{{ route('employees.index', $view === 'table' ? ['view' => 'table'] : []) }}">Reset</x-button>
                 </div>
             </form>
         </x-filter-panel>
 
+        @if ($view === 'gallery')
+            @include('employees._gallery', ['employees' => $galleryEmployees, 'total' => $employees->total(), 'limit' => $galleryLimit])
+        @else
         @can('create', \App\Models\Employee::class)
             <form id="bulk-delete-form" method="POST" action="{{ route('employees.bulk-destroy') }}"
                   data-confirm="Delete the selected employee(s)? This cannot be undone."
@@ -154,6 +179,7 @@
         @endcan
 
         {{ $employees->links() }}
+        @endif
     </div>
     @can('create', \App\Models\Employee::class)
         <x-modal name="import-employees" maxWidth="lg">

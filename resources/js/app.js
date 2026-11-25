@@ -21,6 +21,10 @@ if (document.getElementById('training-checkin-panel')) {
     import('./training-checkin');
 }
 
+if (document.getElementById('employee-gallery')) {
+    import('./employee-gallery');
+}
+
 if (document.getElementById('task-board')) {
     import('./task-board');
 }

@@ -49,6 +49,43 @@ class EmployeeManagementTest extends TestCase
         $response->assertViewHas('employees', fn ($employees) => $employees->total() === 3);
     }
 
+    public function test_index_defaults_to_the_gallery_with_every_match_and_offers_the_table(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        Employee::factory()->count(20)->create();
+
+        // Gallery (default): every match as a photo card, not 15 per page; no bulk delete.
+        $this->actingAs($admin)->get(route('employees.index', ['applied' => '1']))
+            ->assertOk()
+            ->assertViewHas('view', 'gallery')
+            ->assertViewHas('galleryEmployees', fn ($employees) => $employees->count() === 20)
+            ->assertSee('id="employee-gallery"', false)
+            ->assertDontSee('id="bulk-delete-form"', false);
+
+        // Table: the existing paginated list with bulk delete; pager links keep the view.
+        $this->actingAs($admin)->get(route('employees.index', ['applied' => '1', 'view' => 'table']))
+            ->assertOk()
+            ->assertViewHas('view', 'table')
+            ->assertViewHas('employees', fn ($employees) => $employees->count() === 15 && str_contains($employees->nextPageUrl(), 'view=table'))
+            ->assertSee('id="bulk-delete-form"', false)
+            ->assertDontSee('id="employee-gallery"', false);
+    }
+
+    public function test_gallery_respects_filters_and_visibility(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        Employee::factory()->create(['full_name' => 'Gallery Match Person']);
+        Employee::factory()->create(['full_name' => 'Somebody Else Entirely']);
+
+        $this->actingAs($admin)->get(route('employees.index', ['applied' => '1', 'search' => 'Gallery Match']))
+            ->assertOk()
+            ->assertViewHas('galleryEmployees', fn ($employees) => $employees->pluck('full_name')->all() === ['Gallery Match Person'])
+            ->assertSee('Gallery Match Person')
+            ->assertDontSee('Somebody Else Entirely');
+    }
+
     public function test_people_development_sees_all_employees(): void
     {
         // People Development (HR) is an intentional exception to hierarchy
