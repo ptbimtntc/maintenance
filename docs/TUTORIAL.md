@@ -76,6 +76,8 @@ Karyawan baru bisa menerima **link onboarding** (biasanya lewat QR) dari HR. Buk
 - **Top bar** — ikon **lonceng notifikasi** (dengan angka belum dibaca) dan menu pengguna (Profile, Change Password, Logout).
 - **Lencana “🔒 View only”** — muncul di halaman daftar bila Anda hanya boleh melihat, tidak boleh mengedit menu itu.
 - **Filter, pencarian, dan ekspor** — kebanyakan halaman daftar punya panel filter, kotak cari, dan tombol ekspor **CSV / XLSX**.
+- **Tabel daftar** — baris di bawah kursor disorot dengan garis oranye di kiri. Bila tabel lebih lebar dari layar (misalnya di ponsel), bayangan tipis di tepi kiri/kanan menandakan masih ada kolom yang bisa digeser. Saat isi tabel di-scroll, judul kolom tetap terlihat di atas.
+- **Form** — kolom yang sedang diisi diberi garis oranye. Bila ada isian yang salah setelah menekan simpan, kolom tersebut berwarna merah dengan pesan penjelasan tepat di bawahnya.
 - **Perpindahan halaman** — saat membuka menu lain, sidebar dan top bar tetap diam dan hanya isi halaman yang berganti dengan animasi singkat. Jika halaman butuh waktu untuk dimuat, muncul **garis progres berwarna** tipis di paling atas layar. Animasi hanya ada di Chrome/Edge/Safari versi baru dan mati otomatis bila *reduce motion* aktif di perangkat; di browser lain halaman berpindah seperti biasa.
 
 ### Notifikasi
@@ -503,6 +505,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-25 | Tabel daftar: sorotan baris, bayangan penanda geser horizontal, judul kolom tetap terlihat. Form: kolom aktif bergaris oranye, kolom yang salah ditandai merah (bagian *Mengenal Tampilan*). |
 | 2026-11-25 | Tampilan baru halaman baca News: judul di atas gambar, perkiraan waktu baca, garis progres baca, dan daftar **More news** (bagian *Dashboard*). |
 | 2026-11-25 | Transisi halus saat berpindah halaman (sidebar & top bar tetap diam) dan garis progres di atas layar saat halaman sedang dimuat (bagian *Mengenal Tampilan*). |
 | 2026-11-25 | Tampilan baru halaman login (panel brand + form) dan Dashboard (sapaan, animasi scroll, angka count-up, grafik kecil di kartu statistik kini tampil). Animasi otomatis mati bila *reduce motion* aktif di perangkat. |

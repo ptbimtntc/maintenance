@@ -1,0 +1,159 @@
+/*
+ * App-wide polish for list tables and form controls, applied by selector
+ * so the ~40 hand-written list views don't each need editing.
+ *
+ * Deliberately no entrance animations here: tables and forms are used all
+ * day, so they only get clearer hover/focus/error feedback.
+ *
+ * Scope: "list tables" are table.divide-y (every index view uses it; the
+ * LOTOTO activity grid does not and is left alone). Rules use :where() or
+ * stay at low specificity so per-view utility classes still win.
+ */
+
+@layer base {
+    /* Brand focus colour for every control; @tailwindcss/forms defaults to blue. */
+    [type='text'],
+    [type='email'],
+    [type='url'],
+    [type='password'],
+    [type='number'],
+    [type='date'],
+    [type='datetime-local'],
+    [type='month'],
+    [type='search'],
+    [type='tel'],
+    [type='time'],
+    [type='week'],
+    [multiple],
+    textarea,
+    select {
+        transition:
+            border-color 150ms ease,
+            box-shadow 150ms ease,
+            background-color 150ms ease;
+    }
+
+    [type='text']:focus,
+    [type='email']:focus,
+    [type='url']:focus,
+    [type='password']:focus,
+    [type='number']:focus,
+    [type='date']:focus,
+    [type='datetime-local']:focus,
+    [type='month']:focus,
+    [type='search']:focus,
+    [type='tel']:focus,
+    [type='time']:focus,
+    [type='week']:focus,
+    [multiple]:focus,
+    textarea:focus,
+    select:focus {
+        --tw-ring-color: rgb(255 96 44 / 0.35);
+        border-color: #ff602c;
+    }
+
+    [type='checkbox'],
+    [type='radio'] {
+        color: #f04d1b;
+        transition:
+            background-color 120ms ease,
+            border-color 120ms ease,
+            box-shadow 120ms ease;
+    }
+
+    [type='checkbox']:focus,
+    [type='radio']:focus {
+        --tw-ring-color: rgb(255 96 44 / 0.45);
+    }
+
+    :is(input, select, textarea):disabled {
+        cursor: not-allowed;
+        background-color: #f5f4f2;
+    }
+
+    ::selection {
+        background-color: rgb(255 96 44 / 0.2);
+    }
+}
+
+/* ---- Validation errors (x-input-error renders ul.form-error) ----------- */
+
+@keyframes ui-error-in {
+    0% {
+        opacity: 0;
+        transform: translate3d(0, -4px, 0);
+    }
+    40% {
+        opacity: 1;
+        transform: translate3d(-3px, 0, 0);
+    }
+    70% {
+        transform: translate3d(2px, 0, 0);
+    }
+    100% {
+        transform: none;
+    }
+}
+
+.form-error {
+    animation: ui-error-in 420ms ease-out both;
+}
+
+/* The field right before its error message turns red. */
+:is(input, select, textarea, trix-editor):has(+ .form-error) {
+    border-color: #cb4530;
+    background-color: #fdf3f1;
+}
+
+:is(input, select, textarea):has(+ .form-error):focus {
+    --tw-ring-color: rgb(203 69 48 / 0.3);
+    border-color: #cb4530;
+    background-color: #fff;
+}
+
+/* ---- List tables ------------------------------------------------------- */
+
+:where(table.divide-y) > tbody > tr {
+    transition: background-color 120ms ease;
+}
+
+:where(table.divide-y) > tbody > tr:hover {
+    background-color: rgb(255 244 240 / 0.7);
+}
+
+/* Brand accent on the hovered row's leading edge. */
+:where(table.divide-y) > tbody > tr > :first-child {
+    transition: box-shadow 120ms ease;
+}
+
+:where(table.divide-y) > tbody > tr:hover > :first-child {
+    box-shadow: inset 3px 0 0 #ff602c;
+}
+
+/*
+ * Scroll shadows on table wrappers: a soft edge appears on the side that has
+ * more columns to scroll to (pure CSS: "local" covers fade with the content,
+ * "scroll" shadows stay at the edges).
+ */
+:is(.overflow-auto, .overflow-x-auto):has(> table.divide-y) {
+    background:
+        linear-gradient(to right, #fff 40%, rgb(255 255 255 / 0)) left center / 48px 100% no-repeat local,
+        linear-gradient(to left, #fff 40%, rgb(255 255 255 / 0)) right center / 48px 100% no-repeat local,
+        radial-gradient(farthest-side at 0 50%, rgb(33 31 28 / 0.14), transparent) left center / 14px 100% no-repeat scroll,
+        radial-gradient(farthest-side at 100% 50%, rgb(33 31 28 / 0.14), transparent) right center / 14px 100% no-repeat scroll;
+    background-color: #fff;
+}
+
+/* Sticky header gets a shadow once the table body scrolls under it
+   (.is-scrolled is toggled by resources/js/table-scroll.js). */
+:is(.overflow-auto, .overflow-x-auto).is-scrolled > table.divide-y > thead th {
+    box-shadow:
+        inset 0 -2px 0 #ff602c,
+        0 8px 12px -8px rgb(33 31 28 / 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .form-error {
+        animation: none;
+    }
+}

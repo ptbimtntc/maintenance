@@ -17,7 +17,7 @@ $sizes = [
     'md' => 'px-4 py-2 text-sm',
 ];
 
-$classes = 'inline-flex items-center justify-center gap-1.5 rounded-md font-medium shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 '
+$classes = 'inline-flex items-center justify-center gap-1.5 rounded-md font-medium shadow-sm transition duration-150 hover:shadow active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 '
     .($variants[$variant] ?? $variants['primary']).' '
     .($sizes[$size] ?? $sizes['md']);
 @endphp

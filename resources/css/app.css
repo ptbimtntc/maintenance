@@ -1,6 +1,7 @@
 @import './lototo.css';
 @import './motion.css';
 @import './page-transitions.css';
+@import './ui-polish.css';
 
 @tailwind base;
 @tailwind components;
