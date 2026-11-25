@@ -241,6 +241,23 @@ class NewsTest extends TestCase
         $this->actingAs($staff)->get(route('news.show', $news))->assertOk();
     }
 
+    public function test_news_page_suggests_only_other_news_the_reader_may_see(): void
+    {
+        $staff = $this->staffUser();
+        $news = News::factory()->create(['title' => 'Current Article']);
+        News::factory()->create(['title' => 'Other Published Article']);
+        News::factory()->create(['title' => 'Draft Article', 'is_published' => false]);
+        $secret = News::factory()->create(['title' => 'Secret Notice', 'requires_acknowledgement' => true]);
+        $secret->acknowledgements()->create(['user_id' => $this->staffUser()->id]);
+
+        $this->actingAs($staff)->get(route('news.show', $news))
+            ->assertOk()
+            ->assertSee('More news')
+            ->assertSee('Other Published Article')
+            ->assertDontSee('Draft Article')
+            ->assertDontSee('Secret Notice');
+    }
+
     public function test_non_manager_cannot_view_a_draft_news_item(): void
     {
         $staff = User::factory()->create();

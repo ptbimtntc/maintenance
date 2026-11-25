@@ -82,6 +82,12 @@ class NewsController extends Controller
         return view('news.show', [
             'news' => $news,
             'ownAcknowledgement' => $ownAcknowledgement,
+            // Same visibility rules as the dashboard carousel.
+            'moreNews' => News::query()->published()->visibleTo($user)
+                ->whereKeyNot($news->getKey())
+                ->orderByDesc('created_at')
+                ->take(3)
+                ->get(),
             'acknowledgements' => $canManage && $news->requires_acknowledgement
                 ? $news->acknowledgements()->with('user')->get()->sortBy(fn ($a) => $a->user->name)->values()
                 : collect(),

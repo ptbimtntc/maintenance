@@ -85,10 +85,10 @@
     animation-direction: reverse;
 }
 
-/* "Heartbeat" monitoring line on the login brand panel. */
+/* Self-drawing stroke (login heartbeat line, News check mark). Set --dash to the path length. */
 .motion-draw {
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
+    stroke-dasharray: var(--dash, 1200);
+    stroke-dashoffset: var(--dash, 1200);
     animation: motion-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) 600ms forwards;
 }
 

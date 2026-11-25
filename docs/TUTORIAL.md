@@ -113,7 +113,7 @@ Halaman pertama setelah login. Di bagian atas ada sapaan sesuai waktu (mis. *Goo
 - **Kartu statistik** berisi angka nyata dari database (karyawan, organisasi, skill/kompetensi, training, sertifikat), beberapa dengan grafik kecil (misalnya karyawan Aktif vs Tidak Aktif, status gap kompetensi, distribusi status sertifikat).
 - **Animasi saat di-scroll** — kartu dan grafik muncul bertahap, angka menghitung naik, dan bar memanjang saat bagian itu terlihat di layar. Ini hanya efek tampilan; datanya sama. Jika animasi dimatikan di pengaturan perangkat (*Reduce motion* / *Show animations: off*), dashboard tampil langsung tanpa animasi.
 - **Klik kartu** untuk langsung membuka modul terkait. Kartu hanya bisa diklik jika Anda berhak membuka modul tersebut.
-- **News** — pengumuman dari Maintenance. Pengumuman yang mensyaratkan konfirmasi harus Anda **konfirmasi sudah dibaca** (lihat bagian News).
+- **News** — pengumuman dari Maintenance. Klik berita di carousel untuk membaca lengkap. Halaman berita menampilkan judul di atas gambar, tanggal, penulis, dan perkiraan waktu baca (*min read*). Garis berwarna di atas artikel menunjukkan seberapa jauh Anda sudah membaca. Di bawahnya ada **More news** berisi hingga 3 berita lain yang bisa Anda lihat. Pengumuman yang mensyaratkan konfirmasi harus Anda **konfirmasi sudah dibaca** (lihat bagian News).
 
 ---
 <!-- only:guest -->
@@ -503,6 +503,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-25 | Tampilan baru halaman baca News: judul di atas gambar, perkiraan waktu baca, garis progres baca, dan daftar **More news** (bagian *Dashboard*). |
 | 2026-11-25 | Transisi halus saat berpindah halaman (sidebar & top bar tetap diam) dan garis progres di atas layar saat halaman sedang dimuat (bagian *Mengenal Tampilan*). |
 | 2026-11-25 | Tampilan baru halaman login (panel brand + form) dan Dashboard (sapaan, animasi scroll, angka count-up, grafik kecil di kartu statistik kini tampil). Animasi otomatis mati bila *reduce motion* aktif di perangkat. |
 | 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
