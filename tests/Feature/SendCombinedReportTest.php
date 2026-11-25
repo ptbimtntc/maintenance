@@ -65,9 +65,14 @@ class SendCombinedReportTest extends TestCase
         $manager = User::factory()->create();
         $manager->assignRole(RoleName::MaintenanceManager->value);
 
+        // Only files this run created count: an earlier run that was killed
+        // mid-way can leave its own temp file behind.
+        $pattern = storage_path('app/combined-report-*.xlsx');
+        $before = glob($pattern);
+
         $this->artisan('app:send-combined-report')->assertSuccessful();
 
-        $leftoverFiles = glob(storage_path('app/combined-report-*.xlsx'));
+        $leftoverFiles = array_diff(glob($pattern), $before);
 
         $this->assertEmpty($leftoverFiles);
     }

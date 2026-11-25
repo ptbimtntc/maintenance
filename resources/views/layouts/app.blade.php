@@ -17,6 +17,24 @@
             try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.dataset.sidebar = 'collapsed'; } catch (e) {}
         </script>
 
+        {{-- Page transitions (resources/css/page-transitions.css): name the
+             sidebar/top bar/main only for the duration of a transition. Must
+             be inline in <head> so pagereveal is caught before first render. --}}
+        <script>
+            (function () {
+                var root = document.documentElement;
+                var off = function () { root.classList.remove('vt-active'); };
+                var track = function (event) {
+                    if (! event.viewTransition) return;
+                    root.classList.add('vt-active');
+                    event.viewTransition.finished.finally(off);
+                };
+                addEventListener('pageswap', track);
+                addEventListener('pagereveal', track);
+                addEventListener('pageshow', function (event) { if (event.persisted) off(); });
+            })();
+        </script>
+
         {{-- Scroll-reveal (resources/js/motion.js) hides [data-reveal] blocks only
              while html.motion-ok is set; drop it if the bundle never boots so
              content can't stay invisible. --}}

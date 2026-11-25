@@ -8,7 +8,7 @@
  * Reloads never animate (per spec) and reduced-motion users are opted out.
  *
  * Class hooks (layouts/app.blade.php, layouts/topbar.blade.php):
- *   .vt-sidebar  .vt-topbar  .vt-main
+ *   .vt-sidebar  .vt-topbar  .vt-main   (named only under html.vt-active)
  */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -17,15 +17,21 @@
     }
 }
 
-.vt-sidebar {
+/*
+ * Names are applied only while a transition runs (html.vt-active, toggled by
+ * the inline pageswap/pagereveal script in layouts/app.blade.php). A
+ * view-transition-name makes its element a stacking context, so leaving them
+ * on permanently put <main> above the top bar's dropdowns and login modal.
+ */
+html.vt-active .vt-sidebar {
     view-transition-name: app-sidebar;
 }
 
-.vt-topbar {
+html.vt-active .vt-topbar {
     view-transition-name: app-topbar;
 }
 
-.vt-main {
+html.vt-active .vt-main {
     view-transition-name: app-main;
 }
 
