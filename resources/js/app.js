@@ -2,6 +2,7 @@
 
 import Alpine from 'alpinejs';
 import './motion';
+import './page-progress';
 import './dashboard-charts';
 import './qrcode-canvas';
 import './qr-base-url';

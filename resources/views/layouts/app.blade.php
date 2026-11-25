@@ -32,7 +32,7 @@
     <body class="font-sans antialiased bg-neutral-100" x-data="{ sidebarOpen: false }">
         <div class="flex h-screen overflow-hidden">
             <!-- Desktop sidebar -->
-            <div id="desktop-sidebar" class="hidden overflow-hidden lg:flex lg:shrink-0">
+            <div id="desktop-sidebar" class="vt-sidebar hidden overflow-hidden lg:flex lg:shrink-0">
                 @include('layouts.sidebar', ['mobile' => false])
             </div>
 
@@ -57,7 +57,7 @@
             <div class="flex flex-1 flex-col overflow-hidden">
                 @include('layouts.topbar', ['header' => $header ?? null])
 
-                <main class="flex-1 overflow-y-auto">
+                <main class="vt-main flex-1 overflow-y-auto">
                     <div @class([
                         'mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8',
                         'lototo-activity-layout' => request()->routeIs('safety.lototo.show', 'safety.lototo.spare-locks.show'),
