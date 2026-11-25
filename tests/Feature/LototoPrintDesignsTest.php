@@ -140,7 +140,7 @@ class LototoPrintDesignsTest extends TestCase
         $this->actingAs($guest)->get(route('safety.lototo.print.photo', $this->budi))->assertOk();
 
         // Everything that changes data or manages boards stays closed to the guest.
-        $this->actingAs($guest)->get(route('safety.lototo.boards.index'))->assertForbidden();
+        $this->actingAs($guest)->get(route('safety.lototo.boards.index'))->assertRedirect(route('login'));
         $this->actingAs($guest)->getJson(route('safety.lototo.boards.layout', $this->board))->assertForbidden();
         $this->actingAs($guest)->post(route('safety.lototo.boards.store'), ['division_name' => 'X', 'business_unit_id' => $this->board->business_unit_id, 'spare_lock_count' => 1])->assertForbidden();
         $this->actingAs($guest)->patch(route('safety.lototo.boards.status', $this->board), ['is_active' => 0])->assertForbidden();

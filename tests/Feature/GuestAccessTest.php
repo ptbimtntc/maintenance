@@ -47,15 +47,17 @@ class GuestAccessTest extends TestCase
     {
         $this->post(route('guest-login'));
 
-        $this->get(route('employees.create'))->assertForbidden();
+        // Login-only pages ask the Guest to log in instead of a bare 403.
+        $this->get(route('employees.create'))->assertRedirect(route('login'));
     }
 
     public function test_guest_cannot_reach_settings_or_user_management(): void
     {
         $this->post(route('guest-login'));
 
-        $this->get(route('settings.edit'))->assertForbidden();
-        $this->get(route('admin.users.index'))->assertForbidden();
+        $this->get(route('settings.edit'))->assertRedirect(route('login'));
+        $this->post(route('guest-login'));
+        $this->get(route('admin.users.index'))->assertRedirect(route('login'));
     }
 
     /**
@@ -66,7 +68,7 @@ class GuestAccessTest extends TestCase
     {
         $this->post(route('guest-login'));
 
-        $this->get(route('signatories.index'))->assertForbidden();
+        $this->get(route('signatories.index'))->assertRedirect(route('login'));
     }
 
     public function test_guest_does_not_see_signatories_in_the_sidebar(): void

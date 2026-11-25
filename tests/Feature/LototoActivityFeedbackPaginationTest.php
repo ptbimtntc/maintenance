@@ -122,7 +122,9 @@ class LototoActivityFeedbackPaginationTest extends TestCase
         $url = route('safety.lototo.follow-up', $activity);
         $store = route('safety.lototo.follow-up.store', $activity);
         foreach ([$this->technicianUser, $this->otherSupervisorUser, $this->guest, $this->admin] as $user) {
-            $this->actingAs($user)->get($url)->assertForbidden();
+            $response = $this->actingAs($user)->get($url);
+            // The shared Guest account is asked to log in rather than shown a 403.
+            $user->is($this->guest) ? $response->assertRedirect(route('login')) : $response->assertForbidden();
             $this->actingAs($user)->post($store, ['supervisor_follow_up' => 'Tanpa hak'])->assertForbidden();
         }
         auth()->logout();

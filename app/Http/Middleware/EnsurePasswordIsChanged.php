@@ -18,6 +18,12 @@ class EnsurePasswordIsChanged
         $user = $request->user();
 
         if ($user && $user->must_change_password && ! $request->routeIs('password.change', 'password.update', 'logout', 'face-login.enroll', 'face-login.disable')) {
+            // Remember where they were heading (e.g. a task link from an
+            // email) so PasswordController can continue there afterwards.
+            if ($request->isMethod('GET') && ! $request->expectsJson()) {
+                $request->session()->put('url.intended', $request->fullUrl());
+            }
+
             return redirect()->route('password.change')
                 ->with('status', 'password-must-change');
         }

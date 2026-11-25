@@ -34,10 +34,18 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
+        $wasForced = (bool) $request->user()->must_change_password;
+
         $request->user()->update([
             'password' => Hash::make($validated['password']),
             'must_change_password' => false,
         ]);
+
+        // A forced first-login change continues to the page they were sent
+        // to (see EnsurePasswordIsChanged), e.g. a task link from an email.
+        if ($wasForced && $request->session()->has('url.intended')) {
+            return redirect()->intended()->with('status', 'password-updated');
+        }
 
         return back()->with('status', 'password-updated');
     }

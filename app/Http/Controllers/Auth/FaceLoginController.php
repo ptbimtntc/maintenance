@@ -101,7 +101,7 @@ class FaceLoginController extends Controller
         $request->session()->regenerate();
         $device->forceFill(['last_used_at' => now()])->save();
 
-        return response()->json(['redirect' => route('dashboard')]);
+        return response()->json(['redirect' => $request->session()->pull('url.intended', route('dashboard'))]);
     }
 
     /**

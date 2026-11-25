@@ -56,7 +56,10 @@ class TaskPlannerTest extends TestCase
         $guest = User::factory()->create();
         $guest->assignRole(RoleName::Guest->value);
 
-        $this->actingAs($guest)->get(route('tasks.index'))->assertForbidden();
+        // Pages the shared Guest account may not open ask for a real login instead of a 403.
+        $this->actingAs($guest)->get(route('tasks.index'))->assertRedirect(route('login'));
+        $this->assertGuest();
+        $this->actingAs($guest)->getJson(route('tasks.index'))->assertForbidden();
     }
 
     public function test_assigning_a_task_notifies_the_assignee_but_not_the_assigner(): void
@@ -81,6 +84,82 @@ class TaskPlannerTest extends TestCase
         Notification::assertSentTo($assignee, TaskAssigned::class);
         Notification::assertNotSentTo($owner, TaskAssigned::class);
         $this->assertCount(2, $task->fresh()->assignees);
+    }
+
+    private function assignedTask(): array
+    {
+        [$owner] = $this->staffWithEmployee();
+        [$assignee, $assigneeEmployee] = $this->staffWithEmployee();
+        $plan = $this->makePlan($owner);
+        $task = $plan->tasks()->create(['task_bucket_id' => $plan->buckets->first()->id, 'title' => 'Lubricate press', 'created_by' => $owner->id]);
+        $task->assignees()->attach($assigneeEmployee->id);
+        auth()->logout();
+
+        return [$task, $assignee];
+    }
+
+    private function guestAccount(): User
+    {
+        $guest = User::factory()->create(['name' => 'Guest Viewer']);
+        $guest->assignRole(RoleName::Guest->value);
+
+        return $guest;
+    }
+
+    public function test_task_link_from_email_without_a_session_leads_through_login_to_the_task(): void
+    {
+        [$task, $assignee] = $this->assignedTask();
+        $this->guestAccount();
+        $taskUrl = route('tasks.show', $task);
+
+        // No session: the auth middleware lands the visitor on the shared Guest account...
+        $this->get($taskUrl)->assertRedirect(route('guest-login'));
+        $this->get(route('guest-login'))->assertRedirect($taskUrl);
+
+        // ...which may not see the task: ask them to log in instead of a 403.
+        $this->get($taskUrl)
+            ->assertRedirect(route('login'))
+            ->assertSessionHas('status');
+        $this->assertGuest();
+
+        // After logging in they continue to the task they clicked.
+        $this->post(route('login'), ['email' => $assignee->email, 'password' => 'password'])
+            ->assertRedirect($taskUrl);
+        $this->get($taskUrl)->assertOk()->assertSee('Lubricate press');
+        $this->assertAuthenticatedAs($assignee);
+    }
+
+    public function test_first_login_password_change_continues_to_the_task_link(): void
+    {
+        [$task, $assignee] = $this->assignedTask();
+        $assignee->update(['must_change_password' => true]);
+        $taskUrl = route('tasks.show', $task);
+
+        $this->actingAs($assignee)->get($taskUrl)->assertRedirect(route('password.change'));
+
+        $this->put(route('password.update'), [
+            'current_password' => 'password',
+            'password' => 'N3w-Secure-Pass!',
+            'password_confirmation' => 'N3w-Secure-Pass!',
+        ])->assertRedirect($taskUrl);
+    }
+
+    public function test_a_real_account_without_access_still_gets_forbidden(): void
+    {
+        [$task] = $this->assignedTask();
+        [$outsider] = $this->staffWithEmployee();
+
+        $this->actingAs($outsider)->get(route('tasks.show', $task))->assertForbidden();
+        $this->assertAuthenticatedAs($outsider);
+    }
+
+    public function test_guest_json_and_write_requests_stay_forbidden(): void
+    {
+        [$task] = $this->assignedTask();
+        $guest = $this->guestAccount();
+
+        $this->actingAs($guest)->getJson(route('tasks.show', $task))->assertForbidden();
+        $this->actingAs($guest)->post(route('tasks.toggle-complete', $task))->assertForbidden();
     }
 
     public function test_assignee_can_open_the_plan_but_an_unrelated_user_cannot(): void

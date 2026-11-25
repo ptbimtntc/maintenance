@@ -1,10 +1,14 @@
 <?php
 
+use App\Enums\RoleName;
 use App\Http\Middleware\EnsureMenuEditPermission;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,4 +39,48 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // A link from an email (task, certificate, ...) opened without a
+        // session lands on the shared Guest account (redirectGuestsTo above),
+        // which usually may not see that record. Instead of a 403, drop the
+        // Guest session and send the visitor to log in; LoginRequest's
+        // redirect()->intended() then brings them back to the link.
+        // Real accounts that lack access still get the normal 403.
+        $exceptions->render(function (Throwable $e, Request $request) {
+            $forbidden = $e instanceof AuthorizationException
+                || ($e instanceof HttpExceptionInterface && $e->getStatusCode() === 403);
+
+            if (! $forbidden || ! $request->isMethod('GET') || $request->expectsJson() || ! $request->hasSession()) {
+                return null;
+            }
+
+            // Only pages that require an account. Public signed links (LOTOTO
+            // follow-up/feedback, verification pages, QR form) keep their own
+            // 403 explaining why the link does not open.
+            $middleware = $request->route()?->gatherMiddleware() ?? [];
+            $requiresLogin = collect($middleware)->contains(
+                fn ($m) => is_string($m) && ($m === 'auth' || str_starts_with($m, 'auth:')),
+            );
+
+            if (! $requiresLogin) {
+                return null;
+            }
+
+            $user = $request->user();
+
+            if ($user && ! $user->hasRole(RoleName::Guest->value)) {
+                return null;
+            }
+
+            if ($user) {
+                Auth::guard('web')->logout();
+                $request->session()->regenerate(true);
+                $request->session()->regenerateToken();
+            }
+
+            $request->session()->put('url.intended', $request->fullUrl());
+
+            return redirect()->route('login')
+                ->with('status', 'Please log in with your own account to open that page.');
+        });
     })->create();

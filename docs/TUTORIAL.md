@@ -24,6 +24,8 @@ Di dalam aplikasi, daftar isi dan isi panduan **otomatis disesuaikan dengan akse
 1. Buka alamat aplikasi, lalu isi **Email atau NIK** dan **Password**.
 2. Klik **Log in**.
 
+**Membuka link dari email** (misalnya notifikasi task): jika Anda belum login, aplikasi menampilkan halaman login lalu, setelah login berhasil, langsung membuka halaman yang dituju. Jika ini login pertama dan Anda diminta mengganti password, setelah password diganti Anda juga langsung diarahkan ke halaman tersebut. Hal yang sama berlaku bila Anda sedang masuk sebagai tamu dan membuka halaman yang memerlukan akun.
+
 Di layar komputer, halaman login terbagi dua: panel PT Bekaert Indonesia (ringkasan modul utama) di kiri dan form login di kanan. Di HP hanya form login yang tampil. Halaman Forgot/Reset Password memakai tampilan yang sama.
 
 Jika email sudah diisi pada data Employee, email tersebut menjadi email akun dan dapat dipakai untuk login maupun menerima notifikasi. Login dengan NIK tetap tersedia.
@@ -505,6 +507,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-25 | Link dari email (mis. task) saat belum login kini membuka halaman login lalu kembali ke halaman yang dituju, termasuk setelah ganti password pertama kali; sebelumnya muncul 403. |
 | 2026-11-25 | Tabel daftar: sorotan baris, bayangan penanda geser horizontal, judul kolom tetap terlihat. Form: kolom aktif bergaris oranye, kolom yang salah ditandai merah (bagian *Mengenal Tampilan*). |
 | 2026-11-25 | Tampilan baru halaman baca News: judul di atas gambar, perkiraan waktu baca, garis progres baca, dan daftar **More news** (bagian *Dashboard*). |
 | 2026-11-25 | Transisi halus saat berpindah halaman (sidebar & top bar tetap diam) dan garis progres di atas layar saat halaman sedang dimuat (bagian *Mengenal Tampilan*). |

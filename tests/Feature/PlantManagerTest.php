@@ -107,7 +107,7 @@ class PlantManagerTest extends TestCase
         $this->actingAs($this->userWithRole(RoleName::MaintenanceStaff))->get(route('plant-manager.edit'))->assertForbidden();
         $this->actingAs($this->userWithRole(RoleName::MaintenanceStaff))
             ->put(route('plant-manager.update'), ['employee_number' => '1', 'full_name' => 'x'])->assertForbidden();
-        $this->actingAs($this->userWithRole(RoleName::Guest))->get(route('plant-manager.edit'))->assertForbidden();
+        $this->actingAs($this->userWithRole(RoleName::Guest))->get(route('plant-manager.edit'))->assertRedirect(route('login'));
     }
 
     public function test_plant_manager_skill_position_cannot_be_assigned_to_a_regular_employee(): void

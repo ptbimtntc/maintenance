@@ -276,7 +276,7 @@ class ShiftCommTest extends TestCase
 
         $guest = User::factory()->create();
         $guest->assignRole(RoleName::Guest->value);
-        $this->actingAs($guest)->get(route('shift-comm.index'))->assertForbidden();
+        $this->actingAs($guest)->get(route('shift-comm.index'))->assertRedirect(route('login'));
     }
 
     public function test_machine_type_auto_fill_and_persistence(): void
