@@ -23,10 +23,15 @@ $colorClasses = [
 ][$color] ?? 'bg-neutral-100 text-neutral-600';
 @endphp
 
-<div @class([
-    'group relative flex flex-col rounded-lg border border-neutral-200 border-t-2 border-t-brand-500 bg-white p-4 shadow-sm transition-all duration-150',
-    'hover:-translate-y-0.5 hover:border-brand-300 hover:border-t-brand-500 hover:shadow-md' => $href,
+<div data-reveal @class([
+    'group relative flex flex-col overflow-hidden rounded-lg border border-neutral-200 border-t-2 border-t-brand-500 bg-white p-4 shadow-sm transition-all duration-200',
+    'hover:-translate-y-1 hover:border-brand-300 hover:border-t-brand-500 hover:shadow-lg hover:shadow-brand-500/10' => $href,
 ])>
+    {{-- Soft brand glow that fades in on hover (purely decorative). --}}
+    @if ($href)
+        <span aria-hidden="true" class="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-brand-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"></span>
+    @endif
+
     @if ($href)
         <a href="{{ $href }}" class="absolute inset-0 z-10 rounded-lg" aria-label="{{ $label }}"></a>
     @endif
@@ -34,7 +39,7 @@ $colorClasses = [
     <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
             <p class="text-xs font-medium leading-snug text-neutral-500">{{ $label }}</p>
-            <p class="mt-1 text-2xl font-semibold tabular-nums text-neutral-900">{{ $value }}</p>
+            <p data-countup class="mt-1 text-2xl font-semibold tabular-nums text-neutral-900">{{ $value }}</p>
             @if ($caption)
                 <p class="mt-0.5 text-[11px] text-neutral-400">{{ $caption }}</p>
             @endif
@@ -42,7 +47,7 @@ $colorClasses = [
         @if ($icon)
             <span @class([
                 'flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-transform duration-150',
-                'group-hover:scale-105' => $href,
+                'group-hover:scale-110 group-hover:-rotate-6' => $href,
                 $colorClasses,
             ])>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

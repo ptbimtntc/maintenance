@@ -21,7 +21,7 @@ $sum = collect($segments)->sum('value');
                 <div class="absolute inset-1 rounded-full border-[14px] border-neutral-100"></div>
             @endif
             <div class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-lg font-bold text-neutral-900">{{ $total }}</span>
+                <span data-countup class="text-lg font-bold tabular-nums text-neutral-900">{{ $total }}</span>
                 <span class="text-[10px] text-neutral-500">{{ $totalLabel }}</span>
             </div>
         </div>

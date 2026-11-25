@@ -1,0 +1,167 @@
+/*
+ * Motion layer for the login (guest) pages and the Dashboard.
+ *
+ * Two mechanisms:
+ *  - .motion-enter            CSS-only entrance on page load (login). Delay via
+ *                             the --d custom property, e.g. style="--d: 120ms".
+ *  - [data-reveal]            Scroll-reveal driven by resources/js/motion.js,
+ *                             only inside a [data-motion] container (so shared
+ *                             components stay static on other pages).
+ *                             Elements are only hidden while html.motion-ok is
+ *                             set (by an inline script in the layout head), so
+ *                             if JS never runs the content simply shows.
+ *    [data-grow="x"|"y"]      Bars inside a revealed block grow from zero.
+ *    [data-grow-fade]         Labels that fade in after the bars.
+ *    .reveal-done             Added once the entrance finished so the element's
+ *                             own (hover) transitions apply again.
+ *
+ * Everything is disabled under prefers-reduced-motion.
+ */
+
+@keyframes motion-fade-up {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 18px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes motion-float {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+        transform: translate3d(4%, -6%, 0) scale(1.06);
+    }
+    66% {
+        transform: translate3d(-5%, 4%, 0) scale(0.96);
+    }
+}
+
+@keyframes motion-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes motion-pulse-dot {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.8);
+        opacity: 0.35;
+    }
+}
+
+@keyframes motion-gradient-pan {
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.motion-enter {
+    animation: motion-fade-up 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: var(--d, 0ms);
+}
+
+.motion-blob {
+    animation: motion-float 18s ease-in-out infinite;
+    will-change: transform;
+}
+
+.motion-blob--slow {
+    animation-duration: 26s;
+    animation-direction: reverse;
+}
+
+/* "Heartbeat" monitoring line on the login brand panel. */
+.motion-draw {
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    animation: motion-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) 600ms forwards;
+}
+
+.motion-pulse-dot {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: motion-pulse-dot 2s ease-in-out infinite;
+}
+
+.motion-gradient-text {
+    background-size: 200% 200%;
+    animation: motion-gradient-pan 8s ease-in-out infinite;
+}
+
+.motion-grid-bg {
+    background-image: radial-gradient(rgb(255 255 255 / 0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+}
+
+/* ---- Scroll reveal (Dashboard) ---------------------------------------- */
+
+.motion-ok [data-motion] [data-reveal]:not(.reveal-done) {
+    transition:
+        opacity 650ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 650ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: var(--reveal-delay, 0ms);
+}
+
+.motion-ok [data-motion] [data-reveal]:not(.is-revealed) {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+}
+
+.motion-ok [data-motion] [data-grow] {
+    transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition-delay: calc(var(--reveal-delay, 0ms) + 200ms + var(--grow-delay, 0ms));
+}
+
+.motion-ok [data-motion] [data-grow='x'] {
+    transform-origin: left center;
+}
+
+.motion-ok [data-motion] [data-grow='y'] {
+    transform-origin: center bottom;
+}
+
+.motion-ok [data-motion] [data-reveal]:not(.is-revealed) [data-grow='x'] {
+    transform: scaleX(0);
+}
+
+.motion-ok [data-motion] [data-reveal]:not(.is-revealed) [data-grow='y'] {
+    transform: scaleY(0);
+}
+
+.motion-ok [data-motion] [data-grow-fade] {
+    transition: opacity 400ms ease;
+    transition-delay: calc(var(--reveal-delay, 0ms) + 700ms + var(--grow-delay, 0ms));
+}
+
+.motion-ok [data-motion] [data-reveal]:not(.is-revealed) [data-grow-fade] {
+    opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .motion-enter,
+    .motion-blob,
+    .motion-pulse-dot,
+    .motion-gradient-text {
+        animation: none;
+    }
+
+    .motion-draw {
+        animation: none;
+        stroke-dashoffset: 0;
+    }
+}

@@ -8,7 +8,7 @@
 
 {{-- Shared dashboard panel: title row (with optional "view all" link or
      custom `action` slot) plus either the slot or an empty-state message. --}}
-<section {{ $attributes->class(['flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm']) }}>
+<section data-reveal {{ $attributes->class(['flex flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow duration-200 hover:shadow-md']) }}>
     <header class="mb-3 flex items-start justify-between gap-3">
         <div class="min-w-0">
             <h3 class="text-sm font-semibold text-neutral-900">{{ $title }}</h3>

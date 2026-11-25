@@ -17,6 +17,16 @@
             try { if (localStorage.getItem('sidebar-collapsed') === '1') document.documentElement.dataset.sidebar = 'collapsed'; } catch (e) {}
         </script>
 
+        {{-- Scroll-reveal (resources/js/motion.js) hides [data-reveal] blocks only
+             while html.motion-ok is set; drop it if the bundle never boots so
+             content can't stay invisible. --}}
+        <script>
+            if (! window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.documentElement.classList.add('motion-ok');
+                setTimeout(function () { if (! window.__motionBooted) document.documentElement.classList.remove('motion-ok'); }, 3000);
+            }
+        </script>
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-neutral-100" x-data="{ sidebarOpen: false }">

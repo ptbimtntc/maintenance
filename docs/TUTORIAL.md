@@ -24,6 +24,8 @@ Di dalam aplikasi, daftar isi dan isi panduan **otomatis disesuaikan dengan akse
 1. Buka alamat aplikasi, lalu isi **Email atau NIK** dan **Password**.
 2. Klik **Log in**.
 
+Di layar komputer, halaman login terbagi dua: panel PT Bekaert Indonesia (ringkasan modul utama) di kiri dan form login di kanan. Di HP hanya form login yang tampil. Halaman Forgot/Reset Password memakai tampilan yang sama.
+
 Jika email sudah diisi pada data Employee, email tersebut menjadi email akun dan dapat dipakai untuk login maupun menerima notifikasi. Login dengan NIK tetap tersedia.
 
 Dari dalam aplikasi sebagai tamu, tombol **Login** di pojok kanan atas membuka form login melayang (tanpa pindah halaman); lihat *Panduan Tamu*.
@@ -106,8 +108,9 @@ Administrator juga dapat **menyembunyikan menu tertentu** dari pengguna tertentu
 
 ## Dashboard
 
-Halaman pertama setelah login. Menampilkan:
+Halaman pertama setelah login. Di bagian atas ada sapaan sesuai waktu (mis. *Good morning, Ade*), tanggal hari ini, dan filter. Menampilkan:
 - **Kartu statistik** berisi angka nyata dari database (karyawan, organisasi, skill/kompetensi, training, sertifikat), beberapa dengan grafik kecil (misalnya karyawan Aktif vs Tidak Aktif, status gap kompetensi, distribusi status sertifikat).
+- **Animasi saat di-scroll** — kartu dan grafik muncul bertahap, angka menghitung naik, dan bar memanjang saat bagian itu terlihat di layar. Ini hanya efek tampilan; datanya sama. Jika animasi dimatikan di pengaturan perangkat (*Reduce motion* / *Show animations: off*), dashboard tampil langsung tanpa animasi.
 - **Klik kartu** untuk langsung membuka modul terkait. Kartu hanya bisa diklik jika Anda berhak membuka modul tersebut.
 - **News** — pengumuman dari Maintenance. Pengumuman yang mensyaratkan konfirmasi harus Anda **konfirmasi sudah dibaca** (lihat bagian News).
 
@@ -499,6 +502,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-25 | Tampilan baru halaman login (panel brand + form) dan Dashboard (sapaan, animasi scroll, angka count-up, grafik kecil di kartu statistik kini tampil). Animasi otomatis mati bila *reduce motion* aktif di perangkat. |
 | 2026-11-13 | Login dan email notifikasi akun karyawan kini mengikuti email pada data Employee; NIK tetap dapat dipakai untuk login. |
 | 2026-11-19 | Tombol **Login** di pojok kanan atas (saat sebagai tamu) kini membuka form login melayang (overlay) sehingga pengguna tetap di halaman yang sedang dibuka; halaman login penuh tetap tersedia. |
 | 2026-11-19 | User Management: ditambahkan kotak pencarian nama/email (klarifikasi), serta fitur **Reset Password** dan **Delete User** khusus role Administrator. |

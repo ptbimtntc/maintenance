@@ -34,13 +34,22 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
         $hasFilters = $filters['business_unit_id'] || $filters['employment_type_id'] || $filters['employment_source_id'];
     @endphp
 
-    <div class="space-y-6">
+    @php
+        $hour = (int) now()->format('G');
+        $greeting = $hour < 11 ? 'Good morning' : ($hour < 15 ? 'Good afternoon' : ($hour < 19 ? 'Good evening' : 'Good night'));
+        $firstName = \Illuminate\Support\Str::of(auth()->user()->name)->trim()->before(' ');
+    @endphp
+
+    {{-- data-motion opts this page into the scroll-reveal / count-up effects (resources/js/motion.js). --}}
+    <div class="space-y-6" data-motion>
         {{-- Header + filters. Only sticky on large screens; on phones/tablets
              four stacked selects would eat most of the viewport. --}}
-        <div class="z-20 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:flex lg:items-end lg:justify-between lg:gap-6">
+        <div data-reveal class="relative z-20 overflow-hidden rounded-lg border border-neutral-200 bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:flex lg:items-end lg:justify-between lg:gap-6">
+            {{-- Brand accent strip along the top edge. --}}
+            <span aria-hidden="true" class="motion-gradient-text pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-warning-400 to-accent-500"></span>
             <div class="mb-4 lg:mb-0 lg:shrink-0">
-                <p class="text-sm font-semibold text-neutral-900">{{ now()->format('l, d F Y') }}</p>
-                <p class="mt-0.5 text-xs text-neutral-500">Build Competent People &middot; Improve Performance &middot; Ensure Reliability</p>
+                <p class="text-base font-semibold text-neutral-900">{{ $greeting }}, {{ $firstName }}</p>
+                <p class="mt-0.5 text-xs text-neutral-500"><span class="font-medium text-neutral-700">{{ now()->format('l, d F Y') }}</span> &middot; Build Competent People &middot; Improve Performance &middot; Ensure Reliability</p>
             </div>
 
             <form method="GET" class="grid grid-cols-2 items-end gap-2 sm:grid-cols-4 lg:flex lg:flex-nowrap lg:justify-end">
@@ -86,7 +95,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
         </div>
 
         @if ($pendingAcknowledgements->isNotEmpty())
-            <div class="rounded-lg border border-warning-300 bg-warning-50 p-4 shadow-sm">
+            <div data-reveal class="rounded-lg border border-warning-300 bg-warning-50 p-4 shadow-sm">
                 <p class="text-sm font-semibold text-warning-800">You have {{ $pendingAcknowledgements->count() }} announcement(s) waiting for your confirmation</p>
                 <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
                     @foreach ($pendingAcknowledgements as $pending)
@@ -109,12 +118,16 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                 role="region"
                 aria-roledescription="carousel"
                 aria-label="Latest news"
+                data-reveal
                 class="relative overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm"
             >
                 @foreach ($latestNews as $index => $item)
                     <a
                         href="{{ route('news.show', $item) }}"
                         x-show="active === {{ $index }}"
+                        x-transition:enter="transition ease-out duration-500"
+                        x-transition:enter-start="opacity-0"
+                        x-transition:enter-end="opacity-100"
                         x-cloak
                         aria-roledescription="slide"
                         class="block cursor-pointer transition hover:brightness-95 {{ $item->template === 'highlight' ? 'relative' : 'grid grid-cols-1 sm:grid-cols-3' }}"
@@ -171,7 +184,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
         {{-- KPIs, grouped so the eye can scan "who we have / what needs
              attention" separately from "what we are delivering". --}}
         <section aria-labelledby="kpi-workforce" class="space-y-3">
-            <h2 id="kpi-workforce" class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Workforce &amp; Competency</h2>
+            <h2 data-reveal id="kpi-workforce" class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Workforce &amp; Competency</h2>
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Total Employees"
@@ -209,7 +222,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
         </section>
 
         <section aria-labelledby="kpi-training" class="space-y-3">
-            <h2 id="kpi-training" class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Training &amp; Development</h2>
+            <h2 data-reveal id="kpi-training" class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Training &amp; Development</h2>
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <x-dashboard-stat
                     label="Training Hours ({{ $filters['year'] }})"
@@ -277,7 +290,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                         <li class="flex items-center gap-3 text-xs">
                             <span class="w-32 shrink-0 truncate text-neutral-600" title="{{ $row['skill'] }}">{{ $row['skill'] }}</span>
                             <div class="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
-                                <div class="h-full rounded-full bg-accent-500" style="width: {{ round($row['count'] / $maxSkillGap * 100) }}%"></div>
+                                <div data-grow="x" class="h-full rounded-full bg-gradient-to-r from-accent-400 to-accent-600" style="width: {{ round($row['count'] / $maxSkillGap * 100) }}%; --grow-delay: {{ $loop->index * 70 }}ms"></div>
                             </div>
                             <span class="w-6 shrink-0 text-right font-medium tabular-nums text-neutral-900">{{ $row['count'] }}</span>
                         </li>
@@ -391,7 +404,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                                     <td class="py-1.5 pr-2 text-neutral-500">{{ $plan->relatedSkill?->name ?? '—' }}</td>
                                     <td class="py-1.5 pr-2">
                                         <div class="h-1.5 w-16 overflow-hidden rounded-full bg-neutral-100" title="{{ $plan->progress_percentage ?? 0 }}%">
-                                            <div class="h-full rounded-full bg-brand-500" style="width: {{ $plan->progress_percentage ?? 0 }}%"></div>
+                                            <div data-grow="x" class="h-full rounded-full bg-brand-500" style="width: {{ $plan->progress_percentage ?? 0 }}%; --grow-delay: {{ $loop->index * 50 }}ms"></div>
                                         </div>
                                     </td>
                                     <td class="py-1.5">
@@ -427,8 +440,8 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
                         <div class="flex min-w-0 flex-1 flex-col items-center gap-1">
                             {{-- Percent heights only resolve against a definite-height parent, hence the absolute layout. --}}
                             <div class="relative mt-5 w-full flex-1">
-                                <span class="absolute inset-x-0 mb-1 text-center text-xs font-semibold tabular-nums text-neutral-900" style="bottom: {{ $pct }}%">{{ $row['total'] }}</span>
-                                <div class="absolute inset-x-0 bottom-0 rounded-t-md bg-brand-500" style="height: {{ $pct }}%"></div>
+                                <span data-grow-fade class="absolute inset-x-0 mb-1 text-center text-xs font-semibold tabular-nums text-neutral-900" style="bottom: {{ $pct }}%; --grow-delay: {{ $loop->index * 70 }}ms">{{ $row['total'] }}</span>
+                                <div data-grow="y" class="absolute inset-x-0 bottom-0 rounded-t-md bg-gradient-to-t from-brand-600 to-brand-400" style="height: {{ $pct }}%; --grow-delay: {{ $loop->index * 70 }}ms"></div>
                             </div>
                             <span class="w-full truncate text-center text-[10px] text-neutral-500" title="{{ $row['area'] }}">{{ $row['area'] }}</span>
                         </div>
@@ -444,22 +457,22 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
 
             <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <div class="rounded-md border border-warning-100 bg-warning-50 p-3">
-                    <p class="text-xl font-bold tabular-nums text-warning-700">{{ $insights['employees_needing_development'] }}</p>
+                    <p data-countup class="text-xl font-bold tabular-nums text-warning-700">{{ $insights['employees_needing_development'] }}</p>
                     <p class="text-xs text-warning-800">employees need development</p>
                     <p class="text-[10px] text-warning-600">{{ $insights['employees_needing_development_pct'] }}% of total workforce</p>
                 </div>
                 <div class="rounded-md border border-danger-100 bg-danger-50 p-3">
-                    <p class="text-xl font-bold tabular-nums text-danger-700">{{ $insights['certificates_needing_renewal'] }}</p>
+                    <p data-countup class="text-xl font-bold tabular-nums text-danger-700">{{ $insights['certificates_needing_renewal'] }}</p>
                     <p class="text-xs text-danger-800">certificates need renewal</p>
                     <p class="text-[10px] text-danger-600">{{ $insights['certificates_needing_renewal_pct'] }}% of total certificates</p>
                 </div>
                 <div class="rounded-md border border-neutral-200 bg-neutral-50 p-3">
-                    <p class="text-xl font-bold tabular-nums text-neutral-700">{{ $insights['assessments_incomplete'] }}</p>
+                    <p data-countup class="text-xl font-bold tabular-nums text-neutral-700">{{ $insights['assessments_incomplete'] }}</p>
                     <p class="text-xs text-neutral-800">assessments incomplete</p>
                     <p class="text-[10px] text-neutral-500">{{ $insights['assessments_incomplete_pct'] }}% of total employees</p>
                 </div>
                 <div class="rounded-md border border-brand-100 bg-brand-50 p-3">
-                    <p class="text-xl font-bold tabular-nums text-brand-700">{{ $insights['critical_skill_gaps'] }}</p>
+                    <p data-countup class="text-xl font-bold tabular-nums text-brand-700">{{ $insights['critical_skill_gaps'] }}</p>
                     <p class="text-xs text-brand-800">critical skill gaps</p>
                     <p class="text-[10px] text-brand-600">skills with 3+ employees below requirement</p>
                 </div>
