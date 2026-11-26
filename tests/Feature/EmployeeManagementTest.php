@@ -86,6 +86,26 @@ class EmployeeManagementTest extends TestCase
             ->assertDontSee('Somebody Else Entirely');
     }
 
+    public function test_profile_shows_qr_codes_in_overlays_and_reopens_onboarding_after_generating(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $employee = Employee::factory()->create();
+
+        $this->actingAs($admin)->get(route('employees.show', $employee))
+            ->assertOk()
+            ->assertSee("\$dispatch('open-modal', 'certificate-qr')", false)
+            ->assertSee("\$dispatch('open-modal', 'onboarding-qr')", false)
+            ->assertSee(route('verify.employee', $employee), false);
+
+        $this->actingAs($admin)->post(route('employees.onboarding-link', $employee))
+            ->assertRedirect(route('employees.show', $employee))
+            ->assertSessionHas('open_modal', 'onboarding-qr');
+
+        $this->actingAs($admin)->get(route('employees.show', $employee))
+            ->assertSee(route('onboarding.edit', $employee->fresh()->profile_completion_token), false);
+    }
+
     public function test_people_development_sees_all_employees(): void
     {
         // People Development (HR) is an intentional exception to hierarchy

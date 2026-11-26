@@ -300,7 +300,8 @@ class EmployeeController extends Controller
         $employee->generateOnboardingToken();
 
         return redirect()->route('employees.show', $employee)
-            ->with('status', 'A new onboarding link has been generated.');
+            ->with('status', 'A new onboarding link has been generated.')
+            ->with('open_modal', 'onboarding-qr');
     }
 
     public function photo(Employee $employee)

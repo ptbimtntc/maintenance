@@ -83,90 +83,26 @@
                     <x-button variant="secondary" href="{{ $back['route'] }}">{{ $back['label'] }}</x-button>
                 </div>
             </div>
+
+            {{-- QR codes open in overlays instead of taking up the page. --}}
+            <div class="relative flex flex-wrap gap-2 border-t border-white/70 bg-white/50 px-6 py-3 backdrop-blur sm:px-8">
+                <x-button variant="secondary" size="sm" type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'certificate-qr')">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5zM6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z" /></svg>
+                    Certificate QR
+                </x-button>
+                @can('update', $employee)
+                    <x-button variant="secondary" size="sm" type="button" x-data="" x-on:click.prevent="$dispatch('open-modal', 'onboarding-qr')">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" /></svg>
+                        Onboarding
+                        @if ($employee->onboardingLinkIsActive())
+                            <span class="h-2 w-2 rounded-full bg-success-500" title="Link active"></span>
+                        @elseif ($employee->profile_completed_at)
+                            <span class="text-[10px] font-semibold text-success-700">Done</span>
+                        @endif
+                    </x-button>
+                @endcan
+            </div>
         </div>
-
-        @can('update', $employee)
-            <div class="rounded-lg border border-brand-200 bg-brand-50 p-4 sm:p-6" x-data="{ copied: false }">
-                @if ($employee->onboardingLinkIsActive())
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        <canvas data-qrcode="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
-                                class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
-
-                        <div class="min-w-0 flex-1">
-                            <h3 class="text-sm font-semibold text-neutral-900">New employee onboarding</h3>
-                            <p class="mt-1 text-sm text-neutral-600">
-                                Scan this QR code, or share the link below, so {{ $employee->full_name }} can fill in the rest of their own profile (photo, contact details, education, ...).
-                            </p>
-
-                            <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-                                <input type="text" readonly id="onboarding-link-{{ $employee->id }}"
-                                       value="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
-                                       class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-white text-sm text-neutral-700"
-                                       onclick="this.select()">
-                                <x-button variant="secondary" type="button" @click="navigator.clipboard.writeText(document.getElementById('onboarding-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)" class="shrink-0">
-                                    <span x-show="!copied">Copy Link</span>
-                                    <span x-show="copied" x-cloak>Copied!</span>
-                                </x-button>
-                            </div>
-
-                            <p class="mt-2 text-xs text-neutral-500">
-                                Expires {{ $employee->profile_completion_expires_at->format('d M Y') }}.
-                                <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}" class="inline" data-confirm="Generate a new link? The current QR code and link will stop working.">
-                                    @csrf
-                                    <button type="submit" class="font-medium text-accent-700 hover:underline">Generate new link</button>
-                                </form>
-                            </p>
-                        </div>
-                    </div>
-                @else
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h3 class="text-sm font-semibold text-neutral-900">New employee onboarding</h3>
-                            <p class="mt-1 text-sm text-neutral-600">
-                                @if ($employee->profile_completed_at)
-                                    {{ $employee->full_name }} completed their profile via the onboarding link on {{ $employee->profile_completed_at->format('d M Y') }}.
-                                @else
-                                    Generate a QR code / link so {{ $employee->full_name }} can fill in the rest of their own profile.
-                                @endif
-                            </p>
-                        </div>
-                        <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}">
-                            @csrf
-                            <x-button type="submit" class="shrink-0">
-                                Generate {{ $employee->profile_completed_at ? 'New' : '' }} Onboarding Link
-                            </x-button>
-                        </form>
-                    </div>
-                @endif
-            </div>
-        @endcan
-
-        @can('view', $employee)
-            <div class="rounded-lg border border-neutral-200 bg-white p-4 shadow-md sm:p-6">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <canvas data-qrcode="{{ route('verify.employee', $employee) }}"
-                            class="h-[176px] w-[176px] shrink-0 rounded-md border border-neutral-200 bg-white"></canvas>
-
-                    <div class="min-w-0 flex-1">
-                        <h3 class="text-sm font-semibold text-neutral-900">Certificate verification QR code</h3>
-                        <p class="mt-1 text-sm text-neutral-600">
-                            Scan this QR code, or share the link below, to view {{ $employee->full_name }}'s verified certificates - no login required. Print it on an ID badge or post it near their work station.
-                        </p>
-
-                        <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-                            <input type="text" readonly id="verify-link-{{ $employee->id }}"
-                                   value="{{ route('verify.employee', $employee) }}"
-                                   class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-white text-sm text-neutral-700"
-                                   onclick="this.select()">
-                            <x-button variant="secondary" type="button" x-data="{ copied: false }" @click="navigator.clipboard.writeText(document.getElementById('verify-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)" class="shrink-0">
-                                <span x-show="!copied">Copy Link</span>
-                                <span x-show="copied" x-cloak>Copied!</span>
-                            </x-button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endcan
 
         @php
             $trainingAssignments = \App\Models\TrainingParticipant::where('employee_id', $employee->id)
@@ -174,7 +110,7 @@
             $isOwnProfile = auth()->id() !== null && $employee->user_id === auth()->id();
         @endphp
         @if ($trainingAssignments->isNotEmpty() && ($isOwnProfile || auth()->user()->can('update', $employee)))
-            <div class="rounded-lg border border-neutral-200 border-t-2 border-t-accent-500 bg-white p-4">
+            <div class="rounded-2xl border border-neutral-200 border-t-2 border-t-accent-500 bg-white p-4 shadow-sm sm:px-6">
                 <h3 class="text-xs font-semibold uppercase tracking-wide text-accent-700">Assigned trainings &amp; quiz</h3>
                 <ul class="mt-2 divide-y divide-neutral-100 text-sm">
                     @foreach ($trainingAssignments as $assignment)
@@ -202,8 +138,9 @@
             </div>
         @endif
 
-        <div class="border-b border-neutral-200">
-            <nav class="-mb-px flex flex-wrap gap-4 text-sm font-medium">
+        {{-- Tabs styled like the Employees Gallery | Table switch; scrolls sideways on phones. --}}
+        <div class="-mx-1 overflow-x-auto px-1 pb-1">
+            <nav class="inline-flex min-w-max gap-0.5 rounded-xl border border-neutral-200 bg-white p-1 text-sm font-medium shadow-sm" aria-label="Profile sections">
                 @foreach ([
                     'overview' => 'Overview',
                     'job-description' => 'Job Description',
@@ -215,14 +152,16 @@
                     'notes' => 'Notes / Remarks',
                 ] as $key => $label)
                     <button type="button" @click="tab = '{{ $key }}'"
-                            :class="tab === '{{ $key }}' ? 'border-brand-500 text-brand-600' : 'border-transparent text-neutral-500 hover:text-neutral-700'"
-                            class="border-b-2 px-1 py-3">
+                            :class="tab === '{{ $key }}' ? 'bg-neutral-900 text-white shadow-sm' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'"
+                            :aria-current="tab === '{{ $key }}' ? 'page' : null"
+                            class="whitespace-nowrap rounded-lg px-3 py-1.5 transition">
                         {{ $label }}
                     </button>
                 @endforeach
             </nav>
         </div>
 
+        <div class="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
         <div x-show="tab === 'overview'">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <x-profile-field label="Employee Number" :value="$employee->employee_number" />
@@ -577,5 +516,62 @@
                 </div>
             </div>
         </div>
+        </div>
     </div>
+
+    <x-modal name="certificate-qr" maxWidth="md">
+        <div class="p-6 text-center" x-data="{ copied: false }">
+            <h2 class="text-base font-semibold text-neutral-900">Certificate verification QR</h2>
+            <p class="mt-1 text-sm text-neutral-500">Scan to view {{ $employee->full_name }}'s verified certificates, no login required. Print it on an ID badge or near their work station.</p>
+            <canvas data-qrcode="{{ route('verify.employee', $employee) }}" class="mx-auto mt-5 h-[176px] w-[176px] rounded-xl border border-neutral-200 bg-white p-1 shadow-sm"></canvas>
+            <div class="mt-5 flex gap-2">
+                <input type="text" readonly id="verify-link-{{ $employee->id }}" value="{{ route('verify.employee', $employee) }}"
+                       class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-neutral-50 text-sm text-neutral-700" onclick="this.select()">
+                <x-button variant="secondary" type="button" class="shrink-0" @click="navigator.clipboard.writeText(document.getElementById('verify-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)">
+                    <span x-show="!copied">Copy Link</span><span x-show="copied" x-cloak>Copied!</span>
+                </x-button>
+            </div>
+            <div class="mt-4 flex justify-end">
+                <x-button variant="secondary" type="button" x-on:click="$dispatch('close-modal', 'certificate-qr')">Close</x-button>
+            </div>
+        </div>
+    </x-modal>
+
+    @can('update', $employee)
+        <x-modal name="onboarding-qr" maxWidth="md" :show="session('open_modal') === 'onboarding-qr'">
+            <div class="p-6 text-center" x-data="{ copied: false }">
+                <h2 class="text-base font-semibold text-neutral-900">New employee onboarding</h2>
+                @if ($employee->onboardingLinkIsActive())
+                    <p class="mt-1 text-sm text-neutral-500">Scan this QR code, or share the link, so {{ $employee->full_name }} can fill in the rest of their own profile (photo, contact details, education, ...).</p>
+                    <canvas data-qrcode="{{ route('onboarding.edit', $employee->profile_completion_token) }}" class="mx-auto mt-5 h-[176px] w-[176px] rounded-xl border border-neutral-200 bg-white p-1 shadow-sm"></canvas>
+                    <div class="mt-5 flex gap-2">
+                        <input type="text" readonly id="onboarding-link-{{ $employee->id }}" value="{{ route('onboarding.edit', $employee->profile_completion_token) }}"
+                               class="w-full min-w-0 flex-1 rounded-md border-neutral-300 bg-neutral-50 text-sm text-neutral-700" onclick="this.select()">
+                        <x-button variant="secondary" type="button" class="shrink-0" @click="navigator.clipboard.writeText(document.getElementById('onboarding-link-{{ $employee->id }}').value); copied = true; setTimeout(() => copied = false, 2000)">
+                            <span x-show="!copied">Copy Link</span><span x-show="copied" x-cloak>Copied!</span>
+                        </x-button>
+                    </div>
+                    <p class="mt-3 text-xs text-neutral-500">Expires {{ $employee->profile_completion_expires_at->format('d M Y') }}.</p>
+                @else
+                    <p class="mt-2 text-sm text-neutral-600">
+                        @if ($employee->profile_completed_at)
+                            {{ $employee->full_name }} completed their profile via the onboarding link on {{ $employee->profile_completed_at->format('d M Y') }}.
+                        @else
+                            Generate a QR code / link so {{ $employee->full_name }} can fill in the rest of their own profile.
+                        @endif
+                    </p>
+                @endif
+                <div class="mt-5 flex flex-wrap justify-end gap-2">
+                    <form method="POST" action="{{ route('employees.onboarding-link', $employee) }}"
+                          @if ($employee->onboardingLinkIsActive()) data-confirm="Generate a new link? The current QR code and link will stop working." @endif>
+                        @csrf
+                        <x-button type="submit" :variant="$employee->onboardingLinkIsActive() ? 'secondary' : 'primary'">
+                            {{ $employee->onboardingLinkIsActive() ? 'Generate new link' : 'Generate '.($employee->profile_completed_at ? 'New ' : '').'Onboarding Link' }}
+                        </x-button>
+                    </form>
+                    <x-button variant="secondary" type="button" x-on:click="$dispatch('close-modal', 'onboarding-qr')">Close</x-button>
+                </div>
+            </div>
+        </x-modal>
+    @endcan
 </x-app-layout>
