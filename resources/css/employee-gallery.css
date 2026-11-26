@@ -233,6 +233,42 @@
     transform: none;
 }
 
+/* Selected (first click): enlarged in place, details shown; a second click opens it. */
+.employee-card.is-selected {
+    z-index: 5500 !important;
+}
+
+.employee-card.is-selected .employee-card__inner {
+    transform: scale(1.22);
+    box-shadow:
+        0 0 0 3px #ff602c,
+        0 36px 60px -18px rgb(61 57 52 / 0.6);
+}
+
+.employee-card.is-selected .employee-card__inner::after {
+    opacity: 0;
+}
+
+.employee-card.is-selected .employee-card__info {
+    opacity: 1;
+    transform: none;
+}
+
+.employee-card__open {
+    display: none;
+    align-self: flex-start;
+    margin-top: 0.35rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: #ff602c;
+}
+
+.employee-card.is-selected .employee-card__open {
+    display: inline-block;
+}
+
 /* Caption + hint only make sense on the 3D stage. */
 .employee-gallery__caption,
 .employee-gallery__hint {

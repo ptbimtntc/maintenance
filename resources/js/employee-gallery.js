@@ -28,9 +28,53 @@ function loadPhoto(card) {
     }
 }
 
+// Two-step open: the first click on any card (front, middle or back of the
+// stack) enlarges it where it is; a second click on that card follows its
+// link. Keyboard activation (Enter) still opens straight away.
+function enableSelectToOpen(section) {
+    let selected = null;
+
+    const select = (card) => {
+        selected?.classList.remove('is-selected');
+        selected = card;
+        card?.classList.add('is-selected');
+    };
+
+    section.addEventListener('click', (event) => {
+        const card = event.target.closest('[data-gallery-card]');
+
+        if (! card) {
+            select(null);
+            return;
+        }
+
+        if (event.detail === 0 || card === selected) {
+            return; // keyboard, or the second click: let the link open
+        }
+
+        event.preventDefault();
+        select(card);
+    });
+
+    document.addEventListener('click', (event) => {
+        if (selected && ! section.contains(event.target)) select(null);
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') select(null);
+    });
+
+    return {
+        get index() {
+            return selected ? Number(selected.dataset.index) : null;
+        },
+        clear: () => select(null),
+    };
+}
+
 function initGallery(section) {
     const cards = [...section.querySelectorAll('[data-gallery-card]')];
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const selection = enableSelectToOpen(section);
 
     if (reduceMotion || cards.length < 2) {
         cards.forEach((card) => {
@@ -67,6 +111,7 @@ function initGallery(section) {
     let frame = null;
     const introStart = performance.now();
     const visible = new Set();
+    let selectedAt = null; // stack position when a card was enlarged
 
     function measure() {
         const style = getComputedStyle(section);
@@ -168,6 +213,16 @@ function initGallery(section) {
 
         updateCaption();
 
+        // Scrolling well away from where a card was enlarged puts it back.
+        if (selection.index === null) {
+            selectedAt = null;
+        } else if (selectedAt === null) {
+            selectedAt = current;
+        } else if (Math.abs(current - selectedAt) > 1.5) {
+            selection.clear();
+            selectedAt = null;
+        }
+
         if (current !== target || intro !== null) {
             frame = requestAnimationFrame(render);
         }
@@ -195,11 +250,13 @@ function initGallery(section) {
         frame ??= requestAnimationFrame(render);
     }
 
-    // Tabbing to a card scrolls it to the front of the stack.
+    // Tabbing to a card (keyboard) scrolls it to the front of the stack.
     section.addEventListener('focusin', (event) => {
         const card = event.target.closest?.('[data-gallery-card]');
 
-        if (! card) {
+        // Only keyboard focus (Tab); a mouse click focuses the card too, but
+        // clicked cards enlarge where they are (enableSelectToOpen).
+        if (! card || ! card.matches(':focus-visible')) {
             return;
         }
 

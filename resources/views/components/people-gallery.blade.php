@@ -87,6 +87,9 @@
                                 @if ($position)
                                     <span class="employee-card__role">{{ $position }}</span>
                                 @endif
+                                @if ($link)
+                                    <span class="employee-card__open" aria-hidden="true">Click again to open</span>
+                                @endif
                             </span>
                         </span>
                     </{{ $tag }}>

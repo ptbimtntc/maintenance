@@ -175,7 +175,7 @@ Catatan komunikasi antar-shift (serah terima).
 ### Employees (Database Karyawan)
 **Melihat dan mencari**
 - Ada dua tampilan, dipilih lewat tombol **Gallery | Table** di kiri atas. Filter yang sedang aktif tetap berlaku saat berpindah tampilan.
-  - **Gallery** (default) — kartu foto karyawan bertumpuk dalam 3D. **Scroll ke bawah/atas** untuk menggeser kartu satu per satu; nama, NIK, dan posisi kartu yang sedang di depan tampil di bawah, beserta urutannya (mis. *07 / 28*). Arahkan kursor ke kartu untuk memperbesar dan melihat **NIK serta nama**; klik kartu untuk membuka profil karyawan. Gallery menampilkan semua karyawan hasil filter (maksimal 500 — gunakan filter atau tampilan Table untuk sisanya). Jika animasi dimatikan di perangkat (*reduce motion*), Gallery tampil sebagai grid foto biasa.
+  - **Gallery** (default) — kartu foto karyawan bertumpuk dalam 3D. **Scroll ke bawah/atas** untuk menggeser kartu satu per satu; nama, NIK, dan posisi kartu yang sedang di depan tampil di bawah, beserta urutannya (mis. *07 / 28*). Arahkan kursor ke kartu untuk melihat **NIK serta nama**. **Klik sekali** kartu mana pun (depan, tengah, atau belakang) untuk memperbesarnya di tempat; **klik sekali lagi** untuk membuka profil karyawan. Klik di luar kartu atau tekan Esc untuk mengembalikan ukurannya. Gallery menampilkan semua karyawan hasil filter (maksimal 500 — gunakan filter atau tampilan Table untuk sisanya). Jika animasi dimatikan di perangkat (*reduce motion*), Gallery tampil sebagai grid foto biasa.
   - **Table** — daftar berhalaman seperti sebelumnya.
 - Tampilan Table menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift. Foto ditampilkan langsung oleh aplikasi (juga di detail Employee, bagan organisasi, Task, dan halaman verifikasi sertifikat); bila file foto belum ada atau tidak dapat dimuat, tampil inisial nama (bukan gambar rusak). Pada form tambah/ubah Employee, foto yang baru dipilih langsung tampil sebagai pratinjau sebelum disimpan.
 - Cari berdasarkan NIK atau nama.
@@ -211,7 +211,7 @@ Bagan organisasi berbasis foto dari hierarki supervisor. Ada dua tampilan lewat 
 **Gallery** (default) — menjelajah organisasi satu tim per halaman:
 - Di atas ada **kartu pemimpin** tim yang sedang dibuka (foto, nama, NIK, posisi, jumlah anggota langsung, dan jumlah Mechanic/Electric), beserta jalur atasannya (mis. *Organization › Manager › Supervisor*). Klik nama di jalur itu atau **Up one level** untuk naik.
 - Anggota tim tampil sebagai kartu foto 3D yang bergeser saat di-scroll. Arahkan kursor ke kartu untuk melihat **NIK, nama, dan posisi**.
-- Kartu dengan lencana oranye **Team n** adalah orang yang memimpin tim sendiri — klik untuk **membuka timnya**. Kartu lain membuka profil karyawan; **Open profile** membuka profil pemimpin.
+- Klik sekali untuk memperbesar kartu, klik lagi untuk membukanya. Kartu dengan lencana oranye **Team n** adalah orang yang memimpin tim sendiri — kartu ini **membuka timnya**. Kartu lain membuka profil karyawan; **Open profile** membuka profil pemimpin.
 - Garis warna di atas kartu: **biru** = Blue Collar, **abu-abu** = White Collar Management, **pink** = Internship.
 - Mencari nama/NIK menampilkan karyawan yang cocok sebagai galeri; **Clear search** untuk kembali.
 
@@ -523,6 +523,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-26 | Gallery (Employees & Organization Chart): klik pertama memperbesar kartu di posisinya, klik kedua membukanya — kartu tidak lagi bergeser ke depan saat diklik. |
 | 2026-11-26 | Profil karyawan: QR verifikasi sertifikat dan QR onboarding kini dibuka lewat tombol **Certificate QR** / **Onboarding** (jendela melayang); tab profil bergaya tombol. |
 | 2026-11-26 | Profil karyawan: header baru (foto besar, status, dan ringkasan Skill Position/Business Unit/Supervisor/Shift). Perbaikan: profil karyawan yang memiliki Development Plan tidak lagi error saat dibuka. |
 | 2026-11-26 | Organization Chart: tampilan **Gallery** (default, satu tim per halaman dengan kartu pemimpin, jalur atasan, dan kartu foto 3D; lencana **Team n** membuka tim orang tersebut) dan **Chart** (bagan pohon seperti sebelumnya). |
