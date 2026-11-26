@@ -53,7 +53,7 @@ class EmployeePhotoPagesTest extends TestCase
         }
         // The shared avatar: object-cover, never shrinks into an oval, falls back to the initials if the image fails to load.
         $this->assertStringContainsString('h-10 w-10 shrink-0 rounded-full object-cover', $index);
-        $this->assertStringContainsString('h-20 w-20 shrink-0 rounded-full object-cover', $show);
+        $this->assertStringContainsString('h-full w-full object-cover', $show);
         $this->assertStringContainsString('data-initials="AA"', $index);
         $this->assertStringContainsString('onerror=', $index);
         // The file that is gone shows initials, not an image.

@@ -179,6 +179,7 @@ Catatan komunikasi antar-shift (serah terima).
   - **Table** — daftar berhalaman seperti sebelumnya.
 - Tampilan Table menampilkan Foto, NIK, Nama, Supervisor, Posisi, Skill Position, dan Shift. Foto ditampilkan langsung oleh aplikasi (juga di detail Employee, bagan organisasi, Task, dan halaman verifikasi sertifikat); bila file foto belum ada atau tidak dapat dimuat, tampil inisial nama (bukan gambar rusak). Pada form tambah/ubah Employee, foto yang baru dipilih langsung tampil sebagai pratinjau sebelum disimpan.
 - Cari berdasarkan NIK atau nama.
+- **Profil karyawan** dibuka dengan header bergaya galeri: foto besar, NIK, status kepegawaian, posisi, dan ringkasan Skill Position, Business Unit, Supervisor, serta Shift.
 - Filter: Business Unit, Department, Employment Type, Employment Source, Employment Status (default **Active**), Supervisor, dan Shift. Beberapa filter bisa dipilih lebih dari satu nilai.
 
 <!-- only:edit:employees -->
@@ -519,6 +520,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-26 | Profil karyawan: header baru (foto besar, status, dan ringkasan Skill Position/Business Unit/Supervisor/Shift). Perbaikan: profil karyawan yang memiliki Development Plan tidak lagi error saat dibuka. |
 | 2026-11-26 | Organization Chart: tampilan **Gallery** (default, satu tim per halaman dengan kartu pemimpin, jalur atasan, dan kartu foto 3D; lencana **Team n** membuka tim orang tersebut) dan **Chart** (bagan pohon seperti sebelumnya). |
 | 2026-11-25 | Employees: tampilan **Gallery** (default, kartu foto 3D yang bergeser saat di-scroll, hover menampilkan NIK & nama) dan **Table** (daftar seperti sebelumnya). Delete Selected ada di tampilan Table. |
 | 2026-11-25 | Link dari email (mis. task) saat belum login kini membuka halaman login lalu kembali ke halaman yang dituju, termasuk setelah ganti password pertama kali; sebelumnya muncul 403. |

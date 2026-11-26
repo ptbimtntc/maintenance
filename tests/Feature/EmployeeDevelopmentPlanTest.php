@@ -45,6 +45,18 @@ class EmployeeDevelopmentPlanTest extends TestCase
         $response->assertSee('Low Plan')->assertSee('High Plan')->assertDontSee('Medium Plan');
     }
 
+    public function test_profile_with_a_development_plan_renders_its_edit_link(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $plan = EmployeeDevelopmentPlan::factory()->create(['development_objective' => 'Profile Plan']);
+
+        $this->actingAs($admin)->get(route('employees.show', $plan->employee_id))
+            ->assertOk()
+            ->assertSee('Profile Plan')
+            ->assertSee(route('employees.development-plans.edit', ['employee' => $plan->employee_id, 'plan' => $plan]), false);
+    }
+
     public function test_manager_can_create_a_development_plan(): void
     {
         $manager = User::factory()->create();

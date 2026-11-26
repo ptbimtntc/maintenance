@@ -26,21 +26,62 @@
         @if (session('status'))
             <div class="rounded-md bg-success-50 px-4 py-3 text-sm text-success-800">{{ session('status') }}</div>
         @endif
-        <div class="flex flex-col justify-between gap-4 rounded-lg border border-neutral-200 bg-white p-6 shadow-md sm:flex-row sm:items-center">
-            <div class="flex items-center gap-4">
-                <x-employee-avatar :employee="$employee" img-class="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-neutral-200"
-                    fallback-class="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xl font-semibold text-neutral-500 ring-2 ring-neutral-200" />
-                <div>
-                    <h2 class="text-xl font-semibold text-neutral-900">{{ $employee->full_name }}</h2>
-                    <p class="text-sm text-neutral-500">{{ $employee->employee_number }} &middot; {{ $employee->position?->title ?? 'No position assigned' }}</p>
-                </div>
+        {{-- Profile header: warm brand banner (same palette as the Employees gallery) with the
+             photo blurred behind it, drifting on scroll (data-parallax, resources/js/motion.js). --}}
+        @php
+            $heroPhoto = \App\Support\LototoEmployeePhoto::url($employee, 'employees.photo');
+            $status = $employee->employmentStatus;
+            $chips = array_filter([
+                'Skill Position' => $employee->skillPosition?->name,
+                'Business Unit' => $employee->businessUnit?->name,
+                'Supervisor' => $employee->supervisor?->full_name,
+                'Shift' => $employee->shift?->name,
+            ]);
+        @endphp
+        <div data-motion class="relative overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-brand-50 via-white to-accent-50 shadow-md">
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+                @if ($heroPhoto)
+                    <img data-parallax src="{{ $heroPhoto }}" alt="" class="absolute inset-x-0 -top-[10%] h-[120%] w-full scale-110 object-cover opacity-25 blur-2xl">
+                @endif
+                <div class="motion-blob absolute -left-16 -top-24 h-72 w-72 rounded-full bg-brand-200/50 blur-3xl"></div>
+                <div class="motion-blob motion-blob--slow absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-accent-200/50 blur-3xl"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-white/70 via-white/40 to-transparent"></div>
             </div>
 
-            <div class="flex gap-2">
-                @can('update', $employee)
-                    <x-button variant="secondary" href="{{ route('employees.edit', array_filter(['employee' => $employee, 'from' => $from])) }}">Edit</x-button>
-                @endcan
-                <x-button variant="secondary" href="{{ $back['route'] }}">{{ $back['label'] }}</x-button>
+            <div class="relative flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8">
+                <div class="motion-enter h-36 w-28 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-brand-100 to-accent-100 shadow-xl ring-4 ring-white sm:h-44 sm:w-36">
+                    <x-employee-avatar :employee="$employee" img-class="h-full w-full object-cover"
+                        fallback-class="flex h-full w-full items-center justify-center text-3xl font-bold text-brand-700" />
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <div class="motion-enter flex flex-wrap items-center gap-2" style="--d: 60ms">
+                        <span class="rounded-full bg-white/80 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-brand-700 ring-1 ring-brand-200">{{ $employee->employee_number }}</span>
+                        @if ($status)
+                            <span @class(['rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1', $status->code === 'ACTIVE' ? 'bg-success-50 text-success-700 ring-success-200' : 'bg-neutral-100 text-neutral-600 ring-neutral-200'])>{{ $status->name }}</span>
+                        @endif
+                    </div>
+                    <h2 class="motion-enter mt-2 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl" style="--d: 120ms">{{ $employee->full_name }}</h2>
+                    <p class="motion-enter mt-1 text-sm text-neutral-600" style="--d: 180ms">{{ $employee->position?->title ?? 'No position assigned' }}</p>
+
+                    @if ($chips)
+                        <dl class="motion-enter mt-4 flex flex-wrap gap-2" style="--d: 240ms">
+                            @foreach ($chips as $label => $value)
+                                <div class="rounded-xl bg-white/80 px-3 py-1.5 shadow-sm ring-1 ring-neutral-200 backdrop-blur">
+                                    <dt class="text-[10px] font-medium uppercase tracking-wide text-neutral-400">{{ $label }}</dt>
+                                    <dd class="text-xs font-semibold text-neutral-800">{{ $value }}</dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                    @endif
+                </div>
+
+                <div class="flex shrink-0 gap-2 sm:flex-col sm:self-start">
+                    @can('update', $employee)
+                        <x-button variant="secondary" href="{{ route('employees.edit', array_filter(['employee' => $employee, 'from' => $from])) }}">Edit</x-button>
+                    @endcan
+                    <x-button variant="secondary" href="{{ $back['route'] }}">{{ $back['label'] }}</x-button>
+                </div>
             </div>
         </div>
 
@@ -448,7 +489,7 @@
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium {{ $planStatusStyles[$plan->status] }}">{{ ucwords(str_replace('_', ' ', $plan->status)) }}</span>
                                 @can(\App\Enums\PermissionName::ManageDevelopmentPlans->value)
-                                    <a href="{{ route('employees.development-plans.edit', array_filter(['employee' => $employee, 'development_plan' => $plan, 'from' => $from])) }}" class="text-sm text-neutral-600 hover:underline">Edit</a>
+                                    <a href="{{ route('employees.development-plans.edit', array_filter(['employee' => $employee, 'plan' => $plan, 'from' => $from])) }}" class="text-sm text-neutral-600 hover:underline">Edit</a>
                                 @endcan
                             </div>
                         </div>
