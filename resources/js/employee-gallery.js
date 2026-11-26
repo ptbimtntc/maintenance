@@ -1,4 +1,4 @@
-// Employees "Gallery" view: scroll-driven 3D card stack.
+// People gallery (x-people-gallery: Employees, Organization Chart): scroll-driven 3D card stack.
 //
 // The section is tall (one --step of scroll per employee) and its stage is
 // sticky, so scrolling moves a virtual "current" index through the cards.
@@ -78,7 +78,8 @@ function initGallery(section) {
         const stageW = viewport.clientWidth || 1000;
         behind = stageW < 640 ? 4 : 6;
         spread = clamp((stageW * 0.8 - cardW) / ((behind - 1) * cardW), 0.16, 0.55);
-        offsetX = (behind - 1) * spread * cardW * 0.5;
+        // Centre on the cards actually stacked (a small team has fewer than `behind`).
+        offsetX = (Math.min(behind, cards.length) - 1) * spread * cardW * 0.5;
     }
 
     function readTarget() {
@@ -219,4 +220,4 @@ function initGallery(section) {
     frame = requestAnimationFrame(render);
 }
 
-document.querySelectorAll('#employee-gallery').forEach(initGallery);
+document.querySelectorAll('[data-people-gallery]').forEach(initGallery);

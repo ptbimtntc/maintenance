@@ -147,7 +147,16 @@ class OrganizationChartController extends Controller
 
         $childrenByParent = $employees->groupBy('supervisor_id');
 
+        // "Gallery" (default): one team at a time as a 3D photo stack, drilled
+        // into via ?leader=; "Chart": the full collapsible tree below.
+        $view = $request->query('view') === 'chart' ? 'chart' : 'gallery';
+        $gallery = $view === 'gallery'
+            ? $this->galleryTeam($request, $employees, $roots, $childrenByParent, $highlightIds, filled($search))
+            : null;
+
         return view('organization-chart.index', [
+            'view' => $view,
+            'gallery' => $gallery,
             'roots' => $roots,
             'childrenByParent' => $childrenByParent,
             'filters' => $filters,
@@ -161,6 +170,66 @@ class OrganizationChartController extends Controller
             'departments' => $departments,
             'employmentTypes' => $employmentTypes,
         ]);
+    }
+
+    /**
+     * The team shown by the gallery view: a leader (from ?leader=, else the
+     * single top of the chart), their reporting line above them within the
+     * visible set, and their direct reports - people who lead a team of
+     * their own first. With multiple tops and no leader chosen, the tops
+     * themselves are the "team". A name/NIK search shows just the matches.
+     *
+     * Only ids inside the already-visibility-scoped $employees are honoured,
+     * so ?leader= can't reveal anyone the viewer couldn't see in the tree.
+     *
+     * @return array{search: bool, leader: ?Employee, trail: Collection, members: Collection, teamSizes: Collection}
+     */
+    private function galleryTeam(Request $request, Collection $employees, Collection $roots, Collection $childrenByParent, Collection $highlightIds, bool $searching): array
+    {
+        $byId = $employees->keyBy('id');
+        $teamSizes = $employees->mapWithKeys(fn (Employee $employee) => [
+            $employee->id => $childrenByParent->get($employee->id, collect())->count(),
+        ])->filter();
+
+        $ordered = fn (Collection $people) => $people
+            ->sortBy([
+                fn (Employee $a, Employee $b) => ($teamSizes->has($b->id) <=> $teamSizes->has($a->id)),
+                fn (Employee $a, Employee $b) => strcasecmp($a->full_name, $b->full_name),
+            ])
+            ->values();
+
+        if ($searching) {
+            return [
+                'search' => true,
+                'leader' => null,
+                'trail' => collect(),
+                'members' => $ordered($employees->whereIn('id', $highlightIds)),
+                'teamSizes' => $teamSizes,
+            ];
+        }
+
+        $leaderId = (int) $request->query('leader');
+        $leader = match (true) {
+            $leaderId && $teamSizes->has($leaderId) => $byId->get($leaderId),
+            $roots->count() === 1 && $teamSizes->has($roots->first()->id) => $roots->first(),
+            default => null,
+        };
+
+        $trail = collect();
+        $current = $leader;
+
+        while ($current?->supervisor_id && $byId->has($current->supervisor_id) && $trail->count() < 20) {
+            $current = $byId->get($current->supervisor_id);
+            $trail->prepend($current);
+        }
+
+        return [
+            'search' => false,
+            'leader' => $leader,
+            'trail' => $trail,
+            'members' => $ordered($leader ? $childrenByParent->get($leader->id, collect()) : $roots),
+            'teamSizes' => $teamSizes,
+        ];
     }
 
     /**

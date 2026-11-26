@@ -54,13 +54,72 @@ class OrganizationChartTest extends TestCase
         $manager = Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Middle Manager', 'supervisor_id' => $ceo->id]);
         Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Bottom Staff', 'supervisor_id' => $manager->id]);
 
-        $response = $this->actingAs($admin)->get(route('organization-chart.index'));
+        $response = $this->actingAs($admin)->get(route('organization-chart.index', ['view' => 'chart']));
 
         $response->assertOk();
         $response->assertViewHas('roots', fn ($roots) => $roots->pluck('id')->contains($ceo->id));
         $response->assertSee('Top Boss');
         $response->assertSee('Middle Manager');
         $response->assertSee('Bottom Staff');
+    }
+
+    public function test_gallery_is_the_default_and_drills_down_one_team_at_a_time(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+
+        $ceo = Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Top Boss', 'supervisor_id' => null]);
+        $manager = Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Middle Manager', 'supervisor_id' => $ceo->id]);
+        Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Bottom Staff', 'supervisor_id' => $manager->id]);
+
+        // The single top of the chart is the first team; its members are a 3D gallery.
+        $this->actingAs($admin)->get(route('organization-chart.index', ['applied' => 1]))
+            ->assertOk()
+            ->assertViewHas('view', 'gallery')
+            ->assertViewHas('gallery', fn ($gallery) => $gallery['leader']->is($ceo)
+                && $gallery['members']->pluck('id')->all() === [$manager->id])
+            ->assertSee('id="org-gallery"', false)
+            ->assertSee('Team of')
+            ->assertSee('Team 1')
+            ->assertSee('leader='.$manager->id, false)
+            ->assertDontSee('Bottom Staff');
+
+        // Opening the manager's team shows their report, with the reporting line above.
+        $this->actingAs($admin)->get(route('organization-chart.index', ['applied' => 1, 'leader' => $manager->id]))
+            ->assertOk()
+            ->assertViewHas('gallery', fn ($gallery) => $gallery['leader']->is($manager)
+                && $gallery['trail']->pluck('id')->all() === [$ceo->id]
+                && $gallery['members']->pluck('full_name')->all() === ['Bottom Staff'])
+            ->assertSee('Up one level');
+    }
+
+    public function test_gallery_ignores_a_leader_outside_what_the_viewer_may_see(): void
+    {
+        $supervisorUser = User::factory()->create();
+        $supervisorUser->assignRole(RoleName::MaintenanceSupervisor->value);
+        $mine = Employee::factory()->create(['employment_status_id' => $this->active->id, 'user_id' => $supervisorUser->id, 'full_name' => 'My Self']);
+        Employee::factory()->create(['employment_status_id' => $this->active->id, 'supervisor_id' => $mine->id, 'full_name' => 'My Report']);
+        $otherLead = Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Other Lead']);
+        Employee::factory()->create(['employment_status_id' => $this->active->id, 'supervisor_id' => $otherLead->id, 'full_name' => 'Hidden Report']);
+
+        $this->actingAs($supervisorUser)->get(route('organization-chart.index', ['applied' => 1, 'leader' => $otherLead->id]))
+            ->assertOk()
+            ->assertViewHas('gallery', fn ($gallery) => ! $gallery['leader']?->is($otherLead))
+            ->assertDontSee('Hidden Report')
+            ->assertDontSee('Other Lead');
+    }
+
+    public function test_gallery_search_shows_the_matches(): void
+    {
+        $admin = User::factory()->create();
+        $admin->assignRole(RoleName::Administrator->value);
+        $ceo = Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Top Boss', 'supervisor_id' => null]);
+        Employee::factory()->create(['employment_status_id' => $this->active->id, 'full_name' => 'Searchable Person', 'supervisor_id' => $ceo->id]);
+
+        $this->actingAs($admin)->get(route('organization-chart.index', ['applied' => 1, 'search' => 'Searchable']))
+            ->assertOk()
+            ->assertViewHas('gallery', fn ($gallery) => $gallery['search'] && $gallery['members']->pluck('full_name')->all() === ['Searchable Person'])
+            ->assertSee('1 match');
     }
 
     public function test_a_supervisor_only_sees_themselves_and_direct_reports_in_their_chart(): void
@@ -158,7 +217,7 @@ class OrganizationChartTest extends TestCase
             ]);
         }
 
-        $response = $this->actingAs($admin)->get(route('organization-chart.index'));
+        $response = $this->actingAs($admin)->get(route('organization-chart.index', ['view' => 'chart']));
 
         $response->assertOk();
         $response->assertViewHas('teamTrades', fn ($trades) => $trades->get($supervisor->id) === ['M' => 2, 'E' => 1]);

@@ -103,7 +103,13 @@
         </x-filter-panel>
 
         @if ($view === 'gallery')
-            @include('employees._gallery', ['employees' => $galleryEmployees, 'total' => $employees->total(), 'limit' => $galleryLimit])
+            <x-people-gallery :employees="$galleryEmployees">
+                @if ($employees->total() > $galleryEmployees->count())
+                    <p class="text-center text-xs text-neutral-500">
+                        Showing the first {{ $galleryLimit }} of {{ $employees->total() }} employees. Use the filters or the Table view to see the rest.
+                    </p>
+                @endif
+            </x-people-gallery>
         @else
         @can('create', \App\Models\Employee::class)
             <form id="bulk-delete-form" method="POST" action="{{ route('employees.bulk-destroy') }}"

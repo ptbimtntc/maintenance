@@ -202,7 +202,16 @@ Catatan komunikasi antar-shift (serah terima).
 
 <!-- only:organization-chart -->
 ### Organization Chart
-Bagan organisasi berbasis foto dari hierarki supervisor.
+Bagan organisasi berbasis foto dari hierarki supervisor. Ada dua tampilan lewat tombol **Gallery | Chart** di kiri atas (filter tetap berlaku):
+
+**Gallery** (default) — menjelajah organisasi satu tim per halaman:
+- Di atas ada **kartu pemimpin** tim yang sedang dibuka (foto, nama, NIK, posisi, jumlah anggota langsung, dan jumlah Mechanic/Electric), beserta jalur atasannya (mis. *Organization › Manager › Supervisor*). Klik nama di jalur itu atau **Up one level** untuk naik.
+- Anggota tim tampil sebagai kartu foto 3D yang bergeser saat di-scroll. Arahkan kursor ke kartu untuk melihat **NIK, nama, dan posisi**.
+- Kartu dengan lencana oranye **Team n** adalah orang yang memimpin tim sendiri — klik untuk **membuka timnya**. Kartu lain membuka profil karyawan; **Open profile** membuka profil pemimpin.
+- Garis warna di atas kartu: **biru** = Blue Collar, **abu-abu** = White Collar Management, **pink** = Internship.
+- Mencari nama/NIK menampilkan karyawan yang cocok sebagai galeri; **Clear search** untuk kembali.
+
+**Chart** — bagan pohon lengkap:
 - Tiap kotak menampilkan foto/inisial, NIK, nama, dan Skill Position.
 - **Biru** = Blue Collar, **putih** = White Collar Management.
 - Filter berdasarkan Business Unit, Department, dan Employment Type; legenda menampilkan jumlah tenaga kerja.
@@ -510,6 +519,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-26 | Organization Chart: tampilan **Gallery** (default, satu tim per halaman dengan kartu pemimpin, jalur atasan, dan kartu foto 3D; lencana **Team n** membuka tim orang tersebut) dan **Chart** (bagan pohon seperti sebelumnya). |
 | 2026-11-25 | Employees: tampilan **Gallery** (default, kartu foto 3D yang bergeser saat di-scroll, hover menampilkan NIK & nama) dan **Table** (daftar seperti sebelumnya). Delete Selected ada di tampilan Table. |
 | 2026-11-25 | Link dari email (mis. task) saat belum login kini membuka halaman login lalu kembali ke halaman yang dituju, termasuk setelah ganti password pertama kali; sebelumnya muncul 403. |
 | 2026-11-25 | Tabel daftar: sorotan baris, bayangan penanda geser horizontal, judul kolom tetap terlihat. Form: kolom aktif bergaris oranye, kolom yang salah ditandai merah (bagian *Mengenal Tampilan*). |

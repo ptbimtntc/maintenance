@@ -21,7 +21,7 @@ if (document.getElementById('training-checkin-panel')) {
     import('./training-checkin');
 }
 
-if (document.getElementById('employee-gallery')) {
+if (document.querySelector('[data-people-gallery]')) {
     import('./employee-gallery');
 }
 

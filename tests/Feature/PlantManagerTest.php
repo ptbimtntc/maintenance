@@ -165,12 +165,21 @@ class PlantManagerTest extends TestCase
         ]);
         Employee::factory()->create(['employment_status_id' => $active, 'supervisor_id' => $supervisor->id, 'full_name' => 'Direct Report']);
 
-        $response = $this->actingAs($supervisorUser)->get(route('organization-chart.index'));
+        $response = $this->actingAs($supervisorUser)->get(route('organization-chart.index', ['view' => 'chart']));
 
         $response->assertOk()
             ->assertViewHas('roots', fn ($roots) => $roots->count() === 1 && $roots->first()->id === $this->plantManager->id)
             ->assertSee('Plant Boss')
             ->assertSee('Direct Report')
+            ->assertDontSee(route('plant-manager.edit'), false);
+
+        // Gallery (default): the Plant Manager leads the first team, still without a link.
+        $this->actingAs($supervisorUser)->get(route('organization-chart.index'))
+            ->assertOk()
+            ->assertViewHas('gallery', fn ($gallery) => $gallery['leader']?->id === $this->plantManager->id
+                && $gallery['members']->pluck('id')->all() === [$supervisor->id])
+            ->assertSee('Plant Boss')
+            ->assertDontSee('Open profile')
             ->assertDontSee(route('plant-manager.edit'), false);
     }
 

@@ -158,6 +158,62 @@
     line-height: 1.2;
 }
 
+.employee-card__role {
+    font-size: 0.7rem;
+    line-height: 1.25;
+    color: rgb(255 255 255 / 0.75);
+}
+
+/* Workforce category strip (Organization Chart), matching its legend colours. */
+.employee-card__stripe {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 2;
+    height: 5px;
+}
+
+.employee-card__stripe--bc {
+    background: #0189be;
+}
+
+.employee-card__stripe--wcm {
+    background: #b8b2a8;
+}
+
+.employee-card__stripe--intern {
+    background: #ec4899;
+}
+
+/* "Team n" badge on people who lead a team; always visible. */
+.employee-card__badge {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #fff;
+    background: rgb(240 77 27 / 0.92);
+    box-shadow: 0 4px 10px -4px rgb(204 61 18 / 0.6);
+}
+
+.employee-card__badge svg {
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+/* Search match. */
+.employee-card.is-match .employee-card__inner {
+    box-shadow:
+        0 0 0 3px #ff8158,
+        0 22px 40px -14px rgb(61 57 52 / 0.45);
+}
+
 .employee-card:hover .employee-card__inner,
 .employee-card:focus-visible .employee-card__inner {
     transform: scale(1.07);
