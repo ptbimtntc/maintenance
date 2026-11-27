@@ -6,6 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
+        {{-- Opt in to page transitions inline: from the external stylesheet alone,
+             Chrome often has not applied it yet when the new page is revealed
+             and aborts the transition. --}}
+        <style>@media (prefers-reduced-motion: no-preference) { @@view-transition { navigation: auto; } }</style>
+
         <title>{{ config('app.name') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -27,6 +32,7 @@
                 var track = function (event) {
                     if (! event.viewTransition) return;
                     root.classList.add('vt-active');
+                    if (event.type === 'pagereveal') root.classList.add('vt-arrived');
                     event.viewTransition.finished.finally(off);
                 };
                 addEventListener('pageswap', track);
@@ -47,7 +53,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased bg-neutral-100" x-data="{ sidebarOpen: false }">
+    <body class="font-sans antialiased" x-data="{ sidebarOpen: false }">
         <div class="flex h-screen overflow-hidden">
             <!-- Desktop sidebar -->
             <div id="desktop-sidebar" class="vt-sidebar hidden overflow-hidden lg:flex lg:shrink-0">
@@ -75,9 +81,10 @@
             <div class="flex flex-1 flex-col overflow-hidden">
                 @include('layouts.topbar', ['header' => $header ?? null])
 
-                <main class="vt-main flex-1 overflow-y-auto">
+                <main class="vt-main app-main flex-1 overflow-y-auto">
                     <div @class([
-                        'mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8',
+                        'app-page-content mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8',
+                        'lototo-route' => request()->routeIs('safety.lototo.*'),
                         'lototo-activity-layout' => request()->routeIs('safety.lototo.show', 'safety.lototo.spare-locks.show'),
                     ])>
                         {{ $slot }}

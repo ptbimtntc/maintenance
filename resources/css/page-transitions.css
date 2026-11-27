@@ -38,7 +38,7 @@ html.vt-active .vt-main {
 /* Everything not named (body background, login <-> app layout switch). */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-    animation-duration: 220ms;
+    animation-duration: 260ms;
 }
 
 /* Chrome swaps instantly: no cross-fade of two near-identical snapshots. */
@@ -67,7 +67,7 @@ html.vt-active .vt-main {
 @keyframes vt-content-in {
     from {
         opacity: 0;
-        transform: translate3d(0, 12px, 0);
+        transform: translate3d(0, 10px, 0);
     }
 }
 
@@ -76,11 +76,11 @@ html.vt-active .vt-main {
 }
 
 ::view-transition-old(app-main) {
-    animation: vt-content-out 140ms ease-in both;
+    animation: vt-content-out 160ms ease-in both;
 }
 
 ::view-transition-new(app-main) {
-    animation: vt-content-in 320ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+    animation: vt-content-in 300ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
 }
 
 /* ---- Top navigation progress bar (resources/js/page-progress.js) ------- */
@@ -95,7 +95,7 @@ html.vt-active .vt-main {
     transform: scaleX(0);
     opacity: 0;
     pointer-events: none;
-    background: linear-gradient(90deg, #ff602c, #fda92e, #01adef);
+    background: linear-gradient(90deg, #ff7a3d, #fda92e, #22b8e6);
     box-shadow: 0 0 8px rgb(255 96 44 / 0.5);
     transition:
         transform 400ms cubic-bezier(0.2, 0.8, 0.2, 1),

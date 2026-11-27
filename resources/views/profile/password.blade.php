@@ -1,8 +1,8 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-neutral-800 leading-tight">
+        <span>
             {{ __('Change Password') }}
-        </h2>
+        </span>
     </x-slot>
 
     <div class="py-12">

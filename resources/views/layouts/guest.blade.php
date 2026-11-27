@@ -6,6 +6,11 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
 
+        {{-- Opt in to page transitions inline: from the external stylesheet alone,
+             Chrome often has not applied it yet when the new page is revealed
+             and aborts the transition. --}}
+        <style>@media (prefers-reduced-motion: no-preference) { @@view-transition { navigation: auto; } }</style>
+
         <title>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- Fonts -->
@@ -105,7 +110,7 @@
                         </div>
                     @endif
 
-                    <div class="motion-enter w-full overflow-hidden rounded-2xl border border-neutral-200/80 bg-white/90 px-6 py-6 shadow-xl shadow-neutral-900/5 backdrop-blur sm:px-8 sm:py-8" style="--d: 250ms">
+                    <div class="glass-auth motion-enter w-full overflow-hidden rounded-2xl border border-neutral-200/80 bg-white/90 px-6 py-6 shadow-xl shadow-neutral-900/5 backdrop-blur sm:px-8 sm:py-8" style="--d: 250ms">
                         <div aria-hidden="true" class="motion-gradient-text -mx-6 -mt-6 mb-6 h-1 bg-gradient-to-r from-brand-500 via-warning-400 to-accent-500 sm:-mx-8 sm:-mt-8"></div>
                         {{ $slot }}
                     </div>

@@ -44,7 +44,7 @@ $maxSkillGap = collect($topSkillGaps)->max('count') ?: 1;
     <div class="space-y-6" data-motion>
         {{-- Header + filters. Only sticky on large screens; on phones/tablets
              four stacked selects would eat most of the viewport. --}}
-        <div data-reveal class="relative z-20 overflow-hidden rounded-lg border border-neutral-200 bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:flex lg:items-end lg:justify-between lg:gap-6">
+        <div data-reveal class="glass-hero relative z-20 overflow-hidden rounded-lg border border-neutral-200 bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:flex lg:items-end lg:justify-between lg:gap-6">
             {{-- Brand accent strip along the top edge. --}}
             <span aria-hidden="true" class="motion-gradient-text pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-500 via-warning-400 to-accent-500"></span>
             <div class="mb-4 lg:mb-0 lg:shrink-0">

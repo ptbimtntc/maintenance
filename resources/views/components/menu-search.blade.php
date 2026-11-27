@@ -21,7 +21,7 @@
         x-transition:leave="ease-in duration-100"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-neutral-900/60"
+        class="glass-backdrop fixed inset-0"
         @click="close()"
     ></div>
 
@@ -33,7 +33,7 @@
         x-transition:leave="ease-in duration-100"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl"
+        class="glass-modal relative w-full max-w-lg overflow-hidden rounded-lg bg-white shadow-xl"
     >
         <div class="flex items-center gap-3 border-b border-neutral-200 px-4">
             <svg class="h-5 w-5 shrink-0 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">

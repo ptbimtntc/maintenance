@@ -21,7 +21,7 @@
         x-transition:leave="ease-in duration-100"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-neutral-900/60"
+        class="glass-backdrop fixed inset-0"
         @click="cancel()"
     ></div>
 
@@ -33,7 +33,7 @@
         x-transition:leave="ease-in duration-100"
         x-transition:leave-start="opacity-100 sm:scale-100"
         x-transition:leave-end="opacity-0 sm:scale-95"
-        class="relative w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl"
+        class="glass-modal relative w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl"
     >
         <div class="flex gap-4 p-5">
             <span

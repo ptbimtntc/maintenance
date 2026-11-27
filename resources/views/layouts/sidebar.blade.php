@@ -2,7 +2,7 @@
 $user = auth()->user();
 
 $dashboardActive = request()->routeIs('dashboard');
-$employeesActive = request()->routeIs('employees.*');
+$employeesActive = request()->routeIs('employees.*') && ! request()->routeIs('employees.qr-codes');
 $organizationChartActive = request()->routeIs('organization-chart.*');
 $qrCodesActive = request()->routeIs('employees.qr-codes');
 $plantManagerActive = request()->routeIs('plant-manager.*');
@@ -106,7 +106,7 @@ $mobile = $mobile ?? false;
 
 <div id="{{ $mobile ? 'mobile-sidebar' : 'desktop-sidebar-inner' }}"
      x-data="sidebar({{ $mobile ? 'true' : 'false' }})"
-     class="flex h-full min-w-0 grow flex-col overflow-hidden bg-neutral-900">
+     class="app-sidebar flex h-full min-w-0 grow flex-col overflow-hidden bg-neutral-900">
     <div class="flex h-16 shrink-0 items-center gap-3 border-b border-neutral-800"
          :class="rail ? 'justify-center px-0' : 'px-4'">
         <div class="flex h-9 w-9 shrink-0 items-center justify-center" title="PT Bekaert Indonesia">

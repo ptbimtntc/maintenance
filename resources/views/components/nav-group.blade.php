@@ -29,8 +29,12 @@
     </button>
 
     {{-- Sub-items sit under a vertical guide line, indented to line up with the header icon. --}}
-    <div :id="id" x-show="open || rail" x-cloak class="space-y-0.5 pb-1 pt-0.5"
-         :class="rail ? '' : 'ml-[1.375rem] border-l border-neutral-700/70 pl-2'">
-        {{ $slot }}
+    <div :id="id" class="nav-group-panel" :class="{ 'is-closed': ! (open || rail) }">
+        <div>
+            <div class="space-y-0.5 pb-1 pt-0.5"
+                 :class="rail ? '' : 'ml-[1.375rem] border-l border-neutral-700/70 pl-2'">
+                {{ $slot }}
+            </div>
+        </div>
     </div>
 </div>

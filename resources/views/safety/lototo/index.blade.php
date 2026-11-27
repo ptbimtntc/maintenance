@@ -80,6 +80,7 @@
         @if ($canEditBoard)
             @include('safety.lototo._board-editor')
         @endif
+        <div class="lototo-board-glass">
          <section
             class="lototo-board border-4 border-black p-1 shadow-lg"
             style="--lototo-board-columns: {{ $boardColumns }}; background: repeating-linear-gradient(135deg, #171717 0, #171717 7px, #facc15 7px, #facc15 14px);"
@@ -160,5 +161,6 @@
                 @endforeach
             </div>
         </section>
+        </div>
     </div>
 </x-app-layout>

@@ -24,7 +24,7 @@ $colorClasses = [
 @endphp
 
 <div data-reveal @class([
-    'group relative flex flex-col overflow-hidden rounded-lg border border-neutral-200 border-t-2 border-t-brand-500 bg-white p-4 shadow-sm transition-all duration-200',
+    'glass-card glass-kpi group relative flex flex-col overflow-hidden rounded-lg border border-neutral-200 border-t-2 border-t-brand-500 bg-white p-4 shadow-sm transition-all duration-200',
     'hover:-translate-y-1 hover:border-brand-300 hover:border-t-brand-500 hover:shadow-lg hover:shadow-brand-500/10' => $href,
 ])>
     {{-- Soft brand glow that fades in on hover (purely decorative). --}}

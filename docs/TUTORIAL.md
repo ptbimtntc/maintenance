@@ -71,7 +71,7 @@ Karyawan baru bisa menerima **link onboarding** (biasanya lewat QR) dari HR. Buk
 
 ## Mengenal Tampilan
 
-- **Sidebar kiri** — menu utama dikelompokkan: *Task*, *People & Organization*, *Competency*, *Training & Development*, *Safety*, *Insights & System*. Klik nama grup untuk membuka/menutup. Di ponsel sidebar tersembunyi dan dibuka dengan tombol menu.
+- **Sidebar kiri** — menu utama dikelompokkan: *Task*, *People & Organization*, *Competency*, *Training & Development*, *Safety*, *Insights & System*. Klik nama grup untuk membuka/menutup (dengan animasi singkat). Menu halaman yang sedang dibuka disorot dengan latar kaca berpendar. Di ponsel sidebar tersembunyi dan dibuka dengan tombol menu.
 - **Kotak Search menu** — di atas sidebar, untuk mencari menu dengan cepat.
 - **Help** — menu di bagian bawah sidebar yang membuka panduan ini langsung di dalam aplikasi, lengkap dengan daftar isi. Isi panduan menyesuaikan akun yang login: hanya fitur yang bisa Anda akses yang ditampilkan.
 - **Tombol collapse** — di bawah sidebar, untuk menciutkan sidebar menjadi ikon saja.
@@ -79,7 +79,8 @@ Karyawan baru bisa menerima **link onboarding** (biasanya lewat QR) dari HR. Buk
 - **Lencana “🔒 View only”** — muncul di halaman daftar bila Anda hanya boleh melihat, tidak boleh mengedit menu itu.
 - **Filter, pencarian, dan ekspor** — kebanyakan halaman daftar punya panel filter, kotak cari, dan tombol ekspor **CSV / XLSX**.
 - **Tabel daftar** — baris di bawah kursor disorot dengan garis oranye di kiri. Bila tabel lebih lebar dari layar (misalnya di ponsel), bayangan tipis di tepi kiri/kanan menandakan masih ada kolom yang bisa digeser. Saat isi tabel di-scroll, judul kolom tetap terlihat di atas.
-- **Form** — kolom yang sedang diisi diberi garis oranye. Bila ada isian yang salah setelah menekan simpan, kolom tersebut berwarna merah dengan pesan penjelasan tepat di bawahnya.
+- **Form** — kolom yang sedang diisi diberi garis dan pendar biru muda (cyan). Bila ada isian yang salah setelah menekan simpan, kolom tersebut berwarna merah dengan pesan penjelasan tepat di bawahnya.
+- **Tampilan Liquid Glass** — seluruh halaman memakai gaya kaca transparan yang sama: latar bercahaya oranye–cyan, sidebar kaca gelap, serta kartu, tabel, tombol, menu dropdown, dan jendela dialog bergaya kaca. Board LOTOTO diberi bingkai kaca; warna, susunan, dan isi slot di dalamnya tidak berubah.
 - **Perpindahan halaman** — saat membuka menu lain, sidebar dan top bar tetap diam dan hanya isi halaman yang berganti dengan animasi singkat. Jika halaman butuh waktu untuk dimuat, muncul **garis progres berwarna** tipis di paling atas layar. Animasi hanya ada di Chrome/Edge/Safari versi baru dan mati otomatis bila *reduce motion* aktif di perangkat; di browser lain halaman berpindah seperti biasa.
 
 ### Notifikasi
@@ -523,6 +524,7 @@ Tambahkan satu baris setiap kali aplikasi berubah dan tutorial diperbarui. Yang 
 
 | Tanggal | Perubahan pada tutorial |
 |---|---|
+| 2026-11-27 | Tampilan baru **Industrial Liquid Glass** di seluruh aplikasi, animasi submenu sidebar, fokus kolom form berwarna cyan, dan perbaikan transisi antarhalaman (bagian *Mengenal Tampilan*). |
 | 2026-11-26 | Gallery (Employees & Organization Chart): klik pertama memperbesar kartu di posisinya, klik kedua membukanya — kartu tidak lagi bergeser ke depan saat diklik. |
 | 2026-11-26 | Profil karyawan: QR verifikasi sertifikat dan QR onboarding kini dibuka lewat tombol **Certificate QR** / **Onboarding** (jendela melayang); tab profil bergaya tombol. |
 | 2026-11-26 | Profil karyawan: header baru (foto besar, status, dan ringkasan Skill Position/Business Unit/Supervisor/Shift). Perbaikan: profil karyawan yang memiliki Development Plan tidak lagi error saat dibuka. |

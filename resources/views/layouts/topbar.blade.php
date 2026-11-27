@@ -1,4 +1,4 @@
-<div class="vt-topbar flex h-16 shrink-0 items-center gap-x-4 border-b border-neutral-200 bg-white px-4 shadow-sm sm:px-6">
+<div class="vt-topbar app-topbar flex h-16 shrink-0 items-center gap-x-4 border-b border-neutral-200 bg-white px-4 shadow-sm sm:px-6">
     <button type="button" class="text-neutral-500 lg:hidden" @click="sidebarOpen = true">
         <span class="sr-only">Open sidebar</span>
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

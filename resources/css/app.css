@@ -8,6 +8,424 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Industrial Liquid Glass design system.
+ *
+ * 1 tokens  2 ambient background  3 sidebar  4 top bar  5 page surfaces
+ * 6 tables  7 forms  8 buttons  9 popovers/modals  10 dashboard
+ * 11 LOTOTO frame  12 motion  13 responsive / print / reduced motion
+ *
+ * backdrop-filter is only used on floating chrome (sidebar, top bar, popovers,
+ * modals, LOTOTO frame). Cards and tables are translucent without it: cheaper,
+ * and it cannot trap position:fixed dialogs inside a card.
+ * The inside of the LOTOTO board keeps its own colours and geometry.
+ */
+:root {
+    color-scheme: light;
+    --app-ink: #202833;
+    --lg-cyan: #22b8e6;
+    --lg-cyan-rgb: 34 184 230;
+    --lg-orange: #ff7a3d;
+    --lg-orange-rgb: 255 122 61;
+    --lg-charcoal-rgb: 28 31 38;
+    --lg-surface: rgb(255 255 255 / 0.74);
+    --lg-surface-strong: rgb(255 255 255 / 0.9);
+    --lg-popover: rgb(250 252 253 / 0.95);
+    --lg-border: rgb(255 255 255 / 0.85);
+    --lg-line: rgb(88 112 132 / 0.18);
+    --lg-highlight: inset 0 1px 0 rgb(255 255 255 / 0.95);
+    --lg-shadow: 0 1px 2px rgb(var(--lg-charcoal-rgb) / 0.05), 0 12px 30px rgb(var(--lg-charcoal-rgb) / 0.09);
+    --lg-shadow-float: 0 24px 60px rgb(var(--lg-charcoal-rgb) / 0.24);
+    --lg-radius: 1.1rem;
+    --lg-radius-control: 0.75rem;
+    --lg-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --lg-fast: 180ms;
+}
+
+/* ---- 2. Ambient background ------------------------------------------- */
+
+html { background: #dfe8ed; }
+
+body {
+    color: var(--app-ink);
+    background:
+        radial-gradient(ellipse 34rem 20rem at 20rem -3rem, rgb(var(--lg-orange-rgb) / 0.5), transparent 70%),
+        radial-gradient(ellipse 28rem 22rem at 0 100%, rgb(var(--lg-orange-rgb) / 0.38), transparent 70%),
+        radial-gradient(ellipse 42rem 30rem at 100% 24%, rgb(var(--lg-cyan-rgb) / 0.3), transparent 70%),
+        radial-gradient(ellipse 46rem 26rem at 70% 108%, rgb(var(--lg-cyan-rgb) / 0.34), transparent 70%),
+        radial-gradient(ellipse 30rem 14rem at 62% 6%, rgb(255 255 255 / 0.85), transparent 70%),
+        linear-gradient(100deg, #e9ded6 0%, #e8ecee 40%, #d5e6ee 100%);
+    background-attachment: fixed;
+}
+
+@media (min-width: 1024px) {
+    /* Charcoal behind the sidebar, fading to light before the content. */
+    body:has(#desktop-sidebar) {
+        background:
+            radial-gradient(ellipse 34rem 20rem at 20rem -3rem, rgb(var(--lg-orange-rgb) / 0.6), transparent 70%),
+            radial-gradient(ellipse 28rem 22rem at 0 100%, rgb(var(--lg-orange-rgb) / 0.5), transparent 70%),
+            radial-gradient(ellipse 42rem 30rem at 100% 24%, rgb(var(--lg-cyan-rgb) / 0.3), transparent 70%),
+            radial-gradient(ellipse 46rem 26rem at 70% 108%, rgb(var(--lg-cyan-rgb) / 0.36), transparent 70%),
+            radial-gradient(ellipse 30rem 14rem at 62% 6%, rgb(255 255 255 / 0.85), transparent 70%),
+            linear-gradient(90deg, #272a31 0, #4a403d var(--lg-edge-dark, 11rem), #cbbbb1 var(--lg-edge-mid, 18rem), #e8ecee var(--lg-edge-light, 24rem), #d3e5ee 100%);
+        background-attachment: fixed;
+    }
+}
+
+/* The charcoal edge follows the collapsed rail. */
+html[data-sidebar='collapsed'] { --lg-edge-dark: 3rem; --lg-edge-mid: 6rem; --lg-edge-light: 9rem; }
+
+/* ---- 3. Sidebar: floating smoked glass -------------------------------- */
+
+.app-sidebar.app-sidebar {
+    position: relative;
+    isolation: isolate;
+    color: #f4f7fa;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 1.55rem;
+    background:
+        radial-gradient(ellipse 18rem 12rem at 15% 0, rgb(var(--lg-orange-rgb) / 0.22), transparent 70%),
+        radial-gradient(ellipse 18rem 16rem at 100% 78%, rgb(var(--lg-cyan-rgb) / 0.18), transparent 70%),
+        linear-gradient(165deg, rgb(48 48 55 / 0.86), rgb(27 31 38 / 0.9) 55%, rgb(40 36 37 / 0.86));
+    box-shadow: var(--lg-shadow-float), inset 0 1px 0 rgb(255 255 255 / 0.2);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    backdrop-filter: blur(24px) saturate(150%);
+}
+
+/* Edge reflection: orange light from the top-left, cyan from the bottom-right. */
+.app-sidebar.app-sidebar::before {
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(150deg, rgb(var(--lg-orange-rgb) / 0.9), transparent 28%, transparent 68%, rgb(var(--lg-cyan-rgb) / 0.85));
+    content: "";
+    pointer-events: none;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+/* The nav keeps scrolling; only the visual scrollbar is hidden. */
+.app-sidebar nav { scrollbar-width: none; }
+.app-sidebar nav::-webkit-scrollbar { display: none; }
+
+.app-sidebar > div { border-color: rgb(255 255 255 / 0.12); }
+
+.app-sidebar :is([data-nav-item], [data-nav-group] > button, [data-label$="sidebar"]) {
+    border-radius: var(--lg-radius-control);
+    transition: color var(--lg-fast) ease, background-color var(--lg-fast) ease, box-shadow var(--lg-fast) ease, scale 120ms ease;
+}
+
+.app-sidebar :is([data-nav-item], [data-nav-group] > button) { color: rgb(240 245 249 / 0.88); }
+.app-sidebar :is([data-nav-item], [data-nav-group]) svg { color: rgb(214 226 235 / 0.75); transition: color var(--lg-fast) ease, rotate 220ms var(--lg-ease), transform 220ms var(--lg-ease); }
+
+.app-sidebar :is([data-nav-item], [data-nav-group] > button, [data-label$="sidebar"]):hover {
+    color: #fff;
+    background-color: rgb(255 255 255 / 0.09);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18), inset 0 0 0 1px rgb(255 255 255 / 0.07);
+}
+
+.app-sidebar :is([data-nav-item], [data-nav-group] > button):hover svg { color: #8fe3ff; }
+.app-sidebar :is([data-nav-item], [data-nav-group] > button, [data-label]):active { scale: 0.98; }
+
+/* Active page: glowing glass pill. */
+.app-sidebar [data-nav-item][aria-current="page"] {
+    color: #fff;
+    background: linear-gradient(100deg, rgb(var(--lg-orange-rgb) / 0.36), rgb(255 255 255 / 0.14) 48%, rgb(var(--lg-cyan-rgb) / 0.28));
+    box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.35),
+        inset 0 0 0 1px rgb(255 255 255 / 0.22),
+        0 0 18px rgb(var(--lg-cyan-rgb) / 0.22),
+        -4px 0 14px rgb(var(--lg-orange-rgb) / 0.25);
+}
+
+.app-sidebar [data-nav-item][aria-current="page"]::before { background-color: var(--lg-orange); }
+.app-sidebar [data-nav-item][aria-current="page"] svg { color: #fff; }
+
+.app-sidebar :is([data-label="Search menu"], [data-label$="sidebar"]) {
+    color: rgb(255 255 255 / 0.9);
+    background-color: rgb(255 255 255 / 0.08);
+    border: 1px solid rgb(255 255 255 / 0.22);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16);
+}
+
+.app-sidebar [data-label="Search menu"]:hover {
+    border-color: rgb(var(--lg-cyan-rgb) / 0.6);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 0 16px rgb(var(--lg-cyan-rgb) / 0.2);
+}
+
+.app-sidebar :is(a, button):focus-visible { outline: 2px solid #7ddcfb; outline-offset: -2px; }
+.app-sidebar p, .app-sidebar kbd { color: rgb(226 234 241 / 0.68); }
+.app-sidebar p.text-white { color: #fff; }
+
+/* Submenu height transition (0fr/1fr grid rows; hidden links leave the tab order). */
+.nav-group-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr;
+    opacity: 1;
+    visibility: visible;
+    transition: grid-template-rows 260ms var(--lg-ease), opacity 200ms ease, visibility 0s;
+}
+
+.nav-group-panel.is-closed {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    visibility: hidden;
+    transition: grid-template-rows 260ms var(--lg-ease), opacity 200ms ease, visibility 0s 260ms;
+}
+
+.nav-group-panel > div { min-height: 0; overflow: hidden; }
+
+/* ---- 4. Top bar -------------------------------------------------------- */
+
+.app-topbar.app-topbar {
+    position: relative;
+    z-index: 30; /* above sticky page headers (z-20): its dropdowns and login modal live inside */
+    margin: 0.8rem 1rem 0;
+    border: 1px solid var(--lg-border);
+    border-radius: 1.35rem;
+    background: transparent;
+    box-shadow: var(--lg-shadow), var(--lg-highlight);
+}
+
+/* The blur lives on a pseudo-element: on the bar itself it would become the
+   containing block of the login modal rendered inside it. */
+.app-topbar::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(105deg, rgb(255 238 229 / 0.74), rgb(255 255 255 / 0.62) 42%, rgb(222 244 252 / 0.66));
+    box-shadow: inset 0 -1px 0 rgb(var(--lg-cyan-rgb) / 0.35), inset 18px 0 30px -24px rgb(var(--lg-orange-rgb) / 0.9);
+    content: "";
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* A long title truncates instead of pushing the user menu off screen. */
+.app-topbar > div { min-width: 0; gap: 0.5rem; }
+.app-topbar > div > div { flex: none; }
+.app-topbar h1 { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Headers that pass markup (back button, own heading) lay out in a row. */
+.app-topbar h1:has(> *) { display: flex; align-items: center; overflow: visible; }
+.app-topbar h1:has(> *)::before { flex: none; }
+.app-topbar h1 > * { min-width: 0; }
+
+.app-topbar h1::before {
+    display: inline-block;
+    width: 4px;
+    height: 1.1em;
+    margin-right: 0.65rem;
+    vertical-align: -0.18em;
+    border-radius: 99px;
+    background: linear-gradient(var(--lg-orange), rgb(var(--lg-orange-rgb) / 0.45));
+    box-shadow: 0 0 10px rgb(var(--lg-orange-rgb) / 0.55);
+    content: "";
+}
+
+/* ---- 5. Page surfaces --------------------------------------------------- */
+
+.app-main { background: transparent; }
+
+.app-page-content :is(.bg-white):is(.rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .shadow, .shadow-sm, .shadow-md, .shadow-lg):not(a, button, input, select, textarea, span, .absolute, .fixed, .rounded-full, .lototo-board *),
+.app-page-content .glass-card.glass-card {
+    border-color: var(--lg-border);
+    border-radius: var(--lg-radius);
+    background-color: var(--lg-surface);
+    background-image: linear-gradient(155deg, rgb(255 255 255 / 0.65), rgb(255 255 255 / 0) 38%, rgb(var(--lg-cyan-rgb) / 0.05));
+    box-shadow: var(--lg-shadow), var(--lg-highlight), 0 0 0 1px var(--lg-line);
+}
+
+/* Left/top accent borders written by the views stay visible. */
+.app-page-content .bg-white.border-l-brand-500 { border-left-color: var(--lg-orange); }
+.app-page-content .bg-white.border-t-brand-500 { border-top-color: var(--lg-orange); }
+
+/* Cards that are links lift their light, not their layout. */
+.app-page-content a.bg-white:is(.rounded-lg, .rounded-xl, .rounded-2xl) {
+    background-color: var(--lg-surface);
+    box-shadow: var(--lg-shadow), var(--lg-highlight);
+}
+
+.app-page-content a.bg-white:is(.rounded-lg, .rounded-xl, .rounded-2xl):hover {
+    border-color: rgb(var(--lg-cyan-rgb) / 0.7);
+    background-color: var(--lg-surface-strong);
+    box-shadow: var(--lg-shadow), var(--lg-highlight), 0 0 20px rgb(var(--lg-cyan-rgb) / 0.22);
+}
+
+.app-page-content :is(.bg-neutral-50, .bg-gray-50):not(thead, tr, th, td, input, select, textarea, .sticky, .lototo-board *) {
+    background-color: rgb(246 249 251 / 0.6);
+}
+
+/* Muted text darkened a step so it stays readable on the ambient background. */
+.app-page-content .text-neutral-500:not(.lototo-board *) { color: #55606b; }
+.app-page-content .text-neutral-400:not(.lototo-board *) { color: #6d7782; }
+
+/* Sticky toolbars need a near-opaque pane: content scrolls underneath. */
+.app-page-content .sticky.bg-neutral-50:not(th, td, thead, tr) {
+    border-radius: var(--lg-radius);
+    background-color: rgb(239 245 248 / 0.96);
+}
+
+/* ---- 6. Tables and pagination ------------------------------------------ */
+
+.app-page-content table.divide-y thead,
+.app-page-content table.divide-y thead.bg-neutral-50 { background-color: rgb(237 244 248 / 0.92); }
+.app-page-content table.divide-y thead th { color: #3f4d5a; }
+.app-page-content table.divide-y tbody.bg-white { background-color: rgb(255 255 255 / 0.55); }
+.app-page-content table.divide-y > tbody > tr:hover { background-color: rgb(225 245 253 / 0.75); }
+.app-page-content :is(.overflow-auto, .overflow-x-auto):has(> table.divide-y) { background-color: rgb(255 255 255 / 0.86); }
+
+.app-page-content nav[role="navigation"] :is(a, span[aria-disabled] > span, span[aria-current] > span) {
+    border-color: var(--lg-line);
+    background-color: rgb(255 255 255 / 0.7);
+    box-shadow: var(--lg-highlight);
+}
+
+.app-page-content nav[role="navigation"] a:hover {
+    border-color: rgb(var(--lg-cyan-rgb) / 0.65);
+    background-color: #fff;
+}
+
+.app-page-content nav[role="navigation"] span[aria-current] > span {
+    color: #7a240a;
+    background: linear-gradient(135deg, rgb(255 226 211 / 0.95), rgb(255 244 238 / 0.9));
+    border-color: rgb(var(--lg-orange-rgb) / 0.55);
+}
+
+/* ---- 7. Form controls: frosted inputs, cyan focus ----------------------- */
+
+:is(.app-page-content, .glass-modal, .glass-auth) :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="hidden"], [type="submit"], [type="button"]), select, textarea):not(.lototo-board *, .border-0) {
+    border-color: rgb(96 128 152 / 0.3);
+    border-radius: var(--lg-radius-control);
+    background-color: rgb(255 255 255 / 0.78);
+    box-shadow: inset 0 1px 3px rgb(var(--lg-charcoal-rgb) / 0.06);
+}
+
+:is(.app-page-content, .glass-modal, .glass-auth) :is(input:not([type="checkbox"], [type="radio"]), select, textarea):not(:disabled, .border-0, .lototo-board *):hover { border-color: rgb(var(--lg-cyan-rgb) / 0.6); }
+
+:is(.app-page-content, .glass-modal, .glass-auth) :is(input:not([type="checkbox"], [type="radio"]), select, textarea):not(.border-0, .lototo-board *):focus {
+    --tw-ring-color: rgb(var(--lg-cyan-rgb) / 0.35);
+    border-color: var(--lg-cyan);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgb(var(--lg-cyan-rgb) / 0.2);
+}
+
+.app-page-content :is(input, select, textarea):disabled { background-color: rgb(233 237 240 / 0.8); }
+
+/* Validation errors keep their red field over the frosted style. */
+:is(.app-page-content, .glass-modal, .glass-auth) :is(input, select, textarea):has(+ .form-error):not(.lototo-board *, .border-0) { border-color: #cb4530; background-color: #fdf3f1; }
+
+/* ---- 8. Buttons ---------------------------------------------------------- */
+/* Gloss is added on top of each button's own colour, so meanings stay intact. */
+
+.glass-btn.glass-btn,
+:is(.app-page-content, .glass-modal, .glass-auth) :is(a, button, label):is(.bg-brand-500, .bg-brand-600, .bg-brand-700, .bg-accent-600, .bg-danger-600, .bg-success-600, .bg-neutral-800, .bg-neutral-900):not(.rounded-full, .lototo-board *) {
+    border-radius: var(--lg-radius-control);
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0) 55%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.32), 0 5px 14px rgb(var(--lg-charcoal-rgb) / 0.14);
+}
+
+.glass-btn.glass-btn--primary:hover,
+:is(.app-page-content, .glass-modal, .glass-auth) :is(a, button, label):is(.bg-brand-500, .bg-brand-600, .bg-brand-700):not(.rounded-full, .lototo-board *):hover {
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.4), 0 6px 18px rgb(var(--lg-orange-rgb) / 0.38);
+}
+
+.glass-btn:is(.glass-btn--secondary, .glass-btn--soft),
+:is(.app-page-content, .glass-modal) :is(a, button, label):is(.bg-white, .bg-neutral-100):is(.border, .shadow-sm):is(.rounded, .rounded-md, .rounded-lg):not(.lototo-board *) {
+    border-radius: var(--lg-radius-control);
+    background-color: rgb(255 255 255 / 0.7);
+    box-shadow: var(--lg-highlight), 0 4px 12px rgb(var(--lg-charcoal-rgb) / 0.08);
+}
+
+.glass-btn.glass-btn--soft { background-color: rgb(255 238 231 / 0.82); }
+
+.glass-btn:is(.glass-btn--secondary, .glass-btn--soft):hover,
+:is(.app-page-content, .glass-modal) :is(a, button, label):is(.bg-white, .bg-neutral-100):is(.border, .shadow-sm):is(.rounded, .rounded-md, .rounded-lg):not(.lototo-board *):hover {
+    border-color: rgb(var(--lg-cyan-rgb) / 0.75);
+    box-shadow: var(--lg-highlight), 0 0 16px rgb(var(--lg-cyan-rgb) / 0.24);
+}
+
+:is(.app-page-content, .app-topbar, .glass-modal, .glass-auth) :is(button, a):not(.lototo-board, .lototo-board *) {
+    transition-property: color, background-color, border-color, box-shadow, opacity, scale;
+    transition-duration: var(--lg-fast);
+    transition-timing-function: ease;
+}
+
+:is(.app-page-content, .app-topbar, .glass-modal, .glass-auth) :is(button, a.glass-btn):not(:disabled, .lototo-board *):active { scale: 0.97; }
+
+.app-topbar button:not(.glass-popover button, .glass-modal button) { border-radius: 0.9rem; }
+
+.app-topbar button:not(.glass-btn, .glass-popover button, .glass-modal button):hover {
+    background-color: rgb(255 255 255 / 0.65);
+    box-shadow: var(--lg-highlight), 0 0 14px rgb(var(--lg-cyan-rgb) / 0.22);
+}
+
+/* ---- 9. Popovers, modals, dialogs --------------------------------------- */
+
+.glass-popover,
+.glass-modal.glass-modal {
+    border: 1px solid var(--lg-border);
+    background: linear-gradient(150deg, rgb(255 255 255 / 0.97), var(--lg-popover) 45%, rgb(234 247 253 / 0.94));
+    box-shadow: var(--lg-shadow-float), var(--lg-highlight), 0 0 0 1px var(--lg-line);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+}
+
+.glass-popover { overflow: hidden; border-radius: 1rem; }
+.glass-popover > div { background: transparent; box-shadow: none; }
+.glass-modal.glass-modal { border-radius: 1.35rem; }
+.glass-modal > .bg-neutral-50 { background-color: rgb(236 243 247 / 0.7); }
+
+.glass-backdrop {
+    background: linear-gradient(120deg, rgb(41 31 28 / 0.55), rgb(14 36 47 / 0.55));
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+/* Hand-written overlay panels inside pages stay readable. */
+.app-page-content :is(.absolute, .fixed).bg-white:is(.shadow-lg, .shadow-xl):not(.lototo-board *) {
+    background-color: var(--lg-popover);
+    border-radius: 1rem;
+}
+
+/* ---- 10. Dashboard ------------------------------------------------------- */
+
+.app-page-content .glass-hero.glass-hero {
+    background-color: rgb(255 255 255 / 0.9);
+    box-shadow: var(--lg-shadow), var(--lg-highlight), 0 0 28px rgb(var(--lg-cyan-rgb) / 0.12);
+}
+
+.app-page-content .glass-kpi.glass-kpi.glass-kpi {
+    border-top: 2px solid rgb(var(--lg-orange-rgb) / 0.9);
+    background-image:
+        radial-gradient(ellipse 12rem 7rem at 100% 100%, rgb(var(--lg-cyan-rgb) / 0.16), transparent 70%),
+        radial-gradient(ellipse 10rem 5rem at 0 0, rgb(var(--lg-orange-rgb) / 0.1), transparent 70%),
+        linear-gradient(155deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0) 45%);
+}
+
+.app-page-content .glass-kpi.glass-kpi.glass-kpi:has(> a):hover {
+    box-shadow: var(--lg-shadow), var(--lg-highlight), 0 0 24px rgb(var(--lg-cyan-rgb) / 0.3);
+}
+
+/* The four filters wrap under the greeting instead of being clipped. */
+@media (min-width: 1024px) {
+    .app-page-content .glass-hero.glass-hero { flex-wrap: wrap; row-gap: 0.75rem; }
+}
+
+/* A chart never widens its card (seen at 1024px). */
+.app-page-content .glass-card { min-width: 0; }
+.app-page-content .glass-card canvas { max-width: 100% !important; }
+
+/* Sign-in card (layouts/guest.blade.php). */
+.glass-auth.glass-auth {
+    border-color: var(--lg-border);
+    background: linear-gradient(150deg, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0.74));
+    box-shadow: var(--lg-shadow-float), var(--lg-highlight), 0 0 40px rgb(var(--lg-cyan-rgb) / 0.2);
+}
+
 [x-cloak] {
     display: none !important;
 }
@@ -19,17 +437,126 @@
  */
 @media (min-width: 1024px) {
     #desktop-sidebar {
-        width: 17rem;
-        transition: width 200ms ease;
+        box-sizing: border-box;
+        width: 18rem;
+        overflow: visible !important;
+        padding: 0.8rem 0 0.8rem 0.8rem;
+        transition: width 220ms var(--lg-ease);
     }
 
-    html[data-sidebar='collapsed'] #desktop-sidebar {
-        width: 4.5rem;
-    }
+    html[data-sidebar='collapsed'] #desktop-sidebar { width: 5.5rem; }
+}
+
+/* ---- 11. LOTOTO: glass frame around the untouched board ----------------- */
+
+.lototo-board-glass {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+    flex: 0 0 auto;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+/* Thick glass pane: cyan light on the top-right, orange on the bottom-left. */
+.lototo-board-glass::before {
+    position: absolute;
+    z-index: -1;
+    inset: -0.7rem;
+    border: 1px solid rgb(255 255 255 / 0.95);
+    border-radius: 1.5rem;
+    background:
+        radial-gradient(ellipse 45% 35% at 100% 0, rgb(var(--lg-cyan-rgb) / 0.4), transparent 70%),
+        radial-gradient(ellipse 40% 35% at 0 100%, rgb(var(--lg-orange-rgb) / 0.42), transparent 70%),
+        linear-gradient(135deg, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0.34) 34%, rgb(255 255 255 / 0.22) 68%, rgb(255 255 255 / 0.7));
+    box-shadow:
+        0 22px 52px rgb(var(--lg-charcoal-rgb) / 0.2),
+        14px -10px 40px rgb(var(--lg-cyan-rgb) / 0.3),
+        -14px 12px 40px rgb(var(--lg-orange-rgb) / 0.28),
+        inset 0 2px 0 rgb(255 255 255 / 0.95),
+        inset 0 0 0 4px rgb(255 255 255 / 0.28),
+        inset 0 0 22px rgb(255 255 255 / 0.55);
+    content: "";
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+}
+
+/* Sheen on the empty areas only: a background image under the slots keeps
+   each section's own colour and never covers a lock. */
+.lototo-page .lototo-board .lototo-group-content {
+    background-image: linear-gradient(115deg, rgb(255 255 255 / 0.7), rgb(255 255 255 / 0) 30%, rgb(255 255 255 / 0) 62%, rgb(255 255 255 / 0.55) 76%, rgb(255 255 255 / 0) 90%);
+}
+
+/* Toolbar above the board, as glass controls. */
+.lototo-page .lototo-board-actions { position: relative; z-index: 1; padding-bottom: 0.35rem; }
+
+.lototo-page .lototo-board-select,
+.lototo-page .lototo-board-action {
+    border: 1px solid rgb(255 255 255 / 0.95);
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, rgb(255 255 255 / 0.88), rgb(235 247 252 / 0.68));
+    color: var(--app-ink);
+    box-shadow: var(--lg-highlight), 0 0 0 1px var(--lg-line), 0 6px 16px rgb(var(--lg-charcoal-rgb) / 0.1);
+}
+
+.lototo-page .lototo-board-select:is(:hover, :focus-visible),
+.lototo-page .lototo-board-action:is(:hover, :focus-visible) {
+    background: #fff;
+    box-shadow: var(--lg-highlight), 0 0 0 1px rgb(var(--lg-cyan-rgb) / 0.75), 0 0 18px rgb(var(--lg-cyan-rgb) / 0.28);
+    transform: none;
+}
+
+.lototo-page .lototo-board-action svg,
+.lototo-page .lototo-board-select-wrap > svg { color: #c2501f; }
+
+/* ---- 12. Motion ----------------------------------------------------------- */
+/* Browsers with cross-document View Transitions animate in
+   page-transitions.css (html.vt-arrived). Others get this CSS entrance.
+   fill-mode "backwards" leaves no transform behind afterwards. */
+
+html:not(.vt-arrived) .app-page-content.lototo-route { animation: lg-fade 300ms ease backwards; }
+
+/* Staggered cards. The dashboard has its own reveal (motion.js); the LOTOTO
+   board only fades, never moves. */
+html:not(.vt-arrived) .app-page-content:not(.lototo-route) > *:not([data-motion], .fixed, .absolute) { animation: lg-rise 340ms var(--lg-ease) backwards; }
+html:not(.vt-arrived) .app-page-content:not(.lototo-route) > :nth-child(2) { animation-delay: 45ms; }
+html:not(.vt-arrived) .app-page-content:not(.lototo-route) > :nth-child(3) { animation-delay: 90ms; }
+html:not(.vt-arrived) .app-page-content:not(.lototo-route) > :nth-child(n + 4) { animation-delay: 130ms; }
+
+@keyframes lg-fade { from { opacity: 0; } }
+@keyframes lg-rise { from { opacity: 0; translate: 0 8px; } }
+
+/* ---- 13. Responsive, print, reduced motion -------------------------------- */
+
+@media (max-width: 639px) {
+    .app-topbar.app-topbar { margin: 0.55rem 0.6rem 0; padding-inline: 0.85rem; }
+    .app-topbar h1 { font-size: 0.95rem; }
+    .app-topbar > div > div { gap: 0.6rem; }
+    .app-page-content:not(.lototo-route) { padding-top: 1.25rem; padding-bottom: 1.5rem; }
+    .lototo-board-glass::before { inset: -0.45rem; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+    .app-sidebar.app-sidebar { background: #1f232a; }
+    .app-topbar::before { background: #fff; }
+    :root { --lg-surface: #fff; --lg-popover: #fff; }
+}
+
+@media print {
+    html, body, body:has(#desktop-sidebar) { background: #fff; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #desktop-sidebar {
-        transition: none;
+    #desktop-sidebar { transition: none; }
+
+    *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0ms !important;
     }
 }
